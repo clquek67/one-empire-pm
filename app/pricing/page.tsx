@@ -166,7 +166,7 @@ export default function PricingPage() {
         </div>
 
         {/* Footer */}
-        <div style={{ textAlign: 'center', marginTop: '48px', fontSize: '12px', color: 'rgba(240,246,255,0.25)' }}>
+        <div style={{ textAlign: 'center', marginTop: '48px', fontSize: '12px', color: 'rgba(240,246,255,0.85)' }}>
           All plans include a 7-day free trial · Cancel anytime · Secure payments by Stripe
         </div>
       </div>
