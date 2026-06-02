@@ -57,7 +57,7 @@ export default function PricingPage() {
           <h1 style={{ fontFamily: 'Georgia, serif', fontSize: '42px', fontWeight: 300, marginBottom: '12px' }}>
             Choose Your <em style={{ color: '#E8B84B', fontStyle: 'italic' }}>Plan</em>
           </h1>
-          <p style={{ color: 'rgba(240,246,255,0.5)', fontSize: '15px' }}>
+          <p style={{ color: 'rgba(240,246,255,0.75)', fontSize: '15px' }}>
             AI-powered project management for consultants and agencies
           </p>
         </div>
@@ -154,7 +154,7 @@ export default function PricingPage() {
                   {plan.notIncluded.map(f => (
                     <div key={f} style={{
                       display: 'flex', gap: '8px', marginBottom: '10px',
-                      fontSize: '13px', color: 'rgba(240,246,255,0.25)'
+                      fontSize: '13px', color: 'rgba(240,246,255,0.6)'
                     }}>
                       <span style={{ flexShrink: 0 }}>✗</span>{f}
                     </div>
