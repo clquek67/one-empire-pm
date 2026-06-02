@@ -112,7 +112,7 @@ export default function PricingPage() {
                     fontFamily: 'Georgia, serif', fontSize: '22px', color: '#F0F6FF',
                     marginBottom: '6px'
                   }}>{plan.name}</div>
-                  <div style={{ fontSize: '12px', color: 'rgba(240,246,255,0.4)' }}>
+                  <div style={{ fontSize: '12px', color: 'rgba(240,246,255,0.75)' }}>
                     {plan.description}
                   </div>
                 </div>
@@ -121,7 +121,7 @@ export default function PricingPage() {
                   <span style={{
                     fontFamily: 'Georgia, serif', fontSize: '42px', color: '#E8B84B', fontWeight: 300
                   }}>${price.amount}</span>
-                  <span style={{ fontSize: '13px', color: 'rgba(240,246,255,0.4)', marginLeft: '6px' }}>
+                  <span style={{ fontSize: '13px', color: 'rgba(240,246,255,0.75)', marginLeft: '6px' }}>
                     /{period === 'monthly' ? 'mo' : period === 'quarterly' ? 'qtr' : 'yr'}
                   </span>
                 </div>
@@ -132,7 +132,7 @@ export default function PricingPage() {
                   style={{
                     width: '100%', padding: '12px',
                     background: isPro ? 'linear-gradient(135deg, #C9993A, #E8B84B)' : 'transparent',
-                    border: isPro ? 'none' : '1px solid rgba(201,153,58,0.4)',
+                    border: isPro ? 'none' : '1px solid rgba(201,153,58,0.75)',
                     borderRadius: '3px', cursor: 'pointer',
                     color: isPro ? '#050D1A' : '#E8B84B',
                     fontSize: '12px', fontWeight: 700, letterSpacing: '0.12em',
