@@ -528,7 +528,36 @@ export default function Dashboard() {
                   <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '26px', color: '#F0F6FF' }}>Time &amp; <em style={{ color: gold, fontStyle: 'italic' }}>Billing</em></div>
                   <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: whiteFaint, marginTop: '5px' }}>${unbilledTotal.toLocaleString()} unbilled · ready to invoice</div>
                 </div>
-                <button style={s.btnGold} onClick={() => ai('invoice', 'You are a professional billing assistant. Generate a professional invoice covering email.', `Unbilled items: ${timeLogs.map(l => `${l.description} (${l.hours}h @ $${l.rate}/hr)`).join(', ')}. Total: $${unbilledTotal.toLocaleString()}`)}>✦ Generate Invoice</button>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <input
+                    id="invoice-client-email"
+                    style={{ ...s.input, width: '220px', fontSize: '11px', padding: '7px 10px' }}
+                    placeholder="Client email to send invoice..."
+                    type="email"
+                  />
+                  <button style={s.btnGold} onClick={async () => {
+                    const clientEmail = (document.getElementById('invoice-client-email') as HTMLInputElement)?.value
+                    const items = timeLogs.map(l => `${l.description} (${l.hours}h @ $${l.rate}/hr)`).join(', ')
+                    await ai('invoice', 'You are a professional billing assistant. Generate a professional invoice covering email with itemised billing and payment instructions.', `Unbilled items: ${items}. Total: $${unbilledTotal.toLocaleString()}. Client email: ${clientEmail || 'Not provided'}`)
+                    if (clientEmail) {
+                      const project = projects[0]
+                      await fetch('https://n8n.one-empire.com/webhook/empire-pm-invoice', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          client: project?.client_name || 'Client',
+                          project: project?.name || 'Project',
+                          clientEmail,
+                          items,
+                          total: `$${unbilledTotal.toLocaleString()}`,
+                          dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toLocaleDateString(),
+                          senderName: user?.user_metadata?.full_name,
+                          senderEmail: user?.email
+                        })
+                      }).catch(() => {})
+                    }
+                  }}>✦ Generate Invoice</button>
+                </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
                 <div>
