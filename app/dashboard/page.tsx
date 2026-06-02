@@ -727,17 +727,30 @@ function TaskForm({ user, projects, teamMembers, onCreated, supabase }: any) {
 }
 
 function RiskForm({ user, projects, onCreated, supabase }: any) {
-  const [title, setTitle] = useState(''); const [desc, setDesc] = useState(''); const [level, setLevel] = useState('medium'); const [projectId, setProjectId] = useState('')
+  const [title, setTitle] = useState(''); const [desc, setDesc] = useState(''); const [level, setLevel] = useState('medium'); const [projectId, setProjectId] = useState(''); const [notifyEmail, setNotifyEmail] = useState('')
   const submit = async () => {
     if (!title || !projectId || !user) return
     await supabase.from('risks').insert({ user_id: user.id, project_id: projectId, title, description: desc, level })
-    setTitle(''); setDesc(''); onCreated()
+    const project = projects.find((p: Project) => p.id === projectId)
+    if (notifyEmail) {
+      await fetch('https://n8n.one-empire.com/webhook/empire-pm-risk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: notifyEmail, title, description: desc, level,
+          project: project?.name || 'Unknown',
+          senderName: user?.user_metadata?.full_name || 'PM',
+          senderEmail: user?.email
+        })
+      }).catch(() => {})
+    }
+    setTitle(''); setDesc(''); setNotifyEmail(''); onCreated()
   }
   return (
     <div>
       <div style={{ marginBottom: '10px' }}><div style={s.label}>Risk Title</div><input style={s.input} value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Security audit delay"/></div>
       <div style={{ marginBottom: '10px' }}><div style={s.label}>Description</div><textarea style={{ ...s.input, minHeight: '70px', resize: 'vertical' as const }} value={desc} onChange={e => setDesc(e.target.value)} placeholder="Describe the risk and potential impact..."/></div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
         <div><div style={s.label}>Project</div>
           <select style={s.input} value={projectId} onChange={e => setProjectId(e.target.value)}>
             <option value="">Select...</option>
@@ -750,6 +763,7 @@ function RiskForm({ user, projects, onCreated, supabase }: any) {
           </select>
         </div>
       </div>
+      <div style={{ marginBottom: '12px' }}><div style={s.label}>Notify (Email) — Optional</div><input style={s.input} value={notifyEmail} onChange={e => setNotifyEmail(e.target.value)} placeholder="team@company.com" type="email"/></div>
       <button style={{ ...s.btnGold, width: '100%' }} onClick={submit}>Log Risk →</button>
     </div>
   )
