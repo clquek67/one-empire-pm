@@ -959,11 +959,39 @@ function ScopeForm({ ai, aiLoading, aiText, projects }: any) {
 
 function SettingsForm({ user, supabase }: any) {
   const [company, setCompany] = useState(''); const [phone, setPhone] = useState(''); const [saved, setSaved] = useState(false)
+  const [sub, setSub] = useState<any>(null); const [portalLoading, setPortalLoading] = useState(false)
+
+  useEffect(() => {
+    if (user) {
+      supabase.from('profiles').select('company_name, phone').eq('id', user.id).single().then(({ data }: any) => {
+        if (data) { setCompany(data.company_name || ''); setPhone(data.phone || '') }
+      })
+      supabase.from('subscriptions').select('*').eq('user_id', user.id).single().then(({ data }: any) => {
+        if (data) setSub(data)
+      })
+    }
+  }, [user])
+
   const save = async () => {
     if (!user) return
     await supabase.from('profiles').update({ company_name: company, phone }).eq('id', user.id)
     setSaved(true); setTimeout(() => setSaved(false), 3000)
   }
+
+  const manageSubscription = async () => {
+    setPortalLoading(true)
+    try {
+      const res = await fetch('/api/manage-subscription', { method: 'POST' })
+      const { url, error } = await res.json()
+      if (url) window.location.href = url
+      else console.error('Portal error:', error)
+    } catch (e) { console.error(e) }
+    setPortalLoading(false)
+  }
+
+  const planNames: any = { starter: 'Starter', pro: 'Pro', agency: 'Agency' }
+  const planPrices: any = { starter: { monthly: '$17', quarterly: '$42', yearly: '$147' }, pro: { monthly: '$37', quarterly: '$89', yearly: '$297' }, agency: { monthly: '$67', quarterly: '$161', yearly: '$537' } }
+
   return (
     <div style={{ maxWidth: '600px' }}>
       <div style={s.card}>
@@ -976,8 +1004,39 @@ function SettingsForm({ user, supabase }: any) {
       </div>
       <div style={{ ...s.card, marginTop: '14px' }}>
         <div style={s.sectionTitle}>Subscription</div>
-        <div style={{ fontSize: '12px', color: textDim, marginBottom: '12px' }}>Manage your Empire PM subscription</div>
-        <a href="/pricing" style={{ ...s.btnGhost, textDecoration: 'none', display: 'inline-block' }}>View Plans →</a>
+        {sub ? (
+          <div>
+            <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
+              <div style={{ flex: 1, background: 'rgba(201,153,58,0.06)', border: '1px solid rgba(201,153,58,0.25)', borderRadius: '4px', padding: '14px 16px' }}>
+                <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase' as const, color: goldDim, marginBottom: '4px' }}>Current Plan</div>
+                <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '24px', color: gold }}>{planNames[sub.plan] || sub.plan}</div>
+              </div>
+              <div style={{ flex: 1, background: 'rgba(201,153,58,0.06)', border: '1px solid rgba(201,153,58,0.25)', borderRadius: '4px', padding: '14px 16px' }}>
+                <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase' as const, color: goldDim, marginBottom: '4px' }}>Billing</div>
+                <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '24px', color: gold }}>{planPrices[sub.plan]?.[sub.period] || ''}<span style={{ fontSize: '13px', color: textDim }}> /{sub.period === 'monthly' ? 'mo' : sub.period === 'quarterly' ? 'qtr' : 'yr'}</span></div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
+              <div style={{ flex: 1, background: 'rgba(34,201,144,0.06)', border: '1px solid rgba(34,201,144,0.2)', borderRadius: '4px', padding: '14px 16px' }}>
+                <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase' as const, color: goldDim, marginBottom: '4px' }}>Status</div>
+                <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '14px', fontWeight: 600, color: '#4DFFB4', textTransform: 'capitalize' as const }}>{sub.status}</div>
+              </div>
+              <div style={{ flex: 1, background: 'rgba(201,153,58,0.06)', border: '1px solid rgba(201,153,58,0.25)', borderRadius: '4px', padding: '14px 16px' }}>
+                <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase' as const, color: goldDim, marginBottom: '4px' }}>Renews</div>
+                <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '14px', fontWeight: 600, color: textMid }}>{sub.current_period_end ? new Date(sub.current_period_end).toLocaleDateString() : '—'}</div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button style={{ ...s.btnGold, flex: 1 }} onClick={manageSubscription} disabled={portalLoading}>{portalLoading ? 'Loading...' : 'Manage Subscription →'}</button>
+              <a href="/pricing" style={{ ...s.btnGhost, textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1 }}>Change Plan →</a>
+            </div>
+          </div>
+        ) : (
+          <div>
+            <div style={{ fontSize: '12px', color: textDim, marginBottom: '12px' }}>No active subscription found</div>
+            <a href="/pricing" style={{ ...s.btnGold, textDecoration: 'none', display: 'inline-block' }}>View Plans →</a>
+          </div>
+        )}
       </div>
     </div>
   )
