@@ -17,7 +17,9 @@ export async function POST(request: Request) {
       success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?success=true`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/pricing?cancelled=true`,
       customer_email: user.email,
-      metadata: { userId: user.id },
+      subscription_data: {
+        metadata: { userId: user.id },
+      },
       allow_promotion_codes: true,
     })
     return NextResponse.json({ url: session.url })
