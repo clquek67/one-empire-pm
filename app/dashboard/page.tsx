@@ -16,9 +16,9 @@ const navyCard = 'rgba(16,36,72,0.7)'
 const border = 'rgba(201,153,58,0.2)'
 const borderMd = 'rgba(201,153,58,0.35)'
 const textBright = '#E8F0FF'
-const textMid = '#C0D0E8'
-const textDim = 'rgba(192,208,232,0.55)'
-const whiteFaint = 'rgba(240,246,255,0.35)'
+const textMid = '#D8E4F4'
+const textDim = 'rgba(192,208,232,0.75)'
+const whiteFaint = 'rgba(240,246,255,0.55)'
 
 const s = {
   badge: (bg: string, color: string, bdr: string) => ({
