@@ -16,7 +16,7 @@ export default function LoginPage() {
   return (
     <div style={{
       minHeight: '100vh', background: '#050D1A', display: 'flex', alignItems: 'center',
-      justifyContent: 'center', fontFamily: 'sans-serif', position: 'relative', overflow: 'hidden'
+      justifyContent: 'center', fontFamily: 'DM Sans, sans-serif', position: 'relative', overflow: 'hidden'
     }}>
       {/* Circuit BG */}
       <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.1, pointerEvents: 'none' }}
@@ -56,7 +56,7 @@ export default function LoginPage() {
             padding: '4px 12px', borderRadius: '2px', marginBottom: '12px'
           }}>ONE EMPIRE</div>
           <div style={{
-            fontFamily: 'Georgia, serif', fontSize: '32px', color: '#F0F6FF',
+            fontFamily: 'Cormorant Garamond, serif', fontSize: '32px', color: '#F0F6FF',
             fontWeight: 300, marginBottom: '8px'
           }}>
             <em style={{ color: '#E8B84B', fontStyle: 'italic' }}>Empire</em> PM
