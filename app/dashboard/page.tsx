@@ -130,24 +130,36 @@ export default function Dashboard() {
   const openRisks = risks.filter(r => r.status !== 'closed').length
 
   const navItems = [
-    { id: 'dashboard', icon: '◈', label: 'Dashboard', section: 'Overview' },
-    { id: 'projects', icon: '◻', label: 'Projects', section: 'Manage' },
-    { id: 'tasks', icon: '✓', label: 'Tasks', section: null },
-    { id: 'scope', icon: '⊕', label: 'Scope Control', section: null },
-    { id: 'risks', icon: '⚠', label: 'Risk Radar', section: null, badge: openRisks > 0 ? openRisks : null },
-    { id: 'meetings', icon: '◎', label: 'Meetings', section: null },
-    { id: 'clients', icon: '◈', label: 'Client Portal', section: 'Clients' },
-    { id: 'workload', icon: '⊞', label: 'Workload', section: null },
-    { id: 'billing', icon: '◷', label: 'Time & Billing', section: 'Revenue' },
-    { id: 'planner', icon: '✦', label: 'AI Planner', section: 'AI Tools', gold: true },
+    { id: 'dashboard', icon: '◈', label: 'Dashboard', section: 'Command' },
+    { id: 'projects', icon: '◻', label: 'Projects', section: null, badge: activeProjects > 0 ? activeProjects : null },
+    { id: 'tasks', icon: '✓', label: 'Tasks', section: null, badge: activeTasks > 0 ? activeTasks : null },
+    { id: 'planner', icon: '✦', label: 'AI Planner', section: null, gold: true, ai: true },
+    { id: 'meetings', icon: '◎', label: 'Meetings', section: 'Operations', ai: true },
+    { id: 'risks', icon: '⚠', label: 'Risk Radar', section: null, badge: openRisks > 0 ? openRisks : null, ai: true },
+    { id: 'scope', icon: '⊕', label: 'Scope Control', section: null, ai: true },
+    { id: 'clients', icon: '◈', label: 'Client Portal', section: null, ai: true },
+    { id: 'workload', icon: '⊞', label: 'Workload', section: null, ai: true },
+    { id: 'billing', icon: '◷', label: 'Time & Billing', section: null },
     { id: 'settings', icon: '⚙', label: 'Settings', section: 'Account' },
   ]
 
+  const pageLabels: Record<string, string> = {
+    dashboard: 'Dashboard', projects: 'Projects', tasks: 'Tasks', planner: 'AI Planner',
+    meetings: 'Meetings', risks: 'Risk Radar', scope: 'Scope Control',
+    clients: 'Client Portal', workload: 'Workload', billing: 'Time & Billing', settings: 'Settings'
+  }
+  const pageCrumbs: Record<string, string> = {
+    dashboard: '/ Overview', projects: '/ All Projects', tasks: '/ All Tasks',
+    planner: '/ Generate Plan', meetings: '/ Process Notes', risks: '/ Risk Register',
+    scope: '/ Change Log', clients: '/ Email Generator', workload: '/ Capacity',
+    billing: '/ Timer & Invoices', settings: '/ Account'
+  }
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: navy, overflow: 'hidden' }}>
+    <div style={{ display: 'flex', height: '100vh', background: navy, overflow: 'hidden' }}>
 
       {/* Circuit BG */}
-      <svg style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', opacity: 0.1, pointerEvents: 'none', zIndex: 0 }}
+      <svg style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', opacity: 0.08, pointerEvents: 'none', zIndex: 0 }}
         viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice">
         <g stroke="#C9993A" strokeWidth="0.8" fill="none">
           <polyline points="0,180 120,180 120,80 300,80 300,220 500,220"/>
@@ -162,65 +174,84 @@ export default function Dashboard() {
         </g>
       </svg>
 
-      {/* NAV */}
-      <nav style={{
-        position: 'relative', zIndex: 10, display: 'flex', alignItems: 'center',
-        justifyContent: 'space-between', padding: '0 24px', height: '54px',
-        borderBottom: `1px solid ${border}`, background: 'rgba(5,13,26,0.95)',
-        backdropFilter: 'blur(12px)', flexShrink: 0
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ background: `linear-gradient(135deg, ${goldDim}, ${gold})`, color: navy, fontFamily: 'Rajdhani, sans-serif', fontWeight: 800, fontSize: '10px', letterSpacing: '0.14em', padding: '4px 10px', borderRadius: '2px' }}>ONE EMPIRE</div>
-          <div style={{ color: whiteFaint, fontSize: '18px' }}>/</div>
-          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontWeight: 500, fontSize: '13px', color: 'rgba(240,246,255,0.6)' }}>
-            <em style={{ color: gold, fontStyle: 'italic', fontFamily: 'Cormorant Garamond, serif', fontSize: '16px' }}>Empire</em> PM
-          </div>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(34,201,144,0.08)', border: '1px solid rgba(34,201,144,0.25)', borderRadius: '20px', padding: '4px 12px', fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600, color: '#4DFFB4' }}>
-            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#22C990', animation: 'pulse 2s infinite' }}/>
-            {activeProjects} Active Projects
-          </div>
-          {user?.user_metadata?.avatar_url && (
-            <img src={user.user_metadata.avatar_url} style={{ width: '30px', height: '30px', borderRadius: '50%', border: `1px solid ${border}` }} alt="avatar"/>
-          )}
-          <button onClick={signOut} style={{ ...s.btnGhost, fontSize: '9px', padding: '5px 12px' }}>Sign Out</button>
-        </div>
-      </nav>
-
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden', position: 'relative', zIndex: 1 }}>
 
         {/* SIDEBAR */}
-        <aside style={{ width: '220px', flexShrink: 0, background: 'rgba(8,20,40,0.9)', borderRight: `1px solid ${border}`, padding: '16px 10px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1px' }}>
-          {navItems.map((item, i) => (
-            <div key={item.id}>
-              {item.section && (
-                <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '8px', fontWeight: 600, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(201,153,58,0.5)', padding: '10px 8px 4px', marginTop: i > 0 ? '4px' : 0 }}>
-                  {item.section}
-                </div>
-              )}
-              <div onClick={() => setTab(item.id)} style={{
-                display: 'flex', alignItems: 'center', gap: '9px', padding: '8px 10px',
-                borderRadius: '3px', fontFamily: 'Rajdhani, sans-serif', fontSize: '12px',
-                fontWeight: 500, letterSpacing: '0.06em', cursor: 'pointer',
-                border: '1px solid transparent', transition: 'all 0.15s',
-                background: tab === item.id ? 'rgba(201,153,58,0.08)' : 'transparent',
-                color: tab === item.id ? gold : item.gold ? 'rgba(232,184,75,0.6)' : whiteFaint,
-                borderColor: tab === item.id ? 'rgba(201,153,58,0.25)' : 'transparent',
-              }}>
-                <span style={{ fontSize: '14px', flexShrink: 0 }}>{item.icon}</span>
-                {item.label}
-                {item.badge && (
-                  <span style={{ marginLeft: 'auto', fontSize: '9px', padding: '2px 6px', borderRadius: '10px', background: 'rgba(226,75,74,0.2)', color: '#FFB0B0', fontWeight: 700 }}>
-                    {item.badge}
-                  </span>
-                )}
-              </div>
+        <aside style={{ width: '220px', flexShrink: 0, background: 'rgba(8,20,40,0.95)', borderRight: `1px solid ${border}`, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          {/* Logo */}
+          <div style={{ padding: '18px 16px', borderBottom: `1px solid rgba(201,153,58,0.12)`, display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+            <div style={{ width: '30px', height: '30px', background: 'rgba(201,153,58,0.1)', border: `1px solid rgba(201,153,58,0.35)`, borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', flexShrink: 0 }}>⬡</div>
+            <div>
+              <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '12px', fontWeight: 700, letterSpacing: '1.5px', color: gold, textTransform: 'uppercase' }}>Empire PM</div>
+              <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(255,255,255,0.25)', letterSpacing: '0.5px' }}>One Empire</div>
             </div>
-          ))}
+          </div>
+          {/* Nav items */}
+          <nav style={{ flex: 1, padding: '8px 10px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1px' }}>
+            {navItems.map((item, i) => (
+              <div key={item.id}>
+                {item.section && (
+                  <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '8px', fontWeight: 600, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(201,153,58,0.4)', padding: '12px 8px 3px', marginTop: i > 0 ? '4px' : 0 }}>
+                    {item.section}
+                  </div>
+                )}
+                <div onClick={() => setTab(item.id)} style={{
+                  display: 'flex', alignItems: 'center', gap: '9px', padding: '8px 10px',
+                  borderRadius: '3px', fontFamily: 'Rajdhani, sans-serif', fontSize: '12px',
+                  fontWeight: 500, letterSpacing: '0.06em', cursor: 'pointer',
+                  borderLeft: tab === item.id ? `2px solid ${gold}` : '2px solid transparent',
+                  transition: 'all 0.15s',
+                  background: tab === item.id ? 'rgba(201,153,58,0.08)' : 'transparent',
+                  color: tab === item.id ? gold : item.gold ? 'rgba(232,184,75,0.55)' : 'rgba(216,228,244,0.55)',
+                }}>
+                  <span style={{ fontSize: '13px', flexShrink: 0 }}>{item.icon}</span>
+                  <span style={{ flex: 1 }}>{item.label}</span>
+                  {item.ai && !item.badge && (
+                    <span style={{ fontSize: '8px', padding: '1px 5px', borderRadius: '8px', background: 'rgba(201,153,58,0.1)', color: 'rgba(201,153,58,0.6)', fontWeight: 600, letterSpacing: '0.3px' }}>AI</span>
+                  )}
+                  {item.badge && (
+                    <span style={{ fontSize: '9px', padding: '1px 6px', borderRadius: '10px', background: 'rgba(226,75,74,0.18)', color: '#FFB0B0', fontWeight: 700 }}>
+                      {item.badge}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </nav>
+          {/* User footer */}
+          <div style={{ padding: '12px 14px', borderTop: `1px solid rgba(201,153,58,0.12)`, display: 'flex', alignItems: 'center', gap: '9px', flexShrink: 0 }}>
+            {user?.user_metadata?.avatar_url ? (
+              <img src={user.user_metadata.avatar_url} style={{ width: '28px', height: '28px', borderRadius: '50%', border: `1px solid rgba(201,153,58,0.3)`, flexShrink: 0 }} alt="avatar"/>
+            ) : (
+              <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(201,153,58,0.1)', border: `1px solid rgba(201,153,58,0.3)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', fontWeight: 700, color: gold, flexShrink: 0 }}>
+                {user?.user_metadata?.full_name?.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0,2) || 'U'}
+              </div>
+            )}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: 'rgba(255,255,255,0.8)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User'}</div>
+              <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(201,153,58,0.5)' }}>One Empire</div>
+            </div>
+            <button onClick={signOut} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.25)', fontSize: '12px', padding: '2px', flexShrink: 0 }} title="Sign Out">⏻</button>
+          </div>
         </aside>
 
         {/* MAIN */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          {/* Topbar */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', height: '52px', background: 'rgba(8,20,40,0.95)', borderBottom: `1px solid rgba(201,153,58,0.12)`, flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '14px', fontWeight: 600, color: '#F0F6FF', letterSpacing: '0.04em' }}>{pageLabels[tab] || tab}</span>
+              <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: 'rgba(255,255,255,0.25)', marginLeft: '8px' }}>{pageCrumbs[tab] || ''}</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'rgba(34,201,144,0.07)', border: '1px solid rgba(34,201,144,0.2)', borderRadius: '20px', padding: '3px 10px', fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600, color: '#4DFFB4' }}>
+                <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#22C990', animation: 'pulse 2s infinite' }}/>
+                {activeProjects} Active
+              </div>
+              <button style={{ ...s.btnGhost, fontSize: '10px', padding: '5px 12px' }} onClick={() => setTab('planner')}>✦ AI Planner</button>
+              <button style={{ ...s.btnGold, fontSize: '10px', padding: '5px 14px' }} onClick={() => setTab('projects')}>+ New Project</button>
+            </div>
+          </div>
         <main style={{ flex: 1, overflowY: 'auto', padding: '24px 28px' }}>
 
           {/* ═══ DASHBOARD ═══ */}
