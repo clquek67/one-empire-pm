@@ -646,17 +646,16 @@ export default function Dashboard() {
           )}
 
         </main>
+          {/* STATUS BAR */}
+          <div style={{ height: '28px', background: 'rgba(5,13,26,0.97)', borderTop: `1px solid ${border}`, display: 'flex', alignItems: 'center', padding: '0 24px', gap: '20px', flexShrink: 0 }}>
+            <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600, letterSpacing: '0.12em', color: whiteFaint, display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#22C990' }}/>All systems live
+            </div>
+            <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: whiteFaint }}>pm.one-empire.com</div>
+            <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: whiteFaint }}>Empire PM v2.0</div>
+            <div style={{ marginLeft: 'auto', fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: whiteFaint }}>One Empire © 2025</div>
+          </div>
         </div>
-      </div>
-
-      {/* STATUS BAR */}
-      <div style={{ height: '28px', background: 'rgba(5,13,26,0.97)', borderTop: `1px solid ${border}`, display: 'flex', alignItems: 'center', padding: '0 24px', gap: '20px', flexShrink: 0, position: 'relative', zIndex: 10 }}>
-        <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600, letterSpacing: '0.12em', color: whiteFaint, display: 'flex', alignItems: 'center', gap: '5px' }}>
-          <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#22C990' }}/>All systems live
-        </div>
-        <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: whiteFaint }}>pm.one-empire.com</div>
-        <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: whiteFaint }}>Empire PM v2.0</div>
-        <div style={{ marginLeft: 'auto', fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: whiteFaint }}>One Empire © 2025</div>
       </div>
 
       <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}`}</style>
