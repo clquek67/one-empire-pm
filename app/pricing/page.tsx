@@ -26,7 +26,7 @@ export default function PricingPage() {
 
   return (
     <div style={{
-      minHeight: '100vh', background: '#050D1A', fontFamily: 'sans-serif',
+      minHeight: '100vh', background: '#050D1A', fontFamily: 'DM Sans, sans-serif',
       color: '#F0F6FF', position: 'relative', overflow: 'hidden'
     }}>
       {/* Circuit BG */}
@@ -54,7 +54,7 @@ export default function PricingPage() {
               padding: '4px 10px', borderRadius: '2px', marginBottom: '16px'
             }}>ONE EMPIRE</div>
           </a>
-          <h1 style={{ fontFamily: 'Georgia, serif', fontSize: '42px', fontWeight: 300, marginBottom: '12px' }}>
+          <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '42px', fontWeight: 300, marginBottom: '12px' }}>
             Choose Your <em style={{ color: '#E8B84B', fontStyle: 'italic' }}>Plan</em>
           </h1>
           <p style={{ color: 'rgba(240,246,255,0.75)', fontSize: '15px' }}>
@@ -109,7 +109,7 @@ export default function PricingPage() {
 
                 <div style={{ marginBottom: '24px' }}>
                   <div style={{
-                    fontFamily: 'Georgia, serif', fontSize: '22px', color: '#F0F6FF',
+                    fontFamily: 'Cormorant Garamond, serif', fontSize: '22px', color: '#F0F6FF',
                     marginBottom: '6px'
                   }}>{plan.name}</div>
                   <div style={{ fontSize: '12px', color: 'rgba(240,246,255,0.75)' }}>
@@ -119,7 +119,7 @@ export default function PricingPage() {
 
                 <div style={{ marginBottom: '28px' }}>
                   <span style={{
-                    fontFamily: 'Georgia, serif', fontSize: '42px', color: '#E8B84B', fontWeight: 300
+                    fontFamily: 'Cormorant Garamond, serif', fontSize: '42px', color: '#E8B84B', fontWeight: 300
                   }}>${price.amount}</span>
                   <span style={{ fontSize: '13px', color: 'rgba(240,246,255,0.75)', marginLeft: '6px' }}>
                     /{period === 'monthly' ? 'mo' : period === 'quarterly' ? 'qtr' : 'yr'}
