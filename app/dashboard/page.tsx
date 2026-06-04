@@ -3,11 +3,11 @@ import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase-client'
 
 type User = { id: string; email: string; user_metadata: { full_name?: string; avatar_url?: string } }
-type Project = { id: string; name: string; client_name: string; status: string; health: number }
-type Task = { id: string; name: string; status: string; priority: string; owner: string; project_id: string }
-type Risk = { id: string; title: string; description: string; level: string; status: string; project_id: string }
+type Project = { id: string; name: string; client_name: string; status: string; health: number; start_date?: string; end_date?: string }
+type Task = { id: string; name: string; status: string; priority: string; owner: string; project_id: string; due_date?: string }
+type Risk = { id: string; title: string; description: string; level: string; status: string; project_id: string; due_date?: string }
 type TeamMember = { id: string; name: string; email: string; role: string; capacity: number; project_id: string }
-type TimeLog = { id: string; description: string; hours: number; rate: number; billed: boolean; project_id: string; created_at: string }
+type TimeLog = { id: string; description: string; hours: number; rate: number; billed: boolean; project_id: string; created_at: string; log_date?: string }
 
 const gold = '#E8B84B'
 const goldDim = '#C9993A'
@@ -171,15 +171,7 @@ export default function Dashboard() {
         <aside style={{ width: '220px', flexShrink: 0, background: 'rgba(8,20,40,0.95)', borderRight: `1px solid ${border}`, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           {/* Logo */}
           <div style={{ padding: '18px 16px', borderBottom: `1px solid rgba(201,153,58,0.12)`, display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
-            <div style={{ width: '30px', height: '30px', background: 'rgba(201,153,58,0.1)', border: `1px solid rgba(201,153,58,0.35)`, borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-  <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <polygon points="10,1 1,16 4,13 10,18 16,13 19,16" stroke="#E8B84B" strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round"/>
-    <line x1="1" y1="16" x2="19" y2="16" stroke="#E8B84B" strokeWidth="1.5" strokeLinecap="round"/>
-    <circle cx="10" cy="1" r="1.5" fill="#E8B84B"/>
-    <circle cx="1" cy="16" r="1.2" fill="#C9993A"/>
-    <circle cx="19" cy="16" r="1.2" fill="#C9993A"/>
-  </svg>
-</div>
+            <div style={{ width: '30px', height: '30px', background: 'rgba(201,153,58,0.1)', border: `1px solid rgba(201,153,58,0.35)`, borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', flexShrink: 0 }}>⬡</div>
             <div>
               <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '12px', fontWeight: 700, letterSpacing: '1.5px', color: gold, textTransform: 'uppercase' as const }}>Empire PM</div>
               <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(255,255,255,0.25)', letterSpacing: '0.5px' }}>One Empire</div>
@@ -674,17 +666,21 @@ export default function Dashboard() {
 // ─── SUB-COMPONENTS ───
 
 function ProjectForm({ user, onCreated, supabase }: any) {
-  const [name, setName] = useState(''); const [client, setClient] = useState(''); const [budget, setBudget] = useState('')
+  const [name, setName] = useState(''); const [client, setClient] = useState(''); const [budget, setBudget] = useState(''); const [startDate, setStartDate] = useState(''); const [endDate, setEndDate] = useState('')
   const submit = async () => {
     if (!name || !user) return
-    await supabase.from('projects').insert({ user_id: user.id, name, client_name: client, budget: budget ? parseFloat(budget) : null })
-    setName(''); setClient(''); setBudget(''); onCreated()
+    await supabase.from('projects').insert({ user_id: user.id, name, client_name: client, budget: budget ? parseFloat(budget) : null, start_date: startDate || null, end_date: endDate || null })
+    setName(''); setClient(''); setBudget(''); setStartDate(''); setEndDate(''); onCreated()
   }
   return (
     <div>
       <div style={{ marginBottom: '10px' }}><div style={s.label}>Project Name</div><input style={s.input} value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Enterprise CRM"/></div>
       <div style={{ marginBottom: '10px' }}><div style={s.label}>Client Name</div><input style={s.input} value={client} onChange={e => setClient(e.target.value)} placeholder="e.g. Acme Corp"/></div>
-      <div style={{ marginBottom: '12px' }}><div style={s.label}>Budget ($)</div><input style={s.input} value={budget} onChange={e => setBudget(e.target.value)} placeholder="e.g. 50000" type="number"/></div>
+      <div style={{ marginBottom: '10px' }}><div style={s.label}>Budget ($)</div><input style={s.input} value={budget} onChange={e => setBudget(e.target.value)} placeholder="e.g. 50000" type="number"/></div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
+        <div><div style={s.label}>Start Date</div><input style={s.input} value={startDate} onChange={e => setStartDate(e.target.value)} type="date"/></div>
+        <div><div style={s.label}>End Date</div><input style={s.input} value={endDate} onChange={e => setEndDate(e.target.value)} type="date"/></div>
+      </div>
       <button style={{ ...s.btnGold, width: '100%' }} onClick={submit}>Create Project →</button>
     </div>
   )
@@ -757,10 +753,10 @@ function TaskForm({ user, projects, teamMembers, onCreated, supabase }: any) {
 }
 
 function RiskForm({ user, projects, onCreated, supabase }: any) {
-  const [title, setTitle] = useState(''); const [desc, setDesc] = useState(''); const [level, setLevel] = useState('medium'); const [projectId, setProjectId] = useState(''); const [notifyEmail, setNotifyEmail] = useState('')
+  const [title, setTitle] = useState(''); const [desc, setDesc] = useState(''); const [level, setLevel] = useState('medium'); const [projectId, setProjectId] = useState(''); const [notifyEmail, setNotifyEmail] = useState(''); const [dueDate, setDueDate] = useState('')
   const submit = async () => {
     if (!title || !projectId || !user) return
-    await supabase.from('risks').insert({ user_id: user.id, project_id: projectId, title, description: desc, level })
+    await supabase.from('risks').insert({ user_id: user.id, project_id: projectId, title, description: desc, level, due_date: dueDate || null })
     const project = projects.find((p: Project) => p.id === projectId)
     if (notifyEmail) {
       await fetch('https://n8n.one-empire.com/webhook/empire-pm-risk', {
@@ -793,29 +789,33 @@ function RiskForm({ user, projects, onCreated, supabase }: any) {
           </select>
         </div>
       </div>
-      <div style={{ marginBottom: '12px' }}><div style={s.label}>Notify (Email) — Optional</div><input style={s.input} value={notifyEmail} onChange={e => setNotifyEmail(e.target.value)} placeholder="team@company.com" type="email"/></div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+        <div><div style={s.label}>Resolve By</div><input style={s.input} value={dueDate} onChange={e => setDueDate(e.target.value)} type="date"/></div>
+        <div><div style={s.label}>Notify (Email) — Optional</div><input style={s.input} value={notifyEmail} onChange={e => setNotifyEmail(e.target.value)} placeholder="team@company.com" type="email"/></div>
+      </div>
       <button style={{ ...s.btnGold, width: '100%' }} onClick={submit}>Log Risk →</button>
     </div>
   )
 }
 
 function TimeLogForm({ user, projects, onCreated, supabase }: any) {
-  const [desc, setDesc] = useState(''); const [hours, setHours] = useState(''); const [rate, setRate] = useState('250'); const [projectId, setProjectId] = useState('')
+  const [desc, setDesc] = useState(''); const [hours, setHours] = useState(''); const [rate, setRate] = useState('250'); const [projectId, setProjectId] = useState(''); const [logDate, setLogDate] = useState(new Date().toISOString().split('T')[0])
   const submit = async () => {
     if (!desc || !hours || !projectId || !user) return
-    await supabase.from('time_logs').insert({ user_id: user.id, project_id: projectId, description: desc, hours: parseFloat(hours), rate: parseFloat(rate) })
+    await supabase.from('time_logs').insert({ user_id: user.id, project_id: projectId, description: desc, hours: parseFloat(hours), rate: parseFloat(rate), log_date: logDate || null })
     setDesc(''); setHours(''); onCreated()
   }
   return (
     <div>
       <div style={{ marginBottom: '10px' }}><div style={s.label}>Description</div><input style={s.input} value={desc} onChange={e => setDesc(e.target.value)} placeholder="Task description"/></div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginBottom: '12px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '10px', marginBottom: '12px' }}>
         <div><div style={s.label}>Project</div>
           <select style={s.input} value={projectId} onChange={e => setProjectId(e.target.value)}>
             <option value="">Select...</option>
             {projects.map((p: Project) => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
         </div>
+        <div><div style={s.label}>Date</div><input style={s.input} value={logDate} onChange={e => setLogDate(e.target.value)} type="date"/></div>
         <div><div style={s.label}>Hours</div><input style={s.input} value={hours} onChange={e => setHours(e.target.value)} type="number" step="0.5" placeholder="e.g. 2.5"/></div>
         <div><div style={s.label}>Rate ($/hr)</div><input style={s.input} value={rate} onChange={e => setRate(e.target.value)} type="number" placeholder="250"/></div>
       </div>
@@ -825,14 +825,14 @@ function TimeLogForm({ user, projects, onCreated, supabase }: any) {
 }
 
 function MeetingProcessor({ user, projects, supabase, onSaved }: any) {
-  const [title, setTitle] = useState(''); const [notes, setNotes] = useState(''); const [email, setEmail] = useState(''); const [projectId, setProjectId] = useState(''); const [result, setResult] = useState(''); const [loading, setLoading] = useState(false)
+  const [title, setTitle] = useState(''); const [notes, setNotes] = useState(''); const [email, setEmail] = useState(''); const [projectId, setProjectId] = useState(''); const [result, setResult] = useState(''); const [loading, setLoading] = useState(false); const [meetingDate, setMeetingDate] = useState(new Date().toISOString().split('T')[0])
   const process = async () => {
     if (!notes) return
     setLoading(true); setResult('')
     const text = await callAI('You are an expert meeting facilitator. Extract: 1. Summary, 2. Key Decisions, 3. Action Items with owners, 4. Follow-up Questions.', `Meeting: ${title}\n\nNotes:\n${notes}`)
     setResult(text)
     if (user && projectId) {
-      await supabase.from('meetings').insert({ user_id: user.id, project_id: projectId, title, notes, summary: text })
+      await supabase.from('meetings').insert({ user_id: user.id, project_id: projectId, title, notes, summary: text, meeting_date: meetingDate || null })
       onSaved()
     }
     if (email) {
@@ -856,7 +856,8 @@ function MeetingProcessor({ user, projects, supabase, onSaved }: any) {
               {projects.map((p: Project) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
           </div>
-          <div><div style={s.label}>Send Summary To</div><input style={s.input} value={email} onChange={e => setEmail(e.target.value)} placeholder="team@client.com" type="email"/></div>
+          <div><div style={s.label}>Meeting Date</div><input style={s.input} value={meetingDate} onChange={e => setMeetingDate(e.target.value)} type="date"/></div>
+        <div><div style={s.label}>Send Summary To</div><input style={s.input} value={email} onChange={e => setEmail(e.target.value)} placeholder="team@client.com" type="email"/></div>
         </div>
         <div style={{ marginBottom: '12px' }}><div style={s.label}>Notes / Transcript</div><textarea style={{ ...s.input, minHeight: '160px', resize: 'vertical' as const }} value={notes} onChange={e => setNotes(e.target.value)} placeholder="Paste raw meeting notes here..."/></div>
         <button style={{ ...s.btnGold, width: '100%' }} onClick={process} disabled={loading}>{loading ? 'Processing...' : '✦ Process with AI →'}</button>
