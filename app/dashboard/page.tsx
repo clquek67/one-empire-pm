@@ -705,12 +705,6 @@ Proceed and set this task to active anyway?`)
                     const isOverdue = t.due_date && new Date(t.due_date) < new Date() && t.status !== 'done'
                     const daysLeft = t.due_date ? Math.ceil((new Date(t.due_date).getTime() - new Date().getTime()) / (1000*60*60*24)) : null
                     return (
-                    {(() => {
-                      const dep = t.depends_on ? tasks.find((d: Task) => d.id === t.depends_on) : null
-                      const depIncomplete = dep && dep.status !== 'done'
-                      const depOverdue = dep && dep.status !== 'done' && dep.due_date && new Date(dep.due_date) < new Date()
-                      return null
-                    })()}
                     <div key={t.id} style={{ padding: '10px 0', borderBottom: `1px solid rgba(201,153,58,0.1)`, fontSize: '11px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                         <span style={s.badge(t.status === 'done' ? 'rgba(34,201,144,0.12)' : t.status === 'active' ? 'rgba(26,171,204,0.12)' : t.status === 'blocked' ? 'rgba(226,75,74,0.12)' : 'rgba(240,246,255,0.05)', t.status === 'done' ? '#4DFFB4' : t.status === 'active' ? '#4DD8F0' : t.status === 'blocked' ? '#FF9090' : whiteFaint, t.status === 'done' ? 'rgba(34,201,144,0.28)' : 'rgba(26,171,204,0.28)')}>{t.status}</span>
