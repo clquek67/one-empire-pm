@@ -47,6 +47,11 @@ function formatAI(text: string) {
     .replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>')
 }
 
+function fmtDate(d?: string | null) {
+  if (!d) return '—'
+  return new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
 async function callAI(system: string, content: string): Promise<string> {
   const res = await fetch('/api/chat', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -327,7 +332,7 @@ export default function Dashboard() {
                           <span style={{ flex: 1, color: textMid }}>{t.name}</span>
                           {t.owner && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: whiteFaint }}>{t.owner}</span>}
                         </div>
-                        {t.due_date && <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOverdue ? '#FF9090' : textMid, paddingLeft: '2px' }}>{isOverdue ? '⚠ Overdue · ' : 'Due '}{t.due_date}</div>}
+                        {t.due_date && <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOverdue ? '#FF9090' : textMid, paddingLeft: '2px' }}>{isOverdue ? '⚠ Overdue · ' : 'Due '}{fmtDate(t.due_date)}</div>}
                       </div>
                     )})}
                     {tasks.length === 0 && (
@@ -350,7 +355,7 @@ export default function Dashboard() {
                             {p.health}% {isOverdue ? '· Overdue' : daysLeft !== null ? `· ${daysLeft > 0 ? daysLeft+'d left' : 'due today'}` : ''}
                           </span>
                         </div>
-                        {p.end_date && <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOverdue ? '#FF9090' : '#C8D8F0', marginBottom: '4px' }}>Due {p.end_date}</div>}
+                        {p.end_date && <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOverdue ? '#FF9090' : '#C8D8F0', marginBottom: '4px' }}>{`Due ${fmtDate(p.end_date)}`}</div>}
                         <div style={{ height: '3px', background: 'rgba(240,246,255,0.07)', borderRadius: '2px', overflow: 'hidden' }}>
                           <div style={{ height: '3px', width: `${p.health}%`, background: isOverdue ? 'linear-gradient(90deg,#E24B4A,#FF9090)' : `linear-gradient(90deg, ${goldDim}, ${gold})`, borderRadius: '2px' }}/>
                         </div>
@@ -426,7 +431,7 @@ export default function Dashboard() {
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                           <div style={{ fontSize: '11px', color: textDim }}>{p.client_name || '—'}</div>
                           <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: isOverdue ? '#FF9090' : daysLeft !== null && daysLeft <= 7 ? '#FFD080' : '#C8D8F0' }}>
-                            {p.start_date && p.end_date ? `${p.start_date} → ${p.end_date}` : p.end_date ? `Due ${p.end_date}` : 'No dates set'}
+                            {p.start_date && p.end_date ? `${fmtDate(p.start_date)} → ${fmtDate(p.end_date)}` : p.end_date ? `Due ${fmtDate(p.end_date)}` : 'No dates set'}
                             {daysLeft !== null && !isOverdue && daysLeft <= 14 && <span style={{ marginLeft: '6px', color: '#FFD080' }}>({daysLeft}d left)</span>}
                             {isOverdue && <span style={{ marginLeft: '6px' }}>({Math.abs(daysLeft!)}d ago)</span>}
                           </div>
@@ -518,7 +523,7 @@ export default function Dashboard() {
                         <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(201,168,80,0.75)' }}>{proj?.name || '—'}</span>
                         {t.due_date && (
                           <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOverdue ? '#FF9090' : daysLeft !== null && daysLeft <= 3 ? '#FFD080' : textMid }}>
-                            {isOverdue ? `Overdue · ${t.due_date}` : `Due ${t.due_date}${daysLeft !== null && daysLeft <= 7 ? ` · ${daysLeft}d` : ''}`}
+                            {isOverdue ? `Overdue · ${fmtDate(t.due_date)}` : `Due ${fmtDate(t.due_date)}${daysLeft !== null && daysLeft <= 7 ? ` · ${daysLeft}d` : ''}`}
                           </span>
                         )}
                         {!t.due_date && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(200,220,255,0.35)' }}>No due date</span>}
@@ -583,7 +588,7 @@ export default function Dashboard() {
                         <div style={{ fontSize: '11px', color: textDim, marginBottom: '5px' }}>{r.description}</div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                           <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(201,168,80,0.75)' }}>{proj?.name || '—'}</span>
-                          {r.due_date && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOverdue ? '#FF9090' : textMid }}>{isOverdue ? '⚠ Overdue · ' : 'Resolve by '}{r.due_date}</span>}
+                          {r.due_date && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOverdue ? '#FF9090' : textMid }}>{isOverdue ? '⚠ Overdue · ' : 'Resolve by '}{fmtDate(r.due_date)}</span>}
                         </div>
                       </div>
                     )})}
@@ -640,7 +645,7 @@ export default function Dashboard() {
                         <span style={s.badge(isOverdue ? 'rgba(226,75,74,0.12)' : 'rgba(201,153,58,0.08)', isOverdue ? '#FF9090' : gold, isOverdue ? 'rgba(226,75,74,0.28)' : border)}>{isOverdue ? 'OVERDUE' : p.status}</span>
                       </div>
                       <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: whiteFaint, marginBottom: '6px' }}>{p.name} · {p.health}% complete · {doneTasks}/{projTasks.length} tasks done</div>
-                      {p.end_date && <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOverdue ? '#FF9090' : textMid }}>Due {p.end_date}</div>}
+                      {p.end_date && <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOverdue ? '#FF9090' : textMid }}>{`Due ${fmtDate(p.end_date)}`}</div>}
                     </div>
                   )})}
                 </div>
@@ -768,7 +773,7 @@ export default function Dashboard() {
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                         <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(201,168,80,0.75)' }}>{proj?.name || '—'}</span>
-                        {l.log_date && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(200,220,255,0.55)' }}>{l.log_date}</span>}
+                        {l.log_date && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(200,220,255,0.55)' }}>{fmtDate(l.log_date)}</span>}
                       </div>
                     </div>
                   )})}
@@ -1358,7 +1363,7 @@ function SettingsForm({ user, supabase }: any) {
               </div>
               <div style={{ flex: 1, background: 'rgba(201,153,58,0.06)', border: '1px solid rgba(201,153,58,0.25)', borderRadius: '4px', padding: '14px 16px' }}>
                 <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase' as const, color: goldDim, marginBottom: '4px' }}>Renews</div>
-                <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '14px', fontWeight: 600, color: textMid }}>{sub.current_period_end ? new Date(sub.current_period_end).toLocaleDateString() : '—'}</div>
+                <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '14px', fontWeight: 600, color: textMid }}>{sub.current_period_end ? fmtDate(sub.current_period_end) : '—'}</div>
               </div>
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
@@ -1412,7 +1417,7 @@ function TimelineView({ projects, tasks, milestones, user, supabase, onSaved }: 
     return Math.min(100, Math.max(0, ((t - minDate) / span) * 100))
   }
 
-  const formatDate = (d: string) => new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' })
+  const formatDate = (d: string) => fmtDate(d)
   const today = new Date().toISOString().split('T')[0]
   const todayPct = toPercent(today)
 
@@ -1481,7 +1486,7 @@ function TimelineView({ projects, tasks, milestones, user, supabase, onSaved }: 
           </div>
           <div>
             <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600, letterSpacing: '0.18em', color: goldDim, marginBottom: '2px' }}>TIMELINE</div>
-            <div style={{ fontSize: '12px', color: textMid }}>{project.start_date || '?'} → {project.end_date || '?'}</div>
+            <div style={{ fontSize: '12px', color: textMid }}>{fmtDate(project.start_date)} → {fmtDate(project.end_date)}</div>
           </div>
           <div>
             <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600, letterSpacing: '0.18em', color: goldDim, marginBottom: '2px' }}>HEALTH</div>
@@ -1506,7 +1511,7 @@ function TimelineView({ projects, tasks, milestones, user, supabase, onSaved }: 
       <div style={{ background: navyCard, border: `1px solid ${border}`, borderRadius: '4px 4px 0 0', padding: '8px 16px 8px 220px', display: 'flex', justifyContent: 'space-between' }}>
         {[0, 25, 50, 75, 100].map(pct => {
           const d = new Date(minDate + (pct / 100) * span)
-          return <span key={pct} style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', fontWeight: 600, color: '#C8D8F0', letterSpacing: '0.06em' }}>{d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' })}</span>
+          return <span key={pct} style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', fontWeight: 600, color: '#C8D8F0', letterSpacing: '0.06em' }}>{fmtDate(d.toISOString().split('T')[0])}</span>
         })}
       </div>
 
