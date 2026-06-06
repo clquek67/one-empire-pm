@@ -78,6 +78,7 @@ export default function Dashboard() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const [showWizard, setShowWizard] = useState(false)
   const [wizardStep, setWizardStep] = useState(0)
+  const [showNotifications, setShowNotifications] = useState(false)
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -149,6 +150,55 @@ export default function Dashboard() {
   const activeTasks = tasks.filter(t => t.status === 'active').length
   const openRisks = risks.filter(r => r.status !== 'closed').length
 
+  // ── Notifications ──
+  const today = new Date(); today.setHours(0,0,0,0)
+  const in3 = new Date(today); in3.setDate(in3.getDate() + 3)
+  const in7 = new Date(today); in7.setDate(in7.getDate() + 7)
+  const in14 = new Date(today); in14.setDate(in14.getDate() + 14)
+
+  const notifications: { id: string; type: 'critical'|'warning'|'info'; title: string; detail: string; tab: string }[] = []
+
+  tasks.forEach((t: Task) => {
+    if (t.status === 'done') return
+    if (t.due_date) {
+      const d = new Date(t.due_date); d.setHours(0,0,0,0)
+      const proj = projects.find((p: Project) => p.id === t.project_id)
+      if (d < today) notifications.push({ id: `task-overdue-${t.id}`, type: 'critical', title: `Task overdue: ${t.name}`, detail: `${proj?.name || 'Unknown project'} · due ${fmtDate(t.due_date)}`, tab: 'tasks' })
+      else if (d <= in3) notifications.push({ id: `task-soon-${t.id}`, type: 'warning', title: `Task due soon: ${t.name}`, detail: `${proj?.name || 'Unknown project'} · due ${fmtDate(t.due_date)}`, tab: 'tasks' })
+    }
+  })
+
+  risks.forEach((r: Risk) => {
+    if (r.status === 'closed') return
+    if (r.due_date) {
+      const d = new Date(r.due_date); d.setHours(0,0,0,0)
+      const proj = projects.find((p: Project) => p.id === r.project_id)
+      if (d < today) notifications.push({ id: `risk-overdue-${r.id}`, type: 'critical', title: `Risk overdue: ${r.title}`, detail: `${proj?.name || 'Unknown project'} · resolve by ${fmtDate(r.due_date)}`, tab: 'risks' })
+    }
+  })
+
+  milestones.forEach((m: Milestone) => {
+    if (m.status === 'completed') return
+    if (m.due_date) {
+      const d = new Date(m.due_date); d.setHours(0,0,0,0)
+      const proj = projects.find((p: Project) => p.id === m.project_id)
+      if (d < today) notifications.push({ id: `ms-overdue-${m.id}`, type: 'critical', title: `Milestone overdue: ${m.title}`, detail: `${proj?.name || 'Unknown project'} · due ${fmtDate(m.due_date)}`, tab: 'timeline' })
+      else if (d <= in7) notifications.push({ id: `ms-soon-${m.id}`, type: 'warning', title: `Milestone due soon: ${m.title}`, detail: `${proj?.name || 'Unknown project'} · due ${fmtDate(m.due_date)}`, tab: 'timeline' })
+    }
+  })
+
+  projects.forEach((p: Project) => {
+    if (p.status === 'completed') return
+    if (p.end_date) {
+      const d = new Date(p.end_date); d.setHours(0,0,0,0)
+      if (d < today) notifications.push({ id: `proj-overdue-${p.id}`, type: 'critical', title: `Project overdue: ${p.name}`, detail: `${p.client_name || 'Internal'} · ended ${fmtDate(p.end_date)}`, tab: 'projects' })
+      else if (d <= in14) notifications.push({ id: `proj-soon-${p.id}`, type: 'warning', title: `Project ending soon: ${p.name}`, detail: `${p.client_name || 'Internal'} · ends ${fmtDate(p.end_date)}`, tab: 'projects' })
+    }
+  })
+
+  const criticalCount = notifications.filter(n => n.type === 'critical').length
+  const notifCount = notifications.length
+
   const navItems = [
     { id: 'dashboard', icon: '◈', label: 'Dashboard', section: 'Command' },
     { id: 'projects', icon: '◻', label: 'Projects', section: null, badge: activeProjects > 0 ? activeProjects : null },
@@ -168,7 +218,7 @@ export default function Dashboard() {
   const pageCrumbs: Record<string,string> = { dashboard:'/ Overview', projects:'/ All Projects', tasks:'/ All Tasks', planner:'/ Generate Plan', meetings:'/ Process Notes', risks:'/ Risk Register', scope:'/ Change Log', clients:'/ Email Generator', workload:'/ Capacity', timeline:'/ Milestones & Gantt', billing:'/ Timer & Invoices', settings:'/ Account' }
 
   return (
-    <div style={{ display: 'flex', height: '100vh', background: navy, overflow: 'hidden' }}>
+    <div style={{ display: 'flex', height: '100vh', background: navy, overflow: 'hidden' }} onClick={() => setShowNotifications(false)}>
 
       {/* Circuit BG */}
       <svg style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', opacity: 0.1, pointerEvents: 'none', zIndex: 0 }}
@@ -268,6 +318,53 @@ export default function Dashboard() {
                 <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#22C990' }}/>
                 {activeProjects} Active
               </div>
+
+              {/* Bell icon */}
+              <div style={{ position: 'relative' }}>
+                <button onClick={e => { e.stopPropagation(); setShowNotifications(v => !v) }} style={{ background: notifCount > 0 ? 'rgba(226,75,74,0.08)' : 'transparent', border: `1px solid ${notifCount > 0 ? 'rgba(226,75,74,0.3)' : 'rgba(201,153,58,0.2)'}`, borderRadius: '3px', padding: '5px 9px', cursor: 'pointer', position: 'relative', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <span style={{ fontSize: '14px', color: notifCount > 0 ? '#FF9090' : 'rgba(255,255,255,0.4)' }}>🔔</span>
+                  {notifCount > 0 && (
+                    <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', fontWeight: 700, color: criticalCount > 0 ? '#FF9090' : '#FFD080', minWidth: '14px' }}>{notifCount}</span>
+                  )}
+                </button>
+
+                {/* Notification dropdown */}
+                {showNotifications && (
+                  <div style={{ position: 'absolute', top: '42px', right: 0, width: '360px', background: 'rgba(8,20,44,0.98)', border: `1px solid rgba(201,153,58,0.3)`, borderRadius: '4px', zIndex: 500, boxShadow: '0 8px 32px rgba(0,0,0,0.6)' }}>
+                    <div style={{ padding: '12px 16px', borderBottom: 'rgba(201,153,58,0.15) solid 1px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', fontWeight: 700, letterSpacing: '0.18em', color: goldDim }}>NOTIFICATIONS</span>
+                      {notifCount > 0 && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(255,255,255,0.3)' }}>{notifCount} alert{notifCount !== 1 ? 's' : ''}</span>}
+                    </div>
+
+                    {notifications.length === 0 && (
+                      <div style={{ padding: '24px 16px', textAlign: 'center' }}>
+                        <div style={{ fontSize: '20px', marginBottom: '8px', opacity: 0.3 }}>✓</div>
+                        <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: textMid, marginBottom: '3px' }}>All clear</div>
+                        <div style={{ fontSize: '11px', color: textDim }}>No overdue items or upcoming deadlines.</div>
+                      </div>
+                    )}
+
+                    <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                      {notifications.map(n => (
+                        <div key={n.id}
+                          onClick={() => { setTab(n.tab); setShowNotifications(false) }}
+                          style={{ display: 'flex', gap: '12px', padding: '11px 16px', borderBottom: '1px solid rgba(201,153,58,0.08)', cursor: 'pointer', transition: 'background 0.15s' }}
+                          onMouseEnter={e => (e.currentTarget.style.background = 'rgba(201,153,58,0.06)')}
+                          onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                        >
+                          <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: n.type === 'critical' ? '#E24B4A' : n.type === 'warning' ? '#FFD080' : '#4DD8F0', flexShrink: 0, marginTop: '4px' }}/>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', fontWeight: 600, color: n.type === 'critical' ? '#FF9090' : n.type === 'warning' ? '#FFD080' : textMid, marginBottom: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.title}</div>
+                            <div style={{ fontSize: '10px', color: textDim }}>{n.detail}</div>
+                          </div>
+                          <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(255,255,255,0.2)', flexShrink: 0, marginTop: '3px' }}>→</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <button style={{ ...s.btnGhost, fontSize: '10px', padding: '5px 12px' }} onClick={() => setTab('planner')}>✦ AI Planner</button>
               <button style={{ ...s.btnGold, fontSize: '10px', padding: '5px 14px' }} onClick={() => setTab('projects')}>+ New Project</button>
             </div>
