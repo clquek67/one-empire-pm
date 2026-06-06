@@ -327,7 +327,7 @@ Proceed and set this task to active anyway?`)
         {/* SIDEBAR */}
         <aside style={{ width: isMobile ? '100%' : '220px', height: isMobile ? 'auto' : '100%', flexShrink: 0, background: 'rgba(8,20,40,0.95)', borderRight: isMobile ? 'none' : `1px solid ${border}`, borderBottom: isMobile ? `1px solid ${border}` : 'none', display: 'flex', flexDirection: isMobile ? 'row' : 'column', overflowX: isMobile ? 'auto' : 'hidden', overflowY: isMobile ? 'hidden' : 'auto', zIndex: 10 }}>
           {/* Logo */}
-          {!isMobile && <div style={{ padding: '18px 16px', borderBottom: `1px solid rgba(201,153,58,0.12)`, display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>}
+          {!isMobile && (<div style={{ padding: '18px 16px', borderBottom: `1px solid rgba(201,153,58,0.12)`, display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
             <div style={{ width: '30px', height: '30px', background: 'rgba(201,153,58,0.1)', border: `1px solid rgba(201,153,58,0.35)`, borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
   <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
     <polygon points="10,1 1,16 4,13 10,18 16,13 19,16" stroke="#E8B84B" strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round"/>
@@ -341,7 +341,7 @@ Proceed and set this task to active anyway?`)
               <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '12px', fontWeight: 700, letterSpacing: '1.5px', color: gold, textTransform: 'uppercase' as const }}>Empire PM</div>
               <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(255,255,255,0.25)', letterSpacing: '0.5px' }}>One Empire</div>
             </div>
-          </div>}
+          </div>)}
           {/* Nav */}
           <nav style={{ flex: isMobile ? 'none' : 1, padding: isMobile ? '6px 8px' : '8px 10px', overflowY: isMobile ? 'hidden' : 'auto', overflowX: isMobile ? 'auto' : 'hidden', display: 'flex', flexDirection: isMobile ? 'row' : 'column', gap: isMobile ? '2px' : '1px', alignItems: isMobile ? 'flex-start' : 'stretch' }}>
             {navItems.map((item, i) => (
@@ -377,7 +377,7 @@ Proceed and set this task to active anyway?`)
             ))}
           </nav>
           {/* User footer */}
-          {!isMobile && <div style={{ padding: '12px 14px', borderTop: `1px solid rgba(201,153,58,0.12)`, display: 'flex', alignItems: 'center', gap: '9px', flexShrink: 0 }}>}
+          {!isMobile && (<div style={{ padding: '12px 14px', borderTop: `1px solid rgba(201,153,58,0.12)`, display: 'flex', alignItems: 'center', gap: '9px', flexShrink: 0 }}>
             {user?.user_metadata?.avatar_url ? (
               <img src={user.user_metadata.avatar_url} style={{ width: '28px', height: '28px', borderRadius: '50%', border: `1px solid rgba(201,153,58,0.3)`, flexShrink: 0 }} alt="avatar"/>
             ) : (
@@ -390,7 +390,7 @@ Proceed and set this task to active anyway?`)
               <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(201,153,58,0.5)' }}>One Empire</div>
             </div>
             <button onClick={signOut} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.25)', fontSize: '14px', padding: '2px', flexShrink: 0 }} title="Sign Out">⏻</button>
-          </div>}
+          </div>)}
         </aside>
 
         {/* MAIN */}
