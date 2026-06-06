@@ -313,14 +313,18 @@ export default function Dashboard() {
                 <div>
                   <div style={s.card}>
                     <div style={s.sectionTitle}>Recent Tasks <span style={{ fontSize: '9px', color: gold, cursor: 'pointer', fontWeight: 400 }} onClick={() => setTab('tasks')}>View all →</span></div>
-                    {tasks.slice(0, 5).map(t => (
-                      <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 0', borderBottom: `1px solid rgba(201,153,58,0.1)`, fontSize: '11px' }}>
-                        <span style={s.badge(t.status === 'done' ? 'rgba(34,201,144,0.12)' : t.status === 'active' ? 'rgba(26,171,204,0.12)' : t.status === 'blocked' ? 'rgba(226,75,74,0.12)' : 'rgba(240,246,255,0.05)', t.status === 'done' ? '#4DFFB4' : t.status === 'active' ? '#4DD8F0' : t.status === 'blocked' ? '#FF9090' : whiteFaint, t.status === 'done' ? 'rgba(34,201,144,0.28)' : t.status === 'active' ? 'rgba(26,171,204,0.28)' : t.status === 'blocked' ? 'rgba(226,75,74,0.28)' : 'rgba(240,246,255,0.1)')}>{t.status}</span>
-                        <span style={s.badge(t.priority === 'high' ? 'rgba(226,75,74,0.08)' : 'rgba(26,171,204,0.08)', t.priority === 'high' ? '#FFAAAA' : '#4DD8F0', t.priority === 'high' ? 'rgba(226,75,74,0.18)' : 'rgba(26,171,204,0.18)')}>{t.priority}</span>
-                        <span style={{ flex: 1, color: textMid }}>{t.name}</span>
-                        <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: whiteFaint }}>{t.owner}</span>
+                    {tasks.slice(0, 5).map(t => {
+                      const isOverdue = t.due_date && new Date(t.due_date) < new Date() && t.status !== 'done'
+                      return (
+                      <div key={t.id} style={{ padding: '8px 0', borderBottom: `1px solid rgba(201,153,58,0.1)`, fontSize: '11px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
+                          <span style={s.badge(t.status === 'done' ? 'rgba(34,201,144,0.12)' : t.status === 'active' ? 'rgba(26,171,204,0.12)' : t.status === 'blocked' ? 'rgba(226,75,74,0.12)' : 'rgba(240,246,255,0.05)', t.status === 'done' ? '#4DFFB4' : t.status === 'active' ? '#4DD8F0' : t.status === 'blocked' ? '#FF9090' : whiteFaint, t.status === 'done' ? 'rgba(34,201,144,0.28)' : t.status === 'active' ? 'rgba(26,171,204,0.28)' : t.status === 'blocked' ? 'rgba(226,75,74,0.28)' : 'rgba(240,246,255,0.1)')}>{t.status}</span>
+                          <span style={{ flex: 1, color: textMid }}>{t.name}</span>
+                          {t.owner && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: whiteFaint }}>{t.owner}</span>}
+                        </div>
+                        {t.due_date && <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOverdue ? '#FF9090' : whiteFaint, paddingLeft: '2px' }}>{isOverdue ? '⚠ Overdue · ' : 'Due '}{t.due_date}</div>}
                       </div>
-                    ))}
+                    )})}
                     {tasks.length === 0 && (
                       <div style={{ textAlign: 'center', padding: '20px 16px' }}>
                         <div style={{ fontSize: '11px', color: textDim, marginBottom: '10px' }}>No tasks yet. Break your project into actions.</div>
@@ -330,17 +334,23 @@ export default function Dashboard() {
                   </div>
                   <div style={s.card}>
                     <div style={s.sectionTitle}>Project Health</div>
-                    {projects.slice(0, 4).map(p => (
+                    {projects.slice(0, 4).map(p => {
+                      const isOverdue = p.end_date && new Date(p.end_date) < new Date() && p.status !== 'completed'
+                      const daysLeft = p.end_date ? Math.ceil((new Date(p.end_date).getTime() - new Date().getTime()) / (1000*60*60*24)) : null
+                      return (
                       <div key={p.id} style={{ marginBottom: '12px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px', fontSize: '11px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px', fontSize: '11px' }}>
                           <span style={{ fontFamily: 'Rajdhani, sans-serif', fontWeight: 600, color: textMid }}>{p.name}</span>
-                          <span style={{ fontFamily: 'Rajdhani, sans-serif', color: whiteFaint, fontSize: '10px' }}>{p.health}%</span>
+                          <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: isOverdue ? '#FF9090' : daysLeft !== null && daysLeft <= 7 ? '#FFD080' : whiteFaint }}>
+                            {p.health}% {isOverdue ? '· Overdue' : daysLeft !== null ? `· ${daysLeft > 0 ? daysLeft+'d left' : 'due today'}` : ''}
+                          </span>
                         </div>
+                        {p.end_date && <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOverdue ? 'rgba(255,144,144,0.6)' : 'rgba(255,255,255,0.2)', marginBottom: '4px' }}>Due {p.end_date}</div>}
                         <div style={{ height: '3px', background: 'rgba(240,246,255,0.07)', borderRadius: '2px', overflow: 'hidden' }}>
-                          <div style={{ height: '3px', width: `${p.health}%`, background: `linear-gradient(90deg, ${goldDim}, ${gold})`, borderRadius: '2px' }}/>
+                          <div style={{ height: '3px', width: `${p.health}%`, background: isOverdue ? 'linear-gradient(90deg,#E24B4A,#FF9090)' : `linear-gradient(90deg, ${goldDim}, ${gold})`, borderRadius: '2px' }}/>
                         </div>
                       </div>
-                    ))}
+                    )})}
                     {projects.length === 0 && (
                       <div style={{ textAlign: 'center', padding: '20px 16px' }}>
                         <div style={{ fontSize: '11px', color: textDim, marginBottom: '10px' }}>No projects yet. Everything starts with a project.</div>
@@ -352,12 +362,17 @@ export default function Dashboard() {
                 <div>
                   <div style={s.card}>
                     <div style={s.sectionTitle}>Top Risks <span style={{ fontSize: '9px', color: gold, cursor: 'pointer', fontWeight: 400 }} onClick={() => setTab('risks')}>View all →</span></div>
-                    {risks.filter(r => r.status !== 'closed').slice(0, 3).map(r => (
+                    {risks.filter(r => r.status !== 'closed').slice(0, 3).map(r => {
+                      const proj = projects.find(p => p.id === r.project_id)
+                      return (
                       <div key={r.id} style={{ borderLeft: `3px solid ${r.level === 'critical' || r.level === 'high' ? '#E24B4A' : r.level === 'medium' ? '#F5A623' : '#22C990'}`, padding: '10px 12px', marginBottom: '8px', background: 'rgba(16,36,72,0.5)', borderRadius: '0 3px 3px 0' }}>
-                        <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '12px', fontWeight: 600, color: textBright, marginBottom: '3px' }}>{r.title}</div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
+                          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '12px', fontWeight: 600, color: textBright }}>{r.title}</div>
+                          <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(201,153,58,0.5)' }}>{proj?.name || '—'}</span>
+                        </div>
                         <div style={{ fontSize: '11px', color: textDim }}>{r.description}</div>
                       </div>
-                    ))}
+                    )})}
                     {risks.length === 0 && (
                       <div style={{ textAlign: 'center', padding: '28px 16px' }}>
                         <div style={{ fontSize: '22px', marginBottom: '8px', opacity: 0.3 }}>⚠</div>
@@ -391,18 +406,34 @@ export default function Dashboard() {
                 <div>
                   <div style={s.card}>
                     <div style={s.sectionTitle}>Active Projects</div>
-                    {projects.map(p => (
+                    {projects.map(p => {
+                      const isOverdue = p.end_date && new Date(p.end_date) < new Date() && p.status !== 'completed'
+                      const daysLeft = p.end_date ? Math.ceil((new Date(p.end_date).getTime() - new Date().getTime()) / (1000*60*60*24)) : null
+                      return (
                       <div key={p.id} style={{ padding: '12px 0', borderBottom: `1px solid rgba(201,153,58,0.1)` }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
                           <span style={{ fontFamily: 'Rajdhani, sans-serif', fontWeight: 600, fontSize: '13px', color: textBright }}>{p.name}</span>
-                          <span style={s.badge('rgba(201,153,58,0.08)', gold, 'rgba(201,153,58,0.25)')}>{p.status}</span>
+                          <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
+                            {isOverdue && <span style={s.badge('rgba(226,75,74,0.12)', '#FF9090', 'rgba(226,75,74,0.28)')}>OVERDUE</span>}
+                            <span style={s.badge('rgba(201,153,58,0.08)', gold, 'rgba(201,153,58,0.25)')}>{p.status}</span>
+                          </div>
                         </div>
-                        <div style={{ fontSize: '11px', color: textDim }}>{p.client_name}</div>
-                        <div style={{ height: '2px', background: 'rgba(240,246,255,0.07)', borderRadius: '1px', marginTop: '8px', overflow: 'hidden' }}>
-                          <div style={{ height: '2px', width: `${p.health}%`, background: `linear-gradient(90deg, ${goldDim}, ${gold})` }}/>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                          <div style={{ fontSize: '11px', color: textDim }}>{p.client_name || '—'}</div>
+                          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: isOverdue ? '#FF9090' : daysLeft !== null && daysLeft <= 7 ? '#FFD080' : whiteFaint }}>
+                            {p.start_date && p.end_date ? `${p.start_date} → ${p.end_date}` : p.end_date ? `Due ${p.end_date}` : 'No dates set'}
+                            {daysLeft !== null && !isOverdue && daysLeft <= 14 && <span style={{ marginLeft: '6px', color: '#FFD080' }}>({daysLeft}d left)</span>}
+                            {isOverdue && <span style={{ marginLeft: '6px' }}>({Math.abs(daysLeft!)}d ago)</span>}
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <div style={{ flex: 1, height: '2px', background: 'rgba(240,246,255,0.07)', borderRadius: '1px', overflow: 'hidden' }}>
+                            <div style={{ height: '2px', width: `${p.health}%`, background: `linear-gradient(90deg, ${goldDim}, ${gold})` }}/>
+                          </div>
+                          <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: whiteFaint, flexShrink: 0 }}>{p.health}%</span>
                         </div>
                       </div>
-                    ))}
+                    )})}
                     {projects.length === 0 && (
                       <div style={{ textAlign: 'center', padding: '28px 16px' }}>
                         <div style={{ fontSize: '22px', marginBottom: '8px', opacity: 0.3 }}>◻</div>
@@ -421,20 +452,26 @@ export default function Dashboard() {
                 </div>
                 <div style={s.card}>
                   <div style={s.sectionTitle}>Team Members</div>
-                  {teamMembers.map(m => (
+                  {teamMembers.map(m => {
+                    const proj = projects.find(p => p.id === m.project_id)
+                    return (
                     <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 0', borderBottom: `1px solid rgba(201,153,58,0.1)` }}>
                       <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(201,153,58,0.12)', border: `1px solid ${border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', fontWeight: 700, color: gold, flexShrink: 0 }}>
-                        {m.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+                        {m.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)}
                       </div>
                       <div style={{ flex: 1 }}>
                         <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '12px', fontWeight: 600, color: textMid }}>{m.name}</div>
-                        <div style={{ fontSize: '10px', color: textDim }}>{m.email} · {m.role}</div>
+                        <div style={{ fontSize: '10px', color: textDim }}>{m.email} · {m.role || 'No role'}</div>
+                        <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(201,153,58,0.45)', marginTop: '1px' }}>{proj?.name || 'No project assigned'}</div>
                       </div>
-                      <div style={{ width: '80px', height: '3px', background: 'rgba(240,246,255,0.07)', borderRadius: '2px', overflow: 'hidden' }}>
-                        <div style={{ height: '3px', width: `${m.capacity}%`, background: m.capacity > 80 ? 'linear-gradient(90deg,#E24B4A,#FF9090)' : `linear-gradient(90deg,#1AABCC,#4DD8F0)` }}/>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ width: '80px', height: '3px', background: 'rgba(240,246,255,0.07)', borderRadius: '2px', overflow: 'hidden', marginBottom: '3px' }}>
+                          <div style={{ height: '3px', width: `${m.capacity}%`, background: m.capacity > 80 ? 'linear-gradient(90deg,#E24B4A,#FF9090)' : `linear-gradient(90deg,#1AABCC,#4DD8F0)` }}/>
+                        </div>
+                        <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: m.capacity > 80 ? '#FF9090' : whiteFaint }}>{m.capacity}%</span>
                       </div>
                     </div>
-                  ))}
+                  )})}
                   {teamMembers.length === 0 && (
                     <div style={{ textAlign: 'center', padding: '28px 16px' }}>
                       <div style={{ fontSize: '22px', marginBottom: '8px', opacity: 0.3 }}>⊞</div>
@@ -460,14 +497,29 @@ export default function Dashboard() {
                 </div>
                 <div style={s.card}>
                   <div style={s.sectionTitle}>All Tasks</div>
-                  {tasks.map(t => (
-                    <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 0', borderBottom: `1px solid rgba(201,153,58,0.1)`, fontSize: '11px' }}>
-                      <span style={s.badge(t.status === 'done' ? 'rgba(34,201,144,0.12)' : t.status === 'active' ? 'rgba(26,171,204,0.12)' : t.status === 'blocked' ? 'rgba(226,75,74,0.12)' : 'rgba(240,246,255,0.05)', t.status === 'done' ? '#4DFFB4' : t.status === 'active' ? '#4DD8F0' : t.status === 'blocked' ? '#FF9090' : whiteFaint, t.status === 'done' ? 'rgba(34,201,144,0.28)' : 'rgba(26,171,204,0.28)')}>{t.status}</span>
-                      <span style={s.badge(t.priority === 'high' ? 'rgba(226,75,74,0.08)' : 'rgba(26,171,204,0.08)', t.priority === 'high' ? '#FFAAAA' : '#4DD8F0', 'rgba(26,171,204,0.18)')}>{t.priority}</span>
-                      <span style={{ flex: 1, color: textMid }}>{t.name}</span>
-                      <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: whiteFaint }}>{t.owner}</span>
+                  {tasks.map(t => {
+                    const proj = projects.find((p: Project) => p.id === t.project_id)
+                    const isOverdue = t.due_date && new Date(t.due_date) < new Date() && t.status !== 'done'
+                    const daysLeft = t.due_date ? Math.ceil((new Date(t.due_date).getTime() - new Date().getTime()) / (1000*60*60*24)) : null
+                    return (
+                    <div key={t.id} style={{ padding: '10px 0', borderBottom: `1px solid rgba(201,153,58,0.1)`, fontSize: '11px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                        <span style={s.badge(t.status === 'done' ? 'rgba(34,201,144,0.12)' : t.status === 'active' ? 'rgba(26,171,204,0.12)' : t.status === 'blocked' ? 'rgba(226,75,74,0.12)' : 'rgba(240,246,255,0.05)', t.status === 'done' ? '#4DFFB4' : t.status === 'active' ? '#4DD8F0' : t.status === 'blocked' ? '#FF9090' : whiteFaint, t.status === 'done' ? 'rgba(34,201,144,0.28)' : 'rgba(26,171,204,0.28)')}>{t.status}</span>
+                        <span style={s.badge(t.priority === 'high' ? 'rgba(226,75,74,0.08)' : 'rgba(26,171,204,0.08)', t.priority === 'high' ? '#FFAAAA' : '#4DD8F0', 'rgba(26,171,204,0.18)')}>{t.priority}</span>
+                        <span style={{ flex: 1, color: textMid, fontWeight: 500 }}>{t.name}</span>
+                        {t.owner && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: whiteFaint, flexShrink: 0 }}>{t.owner}</span>}
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', paddingLeft: '4px' }}>
+                        <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(201,153,58,0.5)' }}>{proj?.name || '—'}</span>
+                        {t.due_date && (
+                          <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOverdue ? '#FF9090' : daysLeft !== null && daysLeft <= 3 ? '#FFD080' : whiteFaint }}>
+                            {isOverdue ? `Overdue · ${t.due_date}` : `Due ${t.due_date}${daysLeft !== null && daysLeft <= 7 ? ` · ${daysLeft}d` : ''}`}
+                          </span>
+                        )}
+                        {!t.due_date && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(255,255,255,0.15)' }}>No due date</span>}
+                      </div>
                     </div>
-                  ))}
+                  )})}
                   {tasks.length === 0 && (
                     <div style={{ textAlign: 'center', padding: '28px 16px' }}>
                       <div style={{ fontSize: '22px', marginBottom: '8px', opacity: 0.3 }}>✓</div>
@@ -510,15 +562,26 @@ export default function Dashboard() {
                   </div>
                   <div style={s.card}>
                     <div style={s.sectionTitle}>Active Risks</div>
-                    {risks.filter(r => r.status !== 'closed').map(r => (
-                      <div key={r.id} style={{ borderLeft: `3px solid ${r.level === 'critical' || r.level === 'high' ? '#E24B4A' : r.level === 'medium' ? '#F5A623' : '#22C990'}`, padding: '10px 12px', marginBottom: '10px', background: 'rgba(16,36,72,0.5)', borderRadius: '0 3px 3px 0' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                    {risks.filter(r => r.status !== 'closed').map(r => {
+                      const proj = projects.find(p => p.id === r.project_id)
+                      const isOverdue = r.due_date && new Date(r.due_date) < new Date()
+                      const levelColor = r.level === 'critical' ? '#E24B4A' : r.level === 'high' ? '#FF7043' : r.level === 'medium' ? '#F5A623' : '#22C990'
+                      const levelBg = r.level === 'critical' ? 'rgba(226,75,74,0.15)' : r.level === 'high' ? 'rgba(255,112,67,0.12)' : 'rgba(245,166,35,0.12)'
+                      const levelBdr = r.level === 'critical' ? 'rgba(226,75,74,0.3)' : r.level === 'high' ? 'rgba(255,112,67,0.28)' : 'rgba(245,166,35,0.28)'
+                      const levelText = r.level === 'critical' ? '#FF9090' : r.level === 'high' ? '#FFAA88' : '#FFD080'
+                      return (
+                      <div key={r.id} style={{ borderLeft: `3px solid ${levelColor}`, padding: '10px 12px', marginBottom: '10px', background: 'rgba(16,36,72,0.5)', borderRadius: '0 3px 3px 0' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
                           <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '12px', fontWeight: 600, color: textBright }}>{r.title}</div>
-                          <span style={s.badge(r.level === 'critical' ? 'rgba(226,75,74,0.15)' : 'rgba(245,166,35,0.12)', r.level === 'critical' ? '#FF9090' : '#FFD080', r.level === 'critical' ? 'rgba(226,75,74,0.3)' : 'rgba(245,166,35,0.28)')}>{r.level}</span>
+                          <span style={s.badge(levelBg, levelText, levelBdr)}>{r.level}</span>
                         </div>
-                        <div style={{ fontSize: '11px', color: textDim }}>{r.description}</div>
+                        <div style={{ fontSize: '11px', color: textDim, marginBottom: '5px' }}>{r.description}</div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(201,153,58,0.5)' }}>{proj?.name || '—'}</span>
+                          {r.due_date && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOverdue ? '#FF9090' : whiteFaint }}>{isOverdue ? '⚠ Overdue · ' : 'Resolve by '}{r.due_date}</span>}
+                        </div>
                       </div>
-                    ))}
+                    )})}
                     {risks.length === 0 && <div style={{ color: textDim, fontSize: '12px' }}>No risks logged yet</div>}
                   </div>
                 </div>
@@ -561,15 +624,20 @@ export default function Dashboard() {
                   <ClientUpdateForm ai={ai} aiLoading={aiLoading} aiText={aiText} projects={projects} />
                 </div>
                 <div>
-                  {projects.map(p => (
+                  {projects.map(p => {
+                    const projTasks = tasks.filter(t => t.project_id === p.id)
+                    const doneTasks = projTasks.filter(t => t.status === 'done').length
+                    const isOverdue = p.end_date && new Date(p.end_date) < new Date() && p.status !== 'completed'
+                    return (
                     <div key={p.id} style={{ ...s.card, marginBottom: '10px' }}>
-                      <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '16px', color: textBright, marginBottom: '4px' }}>{p.client_name || p.name}</div>
-                      <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: whiteFaint }}>{p.name} · {p.health}% complete</div>
-                      <div style={{ marginTop: '8px' }}>
-                        <span style={s.badge('rgba(201,153,58,0.08)', gold, border)}>{p.status}</span>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
+                        <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '16px', color: textBright }}>{p.client_name || p.name}</div>
+                        <span style={s.badge(isOverdue ? 'rgba(226,75,74,0.12)' : 'rgba(201,153,58,0.08)', isOverdue ? '#FF9090' : gold, isOverdue ? 'rgba(226,75,74,0.28)' : border)}>{isOverdue ? 'OVERDUE' : p.status}</span>
                       </div>
+                      <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: whiteFaint, marginBottom: '6px' }}>{p.name} · {p.health}% complete · {doneTasks}/{projTasks.length} tasks done</div>
+                      {p.end_date && <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOverdue ? '#FF9090' : 'rgba(255,255,255,0.25)' }}>Due {p.end_date}</div>}
                     </div>
-                  ))}
+                  )})}
                 </div>
               </div>
             </div>
@@ -585,18 +653,28 @@ export default function Dashboard() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
                 <div style={s.card}>
                   <div style={s.sectionTitle}>Team Capacity</div>
-                  {teamMembers.map(m => (
-                    <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 0', borderBottom: `1px solid rgba(201,153,58,0.1)` }}>
-                      <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(201,153,58,0.12)', border: `1px solid ${border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', fontWeight: 700, color: gold, flexShrink: 0 }}>
-                        {m.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+                  {teamMembers.map(m => {
+                    const memberTasks = tasks.filter(t => t.owner === m.name && t.status !== 'done')
+                    const proj = projects.find(p => p.id === m.project_id)
+                    return (
+                    <div key={m.id} style={{ padding: '10px 0', borderBottom: `1px solid rgba(201,153,58,0.1)` }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '5px' }}>
+                        <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(201,153,58,0.12)', border: `1px solid ${border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', fontWeight: 700, color: gold, flexShrink: 0 }}>
+                          {m.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)}
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '12px', fontWeight: 600, color: textMid }}>{m.name}</div>
+                          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(201,153,58,0.5)' }}>{m.role || 'No role'} · {proj?.name || 'No project'} · {memberTasks.length} active task{memberTasks.length !== 1 ? 's' : ''}</div>
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                          <div style={{ width: '100px', height: '4px', background: 'rgba(240,246,255,0.07)', borderRadius: '2px', overflow: 'hidden', marginBottom: '3px' }}>
+                            <div style={{ height: '4px', width: `${m.capacity}%`, background: m.capacity > 80 ? 'linear-gradient(90deg,#E24B4A,#FF9090)' : 'linear-gradient(90deg,#1AABCC,#4DD8F0)', borderRadius: '2px' }}/>
+                          </div>
+                          <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: m.capacity > 80 ? '#FF9090' : whiteFaint }}>{m.capacity}% · {m.capacity > 80 ? 'Busy' : 'Available'}</span>
+                        </div>
                       </div>
-                      <span style={{ flex: 1, fontFamily: 'Rajdhani, sans-serif', fontSize: '12px', fontWeight: 600, color: textMid }}>{m.name}</span>
-                      <div style={{ width: '120px', height: '4px', background: 'rgba(240,246,255,0.07)', borderRadius: '2px', overflow: 'hidden' }}>
-                        <div style={{ height: '4px', width: `${m.capacity}%`, background: m.capacity > 80 ? 'linear-gradient(90deg,#E24B4A,#FF9090)' : 'linear-gradient(90deg,#1AABCC,#4DD8F0)', borderRadius: '2px' }}/>
-                      </div>
-                      <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: whiteFaint, width: '80px', textAlign: 'right' }}>{m.capacity}% · {m.capacity > 80 ? 'Busy' : 'Available'}</span>
                     </div>
-                  ))}
+                  )})}
                   {teamMembers.length === 0 && (
                     <div style={{ textAlign: 'center', padding: '28px 16px' }}>
                       <div style={{ fontSize: '22px', marginBottom: '8px', opacity: 0.3 }}>⊞</div>
@@ -674,13 +752,21 @@ export default function Dashboard() {
                 </div>
                 <div style={s.card}>
                   <div style={s.sectionTitle}>Unbilled Hours</div>
-                  {timeLogs.map(l => (
-                    <div key={l.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 0', borderBottom: `1px solid rgba(201,153,58,0.1)`, fontSize: '11px' }}>
-                      <span style={{ flex: 1, color: textMid }}>{l.description}</span>
-                      <span style={{ fontFamily: 'Rajdhani, sans-serif', color: whiteFaint, width: '35px', textAlign: 'right' }}>{l.hours}h</span>
-                      <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '14px', color: gold, width: '70px', textAlign: 'right' }}>${(l.hours * l.rate).toLocaleString()}</span>
+                  {timeLogs.map(l => {
+                    const proj = projects.find(p => p.id === l.project_id)
+                    return (
+                    <div key={l.id} style={{ padding: '9px 0', borderBottom: `1px solid rgba(201,153,58,0.1)` }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px', fontSize: '11px' }}>
+                        <span style={{ flex: 1, color: textMid }}>{l.description}</span>
+                        <span style={{ fontFamily: 'Rajdhani, sans-serif', color: whiteFaint, width: '35px', textAlign: 'right' }}>{l.hours}h</span>
+                        <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '14px', color: gold, width: '70px', textAlign: 'right' }}>${(l.hours * l.rate).toLocaleString()}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(201,153,58,0.5)' }}>{proj?.name || '—'}</span>
+                        {l.log_date && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(255,255,255,0.2)' }}>{l.log_date}</span>}
+                      </div>
                     </div>
-                  ))}
+                  )})}
                   <div style={{ borderTop: `1px solid ${borderMd}`, marginTop: '10px', paddingTop: '10px', display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', fontWeight: 600, color: goldDim }}>TOTAL UNBILLED</span>
                     <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '20px', color: gold }}>${unbilledTotal.toLocaleString()}</span>
