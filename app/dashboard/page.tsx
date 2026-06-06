@@ -439,7 +439,22 @@ export default function Dashboard() {
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '22px' }}>
                 <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '26px', color: '#F0F6FF' }}>Risk <em style={{ color: gold, fontStyle: 'italic' }}>Radar</em></div>
-                <button style={s.btnGold} onClick={() => ai('risks', 'You are an expert risk manager. Identify hidden project risks and provide mitigation strategies.', `Projects: ${projects.map(p => p.name).join(', ')}. Team size: ${teamMembers.length}. Open risks: ${risks.filter(r => r.status !== 'closed').length}`)}>✦ AI Risk Scan</button>
+                <button style={s.btnGold} onClick={() => {
+                  const projectContext = projects.map(p => {
+                    const projTasks = tasks.filter(t => t.project_id === p.id)
+                    const projRisks = risks.filter(r => r.project_id === p.id && r.status !== 'closed')
+                    const projTeam = teamMembers.filter(m => m.project_id === p.id)
+                    const overdueTasks = projTasks.filter(t => t.due_date && new Date(t.due_date) < new Date() && t.status !== 'done')
+                    return `PROJECT: ${p.name} (Client: ${p.client_name || 'Internal'}, Health: ${p.health}%, Status: ${p.status}, Timeline: ${p.start_date || 'TBD'} → ${p.end_date || 'TBD'})
+  Tasks: ${projTasks.length} total, ${projTasks.filter(t => t.status === 'active').length} active, ${projTasks.filter(t => t.status === 'blocked').length} blocked, ${overdueTasks.length} overdue
+  Open Risks: ${projRisks.map(r => `${r.title} [${r.level}]`).join(', ') || 'None logged'}
+  Team: ${projTeam.map(m => `${m.name} (${m.role}, ${m.capacity}% capacity)`).join(', ') || 'No team assigned'}`
+                  }).join('\n\n')
+                  ai('risks',
+                    'You are an expert risk manager with 20 years experience. Analyse the project data provided and: 1. Identify hidden or emerging risks not yet logged, 2. Flag any existing risks that need escalation, 3. Highlight capacity or deadline conflicts, 4. Provide specific mitigation actions. Use bullet points only — no markdown tables. Be direct and specific to the actual data, not generic advice.',
+                    `Analyse these projects for risks:\n\n${projectContext}\n\nTotal team members: ${teamMembers.length}. Provide a prioritised risk assessment.`
+                  )
+                }}>✦ AI Risk Scan</button>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
                 <div>
@@ -483,7 +498,7 @@ export default function Dashboard() {
               <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '26px', color: '#F0F6FF', marginBottom: '22px' }}>
                 Meeting <em style={{ color: gold, fontStyle: 'italic' }}>Processor</em>
               </div>
-              <MeetingProcessor user={user} projects={projects} supabase={supabase} onSaved={() => user && loadData(user.id)} />
+              <MeetingProcessor user={user} projects={projects} tasks={tasks} risks={risks} supabase={supabase} onSaved={() => user && loadData(user.id)} />
             </div>
           )}
 
@@ -492,7 +507,7 @@ export default function Dashboard() {
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '22px' }}>
                 <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '26px', color: '#F0F6FF' }}>Client <em style={{ color: gold, fontStyle: 'italic' }}>Portal</em></div>
-                <button style={s.btnGold} onClick={() => ai('client', 'You are a professional PM writing client updates. Write clear professional updates that build confidence.', 'Generate a general project progress update for all active projects.')}>✦ Generate Update</button>
+    ai('client', 'You are a professional PM writing client updates. Write clear professional updates that build confidence. Never reveal internal issues unless explicitly included. Use bullet points only — no markdown tables.', `Generate a professional client status update covering all active projects.\n\nActive projects:\n${projects.filter((p: Project) => p.status === 'active').map((p: Project) => `- ${p.name} (Client: ${p.client_name || 'Internal'}, Health: ${p.health}%, Due: ${p.end_date || 'TBD'})`).join('\n') || 'No active projects'}`)
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '14px' }}>
                 <div style={s.card}>
@@ -629,7 +644,7 @@ export default function Dashboard() {
               <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '26px', color: '#F0F6FF', marginBottom: '22px' }}>
                 ✦ AI <em style={{ color: gold, fontStyle: 'italic' }}>Planner</em>
               </div>
-              <AIPlannerForm ai={ai} aiLoading={aiLoading} aiText={aiText} />
+              <AIPlannerForm ai={ai} aiLoading={aiLoading} aiText={aiText} projects={projects} tasks={tasks} risks={risks} teamMembers={teamMembers} />
             </div>
           )}
 
@@ -639,7 +654,7 @@ export default function Dashboard() {
               <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '26px', color: '#F0F6FF', marginBottom: '22px' }}>
                 Scope <em style={{ color: gold, fontStyle: 'italic' }}>Control</em>
               </div>
-              <ScopeForm ai={ai} aiLoading={aiLoading} aiText={aiText} projects={projects} />
+              <ScopeForm ai={ai} aiLoading={aiLoading} aiText={aiText} projects={projects} tasks={tasks} />
             </div>
           )}
 
@@ -832,12 +847,25 @@ function TimeLogForm({ user, projects, onCreated, supabase }: any) {
   )
 }
 
-function MeetingProcessor({ user, projects, supabase, onSaved }: any) {
+function MeetingProcessor({ user, projects, tasks, risks, supabase, onSaved }: any) {
   const [title, setTitle] = useState(''); const [notes, setNotes] = useState(''); const [email, setEmail] = useState(''); const [projectId, setProjectId] = useState(''); const [result, setResult] = useState(''); const [loading, setLoading] = useState(false); const [meetingDate, setMeetingDate] = useState(new Date().toISOString().split('T')[0])
   const process = async () => {
     if (!notes) return
     setLoading(true); setResult('')
-    const text = await callAI('You are an expert meeting facilitator. Extract: 1. Summary, 2. Key Decisions, 3. Action Items with owners, 4. Follow-up Questions.', `Meeting: ${title}\n\nNotes:\n${notes}`)
+    const project = projects.find((p: Project) => p.id === projectId)
+    const projContext = project ? (() => {
+      const pTasks = (tasks || []).filter((t: Task) => t.project_id === projectId)
+      const pRisks = (risks || []).filter((r: Risk) => r.project_id === projectId && r.status !== 'closed')
+      return `\n\nPROJECT CONTEXT for "${project.name}" (Client: ${project.client_name || 'Internal'}, Health: ${project.health}%):
+Active tasks: ${pTasks.filter((t: Task) => t.status === 'active').map((t: Task) => `${t.name} [owner: ${t.owner || 'unassigned'}, due: ${t.due_date || 'no date'}]`).join('; ') || 'None'}
+Blocked tasks: ${pTasks.filter((t: Task) => t.status === 'blocked').map((t: Task) => t.name).join(', ') || 'None'}
+Open risks: ${pRisks.map((r: Risk) => `${r.title} [${r.level}]`).join(', ') || 'None logged'}
+Use this context to cross-reference action items with existing tasks and flag any conflicts or overlaps with open risks.`
+    })() : ''
+    const text = await callAI(
+      'You are an expert meeting facilitator and project manager. Extract and structure the following from the meeting notes. Use bullet points only — no markdown tables. Sections: 1. Summary (2-3 sentences), 2. Key Decisions, 3. Action Items (with owner and deadline if mentioned), 4. Risks or Issues Raised, 5. Follow-up Questions. If project context is provided, cross-reference action items against existing tasks and flag overlaps with open risks.',
+      `Meeting: ${title}\n\nNotes:\n${notes}${projContext}`
+    )
     setResult(text)
     if (user && projectId) {
       await supabase.from('meetings').insert({ user_id: user.id, project_id: projectId, title, notes, summary: text, meeting_date: meetingDate || null })
@@ -890,7 +918,17 @@ function ClientUpdateForm({ ai, aiLoading, aiText, projects }: any) {
   const [projectId, setProjectId] = useState(''); const [tone, setTone] = useState('Professional'); const [notes, setNotes] = useState('')
   const generate = () => {
     const project = projects.find((p: Project) => p.id === projectId)
-    ai('client', 'You are a professional PM writing client updates. Write clear professional updates that build confidence. Never reveal internal issues unless explicitly included.', `Project: ${project?.name || 'General update'}\nClient: ${project?.client_name || 'Client'}\nTone: ${tone}\nKey points: ${notes || 'General progress update — project on track'}\n\nWrite a professional client status update email.`)
+    ai('client',
+      'You are a professional PM writing client updates. Write clear professional updates that build confidence. Never reveal internal issues unless explicitly included in the notes. Use bullet points only — no markdown tables. Write in email format with a subject line.',
+      `Project: ${project?.name || 'General update'}
+Client: ${project?.client_name || 'Client'}
+Project health: ${project?.health || 'N/A'}%
+Timeline: ${project?.start_date || 'TBD'} → ${project?.end_date || 'TBD'}
+Tone: ${tone}
+Key points from PM: ${notes || 'General progress update — project on track'}
+
+Write a professional client status update email.`
+    )
   }
   return (
     <div>
@@ -914,11 +952,19 @@ function ClientUpdateForm({ ai, aiLoading, aiText, projects }: any) {
   )
 }
 
-function AIPlannerForm({ ai, aiLoading, aiText }: any) {
+function AIPlannerForm({ ai, aiLoading, aiText, projects, tasks, risks, teamMembers }: any) {
   const [name, setName] = useState(''); const [brief, setBrief] = useState(''); const [timeline, setTimeline] = useState('8 weeks'); const [team, setTeam] = useState('2–3 people')
   const generate = () => {
     if (!brief) return
-    ai('planner', 'You are an expert PM. Generate comprehensive project plans. Include: Phase Breakdown with milestones, Key Tasks with owners/priorities, Risk Register, KPIs, Budget considerations.', `Project: ${name || 'New Project'}\nTimeline: ${timeline}\nTeam: ${team}\n\nBrief:\n${brief}`)
+    const existingContext = projects.length > 0 ? `\n\nEXISTING PORTFOLIO CONTEXT (avoid duplicating effort):
+Active projects: ${projects.filter((p: Project) => p.status === 'active').map((p: Project) => `${p.name} (${p.health}% health, ends ${p.end_date || 'TBD'})`).join(', ') || 'None'}
+Available team members: ${teamMembers.length > 0 ? teamMembers.map((m: TeamMember) => `${m.name} — ${m.role} (${m.capacity}% capacity)`).join(', ') : 'Not specified — use team size below'}
+Current open risks across portfolio: ${risks.filter((r: Risk) => r.status !== 'closed').length} open risks — consider these when identifying risks for the new project
+Total active tasks in flight: ${tasks.filter((t: Task) => t.status === 'active').length} — factor team availability accordingly` : ''
+    ai('planner',
+      'You are an expert PM with 20 years experience. Generate a comprehensive, actionable project plan. Use bullet points only — no markdown tables. Structure: 1. Phase Breakdown (with milestone dates relative to start), 2. Key Tasks (owner, priority, estimated duration), 3. Risk Register (likelihood, impact, mitigation), 4. KPIs and success criteria, 5. Budget considerations, 6. Team allocation recommendations. Be specific — avoid generic advice. If existing team members are listed, assign tasks to them by name.',
+      `New Project: ${name || 'New Project'}\nTimeline: ${timeline}\nTeam Size: ${team}\n\nBrief:\n${brief}${existingContext}`
+    )
   }
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
@@ -961,12 +1007,21 @@ function AIPlannerForm({ ai, aiLoading, aiText }: any) {
   )
 }
 
-function ScopeForm({ ai, aiLoading, aiText, projects }: any) {
+function ScopeForm({ ai, aiLoading, aiText, projects, tasks }: any) {
   const [desc, setDesc] = useState(''); const [projectId, setProjectId] = useState(''); const [by, setBy] = useState('')
   const analyse = () => {
     if (!desc) return
     const project = projects.find((p: Project) => p.id === projectId)
-    ai('scope', 'You are an expert PM. Analyse scope changes and provide impact assessments. Format: Impact Summary, Time Impact, Budget Impact, Risk Level, Recommendation.', `Project: ${project?.name || 'Unknown'}\nRequested by: ${by || 'Unknown'}\nScope change: ${desc}`)
+    const projTasks = (tasks || []).filter((t: Task) => t.project_id === projectId)
+    const scopeContext = project ? `
+Project health: ${project.health}%
+Budget: ${project.budget ? `$${Number(project.budget).toLocaleString()}` : 'Not set'}
+Timeline: ${project.start_date || 'TBD'} → ${project.end_date || 'TBD'}
+Active tasks: ${projTasks.filter((t: Task) => t.status === 'active').length}, Blocked: ${projTasks.filter((t: Task) => t.status === 'blocked').length}` : ''
+    ai('scope',
+      'You are an expert PM. Analyse scope changes and provide impact assessments. Use bullet points only — no markdown tables. Sections: Impact Summary, Time Impact (days/weeks), Budget Impact (estimated cost), Risk Level (Low/Medium/High/Critical), Effect on existing tasks, Recommendation (approve/reject/negotiate).',
+      `Project: ${project?.name || 'Unknown'}${scopeContext}\nRequested by: ${by || 'Unknown'}\nScope change requested:\n${desc}`
+    )
   }
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
