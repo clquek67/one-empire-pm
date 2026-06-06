@@ -8,6 +8,7 @@ type Task = { id: string; name: string; status: string; priority: string; owner:
 type Risk = { id: string; title: string; description: string; level: string; status: string; project_id: string; due_date?: string }
 type TeamMember = { id: string; name: string; email: string; role: string; capacity: number; project_id: string }
 type TimeLog = { id: string; description: string; hours: number; rate: number; billed: boolean; project_id: string; created_at: string; log_date?: string }
+type Milestone = { id: string; title: string; due_date?: string; status: string; project_id: string; user_id: string; created_at: string }
 
 const gold = '#E8B84B'
 const goldDim = '#C9993A'
@@ -64,6 +65,7 @@ export default function Dashboard() {
   const [risks, setRisks] = useState<Risk[]>([])
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
   const [timeLogs, setTimeLogs] = useState<TimeLog[]>([])
+  const [milestones, setMilestones] = useState<Milestone[]>([])
   const [aiText, setAiText] = useState<Record<string, string>>({})
   const [aiLoading, setAiLoading] = useState<Record<string, boolean>>({})
   const [timerSeconds, setTimerSeconds] = useState(0)
@@ -79,19 +81,21 @@ export default function Dashboard() {
   }, [])
 
   const loadData = async (userId: string) => {
-    const [p, t, r, tm, tl, profile] = await Promise.all([
+    const [p, t, r, tm, tl, profile, ms] = await Promise.all([
       supabase.from('projects').select('*').eq('user_id', userId),
       supabase.from('tasks').select('*').eq('user_id', userId),
       supabase.from('risks').select('*').eq('user_id', userId),
       supabase.from('team_members').select('*').eq('user_id', userId),
       supabase.from('time_logs').select('*').eq('user_id', userId).eq('billed', false),
       supabase.from('profiles').select('onboarded').eq('id', userId).single(),
+      supabase.from('milestones').select('*').eq('user_id', userId).order('due_date', { ascending: true }),
     ])
     if (p.data) setProjects(p.data)
     if (t.data) setTasks(t.data)
     if (r.data) setRisks(r.data)
     if (tm.data) setTeamMembers(tm.data)
     if (tl.data) setTimeLogs(tl.data)
+    if (ms.data) setMilestones(ms.data)
     if (profile.data && (profile.data.onboarded === false || profile.data.onboarded === null)) setShowWizard(true)
   }
 
@@ -150,12 +154,13 @@ export default function Dashboard() {
     { id: 'scope', icon: '⊕', label: 'Scope Control', section: null, ai: true },
     { id: 'clients', icon: '◈', label: 'Client Portal', section: null, ai: true },
     { id: 'workload', icon: '⊞', label: 'Workload', section: null, ai: true },
+    { id: 'timeline', icon: '▷', label: 'Timeline', section: null },
     { id: 'billing', icon: '◷', label: 'Time & Billing', section: null },
     { id: 'settings', icon: '⚙', label: 'Settings', section: 'Account' },
   ]
 
-  const pageLabels: Record<string,string> = { dashboard:'Dashboard', projects:'Projects', tasks:'Tasks', planner:'AI Planner', meetings:'Meetings', risks:'Risk Radar', scope:'Scope Control', clients:'Client Portal', workload:'Workload', billing:'Time & Billing', settings:'Settings' }
-  const pageCrumbs: Record<string,string> = { dashboard:'/ Overview', projects:'/ All Projects', tasks:'/ All Tasks', planner:'/ Generate Plan', meetings:'/ Process Notes', risks:'/ Risk Register', scope:'/ Change Log', clients:'/ Email Generator', workload:'/ Capacity', billing:'/ Timer & Invoices', settings:'/ Account' }
+  const pageLabels: Record<string,string> = { dashboard:'Dashboard', projects:'Projects', tasks:'Tasks', planner:'AI Planner', meetings:'Meetings', risks:'Risk Radar', scope:'Scope Control', clients:'Client Portal', workload:'Workload', timeline:'Timeline', billing:'Time & Billing', settings:'Settings' }
+  const pageCrumbs: Record<string,string> = { dashboard:'/ Overview', projects:'/ All Projects', tasks:'/ All Tasks', planner:'/ Generate Plan', meetings:'/ Process Notes', risks:'/ Risk Register', scope:'/ Change Log', clients:'/ Email Generator', workload:'/ Capacity', timeline:'/ Milestones & Gantt', billing:'/ Timer & Invoices', settings:'/ Account' }
 
   return (
     <div style={{ display: 'flex', height: '100vh', background: navy, overflow: 'hidden' }}>
@@ -777,6 +782,18 @@ export default function Dashboard() {
             </div>
           )}
 
+          {/* ═══ TIMELINE ═══ */}
+          {tab === 'timeline' && (
+            <TimelineView
+              projects={projects}
+              tasks={tasks}
+              milestones={milestones}
+              user={user}
+              supabase={supabase}
+              onSaved={() => user && loadData(user.id)}
+            />
+          )}
+
           {/* ═══ AI PLANNER ═══ */}
           {tab === 'planner' && (
             <div>
@@ -1356,6 +1373,276 @@ function SettingsForm({ user, supabase }: any) {
           </div>
         )}
       </div>
+    </div>
+  )
+}
+
+// ─── TIMELINE VIEW ───────────────────────────────────────────────────────────
+
+function TimelineView({ projects, tasks, milestones, user, supabase, onSaved }: any) {
+  const [selectedProjectId, setSelectedProjectId] = useState('')
+  const [showMilestoneForm, setShowMilestoneForm] = useState(false)
+
+  const gold = '#E8B84B'; const goldDim = '#C9993A'; const navy = '#050D1A'
+  const navyCard = 'rgba(16,36,72,0.7)'; const border = 'rgba(201,153,58,0.2)'
+  const borderMd = 'rgba(201,153,58,0.35)'; const textBright = '#E8F0FF'
+  const textMid = '#D8E4F4'; const textDim = 'rgba(192,208,232,0.75)'
+  const whiteFaint = 'rgba(240,246,255,0.55)'
+
+  const project = projects.find((p: Project) => p.id === selectedProjectId) || projects[0]
+  const pid = project?.id
+
+  const projTasks = tasks.filter((t: Task) => t.project_id === pid && t.due_date)
+  const projMilestones = milestones.filter((m: Milestone) => m.project_id === pid)
+
+  // Build timeline date range from project start/end or task dates
+  const allDates = [
+    project?.start_date,
+    project?.end_date,
+    ...projTasks.map((t: Task) => t.due_date),
+    ...projMilestones.map((m: Milestone) => m.due_date),
+  ].filter(Boolean).map((d: string) => new Date(d).getTime())
+
+  const minDate = allDates.length ? Math.min(...allDates) : Date.now()
+  const maxDate = allDates.length ? Math.max(...allDates) : Date.now() + 30 * 86400000
+  const span = Math.max(maxDate - minDate, 7 * 86400000)
+
+  const toPercent = (dateStr: string) => {
+    const t = new Date(dateStr).getTime()
+    return Math.min(100, Math.max(0, ((t - minDate) / span) * 100))
+  }
+
+  const formatDate = (d: string) => new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+  const today = new Date().toISOString().split('T')[0]
+  const todayPct = toPercent(today)
+
+  const statusColor = (status: string) => {
+    if (status === 'done' || status === 'completed') return '#22C990'
+    if (status === 'active' || status === 'in-progress') return '#4DD8F0'
+    if (status === 'blocked') return '#E24B4A'
+    return goldDim
+  }
+
+  const taskBarColor = (t: Task) => {
+    if (t.status === 'done') return 'rgba(34,201,144,0.5)'
+    if (t.status === 'blocked') return 'rgba(226,75,74,0.5)'
+    if (t.status === 'active') return 'rgba(26,171,204,0.5)'
+    if (t.due_date && new Date(t.due_date) < new Date() && t.status !== 'done') return 'rgba(226,75,74,0.35)'
+    return 'rgba(201,153,58,0.35)'
+  }
+  const taskBarBorder = (t: Task) => {
+    if (t.status === 'done') return '#22C990'
+    if (t.status === 'blocked') return '#E24B4A'
+    if (t.status === 'active') return '#4DD8F0'
+    if (t.due_date && new Date(t.due_date) < new Date()) return '#E24B4A'
+    return goldDim
+  }
+
+  if (projects.length === 0) return (
+    <div style={{ textAlign: 'center', padding: '80px 24px' }}>
+      <div style={{ fontSize: '32px', opacity: 0.2, marginBottom: '12px' }}>▷</div>
+      <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '14px', fontWeight: 600, color: textMid, marginBottom: '6px' }}>No projects yet</div>
+      <div style={{ fontSize: '12px', color: textDim }}>Create a project first to view its timeline.</div>
+    </div>
+  )
+
+  return (
+    <div>
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '22px' }}>
+        <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '26px', color: '#F0F6FF' }}>
+          Project <em style={{ color: gold, fontStyle: 'italic' }}>Timeline</em>
+        </div>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <select
+            value={selectedProjectId || pid || ''}
+            onChange={e => setSelectedProjectId(e.target.value)}
+            style={{ background: 'rgba(16,36,72,0.8)', border: `1px solid ${borderMd}`, borderRadius: '3px', padding: '7px 12px', fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: textBright, outline: 'none' }}
+          >
+            {projects.map((p: Project) => <option key={p.id} value={p.id}>{p.name}</option>)}
+          </select>
+          <button
+            style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', fontWeight: 700, letterSpacing: '0.14em', background: `linear-gradient(135deg, ${goldDim}, ${gold})`, color: navy, border: 'none', padding: '8px 16px', borderRadius: '2px', cursor: 'pointer' }}
+            onClick={() => setShowMilestoneForm(f => !f)}
+          >+ Milestone</button>
+        </div>
+      </div>
+
+      {/* Project summary strip */}
+      {project && (
+        <div style={{ background: 'rgba(201,153,58,0.05)', border: `1px solid ${border}`, borderRadius: '4px', padding: '12px 16px', marginBottom: '16px', display: 'flex', gap: '24px', alignItems: 'center' }}>
+          <div>
+            <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600, letterSpacing: '0.18em', color: goldDim, marginBottom: '2px' }}>PROJECT</div>
+            <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '13px', fontWeight: 700, color: textBright }}>{project.name}</div>
+          </div>
+          <div>
+            <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600, letterSpacing: '0.18em', color: goldDim, marginBottom: '2px' }}>CLIENT</div>
+            <div style={{ fontSize: '12px', color: textMid }}>{project.client_name || '—'}</div>
+          </div>
+          <div>
+            <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600, letterSpacing: '0.18em', color: goldDim, marginBottom: '2px' }}>TIMELINE</div>
+            <div style={{ fontSize: '12px', color: textMid }}>{project.start_date || '?'} → {project.end_date || '?'}</div>
+          </div>
+          <div>
+            <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600, letterSpacing: '0.18em', color: goldDim, marginBottom: '2px' }}>HEALTH</div>
+            <div style={{ fontSize: '12px', color: project.health >= 70 ? '#22C990' : project.health >= 40 ? '#FFD080' : '#FF9090' }}>{project.health}%</div>
+          </div>
+          <div>
+            <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600, letterSpacing: '0.18em', color: goldDim, marginBottom: '2px' }}>TASKS</div>
+            <div style={{ fontSize: '12px', color: textMid }}>{projTasks.filter((t: Task) => t.status === 'done').length}/{projTasks.length} done</div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Milestone Form */}
+      {showMilestoneForm && (
+        <div style={{ background: navyCard, border: `1px solid ${borderMd}`, borderRadius: '4px', padding: '16px 18px', marginBottom: '16px' }}>
+          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600, letterSpacing: '0.22em', color: goldDim, marginBottom: '12px' }}>ADD MILESTONE</div>
+          <MilestoneForm user={user} projectId={pid} supabase={supabase} onCreated={() => { onSaved(); setShowMilestoneForm(false) }} />
+        </div>
+      )}
+
+      {/* Date axis header */}
+      <div style={{ background: navyCard, border: `1px solid ${border}`, borderRadius: '4px 4px 0 0', padding: '8px 16px 8px 220px', display: 'flex', justifyContent: 'space-between' }}>
+        {[0, 25, 50, 75, 100].map(pct => {
+          const d = new Date(minDate + (pct / 100) * span)
+          return <span key={pct} style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: goldDim, letterSpacing: '0.08em' }}>{d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>
+        })}
+      </div>
+
+      {/* Timeline canvas */}
+      <div style={{ background: 'rgba(8,20,44,0.6)', border: `1px solid ${border}`, borderTop: 'none', borderRadius: '0 0 4px 4px', padding: '0', overflow: 'hidden' }}>
+
+        {/* Today marker — absolute over the whole canvas */}
+        <div style={{ position: 'relative' }}>
+          <div style={{ position: 'absolute', left: `calc(220px + ${todayPct}% * (100% - 220px) / 100)`, top: 0, bottom: 0, width: '1px', background: 'rgba(232,184,75,0.4)', zIndex: 2, pointerEvents: 'none' }}>
+            <div style={{ position: 'absolute', top: '4px', left: '4px', fontFamily: 'Rajdhani, sans-serif', fontSize: '8px', color: gold, whiteSpace: 'nowrap', letterSpacing: '0.1em' }}>TODAY</div>
+          </div>
+
+          {/* ── MILESTONES SECTION ── */}
+          <div style={{ borderBottom: `1px solid rgba(201,153,58,0.15)`, padding: '10px 0' }}>
+            <div style={{ display: 'flex', alignItems: 'center', padding: '0 16px 8px 16px' }}>
+              <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600, letterSpacing: '0.2em', color: gold }}>MILESTONES</span>
+            </div>
+
+            {projMilestones.length === 0 && (
+              <div style={{ padding: '12px 16px 12px 220px', fontSize: '11px', color: textDim }}>No milestones yet — click + Milestone to add one.</div>
+            )}
+
+            {projMilestones.map((m: Milestone) => {
+              const pct = m.due_date ? toPercent(m.due_date) : 50
+              const isOverdue = m.due_date && new Date(m.due_date) < new Date() && m.status !== 'completed'
+              const dotColor = m.status === 'completed' ? '#22C990' : isOverdue ? '#E24B4A' : gold
+              return (
+                <div key={m.id} style={{ display: 'flex', alignItems: 'center', padding: '6px 16px', position: 'relative', minHeight: '32px' }}>
+                  {/* Label */}
+                  <div style={{ width: '204px', flexShrink: 0, paddingRight: '16px' }}>
+                    <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', fontWeight: 600, color: isOverdue ? '#FF9090' : textMid, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.title}</div>
+                    <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOverdue ? 'rgba(255,144,144,0.7)' : goldDim }}>{m.due_date ? formatDate(m.due_date) : 'No date'}</div>
+                  </div>
+                  {/* Track */}
+                  <div style={{ flex: 1, position: 'relative', height: '2px', background: 'rgba(255,255,255,0.05)', borderRadius: '1px' }}>
+                    {/* Dot on track */}
+                    <div style={{ position: 'absolute', left: `${pct}%`, top: '50%', transform: 'translate(-50%, -50%)', width: '12px', height: '12px', borderRadius: '50%', background: dotColor, border: `2px solid ${navy}`, boxShadow: `0 0 6px ${dotColor}`, zIndex: 3 }}/>
+                    {/* Vertical tick */}
+                    <div style={{ position: 'absolute', left: `${pct}%`, top: '-8px', height: '18px', width: '1px', background: `${dotColor}55` }}/>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* ── TASKS GANTT SECTION ── */}
+          <div style={{ padding: '10px 0' }}>
+            <div style={{ display: 'flex', alignItems: 'center', padding: '0 16px 8px 16px' }}>
+              <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600, letterSpacing: '0.2em', color: '#4DD8F0' }}>TASKS</span>
+            </div>
+
+            {projTasks.length === 0 && (
+              <div style={{ padding: '12px 16px 12px 220px', fontSize: '11px', color: textDim }}>No tasks with due dates. Add due dates to tasks to see them here.</div>
+            )}
+
+            {projTasks.map((t: Task) => {
+              const endPct = toPercent(t.due_date!)
+              const startPct = Math.max(0, endPct - 8)
+              const barWidth = Math.max(1.5, endPct - startPct)
+              const isOverdue = t.due_date && new Date(t.due_date) < new Date() && t.status !== 'done'
+              return (
+                <div key={t.id} style={{ display: 'flex', alignItems: 'center', padding: '5px 16px', minHeight: '30px' }}>
+                  {/* Label */}
+                  <div style={{ width: '204px', flexShrink: 0, paddingRight: '16px' }}>
+                    <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', fontWeight: 500, color: isOverdue ? '#FF9090' : textMid, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.name}</div>
+                    <div style={{ display: 'flex', gap: '5px', marginTop: '2px' }}>
+                      <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '8px', padding: '1px 4px', borderRadius: '2px', background: t.status === 'done' ? 'rgba(34,201,144,0.12)' : t.status === 'active' ? 'rgba(26,171,204,0.12)' : t.status === 'blocked' ? 'rgba(226,75,74,0.12)' : 'rgba(255,255,255,0.05)', color: t.status === 'done' ? '#4DFFB4' : t.status === 'active' ? '#4DD8F0' : t.status === 'blocked' ? '#FF9090' : whiteFaint }}>{t.status}</span>
+                      {t.owner && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '8px', color: goldDim }}>{t.owner}</span>}
+                    </div>
+                  </div>
+                  {/* Track + bar */}
+                  <div style={{ flex: 1, position: 'relative', height: '20px' }}>
+                    <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: '1px', background: 'rgba(255,255,255,0.04)', transform: 'translateY(-50%)' }}/>
+                    <div style={{ position: 'absolute', left: `${startPct}%`, width: `${barWidth}%`, top: '3px', height: '14px', background: taskBarColor(t), border: `1px solid ${taskBarBorder(t)}`, borderRadius: '2px', minWidth: '6px' }}>
+                      {barWidth > 8 && <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '8px', color: textBright, padding: '2px 4px', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{t.due_date ? formatDate(t.due_date) : ''}</div>}
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Legend */}
+          <div style={{ borderTop: `1px solid rgba(201,153,58,0.1)`, padding: '10px 16px', display: 'flex', gap: '16px', alignItems: 'center' }}>
+            {[
+              { color: '#22C990', label: 'Done' },
+              { color: '#4DD8F0', label: 'Active' },
+              { color: goldDim, label: 'To do' },
+              { color: '#E24B4A', label: 'Blocked / Overdue' },
+            ].map(l => (
+              <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <div style={{ width: '10px', height: '10px', borderRadius: '2px', background: l.color, opacity: 0.7 }}/>
+                <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: textDim }}>{l.label}</span>
+              </div>
+            ))}
+            <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <div style={{ width: '12px', height: '1px', background: 'rgba(232,184,75,0.5)' }}/>
+              <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: goldDim }}>Today</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function MilestoneForm({ user, projectId, supabase, onCreated }: any) {
+  const [title, setTitle] = useState('')
+  const [dueDate, setDueDate] = useState('')
+  const [status, setStatus] = useState('pending')
+
+  const gold = '#E8B84B'; const goldDim = '#C9993A'; const navy = '#050D1A'
+  const border = 'rgba(201,153,58,0.2)'; const borderMd = 'rgba(201,153,58,0.35)'
+  const textBright = '#E8F0FF'
+  const s_input = { width: '100%', background: 'rgba(16,36,72,0.8)', border: `1px solid ${border}`, borderRadius: '3px', padding: '9px 12px', fontFamily: 'DM Sans, sans-serif', fontSize: '12px', color: textBright, outline: 'none' }
+  const s_label = { fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase' as const, color: goldDim, marginBottom: '5px' }
+
+  const submit = async () => {
+    if (!title || !projectId || !user) return
+    await supabase.from('milestones').insert({ user_id: user.id, project_id: projectId, title, due_date: dueDate || null, status })
+    setTitle(''); setDueDate(''); setStatus('pending')
+    onCreated()
+  }
+
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: '10px', alignItems: 'flex-end' }}>
+      <div><div style={s_label}>Milestone Name</div><input style={s_input} value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. MVP Launch, Client Sign-off"/></div>
+      <div><div style={s_label}>Due Date</div><input style={s_input} value={dueDate} onChange={e => setDueDate(e.target.value)} type="date"/></div>
+      <div><div style={s_label}>Status</div>
+        <select style={s_input} value={status} onChange={e => setStatus(e.target.value)}>
+          <option value="pending">Pending</option>
+          <option value="in-progress">In Progress</option>
+          <option value="completed">Completed</option>
+        </select>
+      </div>
+      <button style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', fontWeight: 700, letterSpacing: '0.14em', background: `linear-gradient(135deg, ${goldDim}, ${gold})`, color: navy, border: 'none', padding: '9px 16px', borderRadius: '2px', cursor: 'pointer', whiteSpace: 'nowrap' as const }} onClick={submit}>Add →</button>
     </div>
   )
 }
