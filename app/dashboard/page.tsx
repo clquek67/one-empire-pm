@@ -69,6 +69,8 @@ export default function Dashboard() {
   const [timerSeconds, setTimerSeconds] = useState(0)
   const [timerRunning, setTimerRunning] = useState(false)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const [showWizard, setShowWizard] = useState(false)
+  const [wizardStep, setWizardStep] = useState(0)
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -77,18 +79,27 @@ export default function Dashboard() {
   }, [])
 
   const loadData = async (userId: string) => {
-    const [p, t, r, tm, tl] = await Promise.all([
+    const [p, t, r, tm, tl, profile] = await Promise.all([
       supabase.from('projects').select('*').eq('user_id', userId),
       supabase.from('tasks').select('*').eq('user_id', userId),
       supabase.from('risks').select('*').eq('user_id', userId),
       supabase.from('team_members').select('*').eq('user_id', userId),
       supabase.from('time_logs').select('*').eq('user_id', userId).eq('billed', false),
+      supabase.from('profiles').select('onboarded').eq('id', userId).single(),
     ])
     if (p.data) setProjects(p.data)
     if (t.data) setTasks(t.data)
     if (r.data) setRisks(r.data)
     if (tm.data) setTeamMembers(tm.data)
     if (tl.data) setTimeLogs(tl.data)
+    if (profile.data && !profile.data.onboarded) setShowWizard(true)
+  }
+
+  const completeOnboarding = async () => {
+    if (!user) return
+    await supabase.from('profiles').update({ onboarded: true }).eq('id', user.id)
+    setShowWizard(false)
+    setWizardStep(0)
   }
 
   const ai = async (key: string, system: string, content: string) => {
@@ -310,7 +321,12 @@ export default function Dashboard() {
                         <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: whiteFaint }}>{t.owner}</span>
                       </div>
                     ))}
-                    {tasks.length === 0 && <div style={{ color: textDim, fontSize: '12px' }}>No tasks yet — add one in the Tasks tab</div>}
+                    {tasks.length === 0 && (
+                      <div style={{ textAlign: 'center', padding: '20px 16px' }}>
+                        <div style={{ fontSize: '11px', color: textDim, marginBottom: '10px' }}>No tasks yet. Break your project into actions.</div>
+                        <button style={{ ...s.btnGhost, fontSize: '10px', padding: '6px 12px' }} onClick={() => setTab('tasks')}>+ Add First Task</button>
+                      </div>
+                    )}
                   </div>
                   <div style={s.card}>
                     <div style={s.sectionTitle}>Project Health</div>
@@ -325,7 +341,12 @@ export default function Dashboard() {
                         </div>
                       </div>
                     ))}
-                    {projects.length === 0 && <div style={{ color: textDim, fontSize: '12px' }}>No projects yet — create one in the Projects tab</div>}
+                    {projects.length === 0 && (
+                      <div style={{ textAlign: 'center', padding: '20px 16px' }}>
+                        <div style={{ fontSize: '11px', color: textDim, marginBottom: '10px' }}>No projects yet. Everything starts with a project.</div>
+                        <button style={{ ...s.btnGold, fontSize: '10px', padding: '6px 12px' }} onClick={() => setTab('projects')}>+ Create First Project</button>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div>
@@ -337,7 +358,14 @@ export default function Dashboard() {
                         <div style={{ fontSize: '11px', color: textDim }}>{r.description}</div>
                       </div>
                     ))}
-                    {risks.length === 0 && <div style={{ color: textDim, fontSize: '12px' }}>No risks logged yet</div>}
+                    {risks.length === 0 && (
+                      <div style={{ textAlign: 'center', padding: '28px 16px' }}>
+                        <div style={{ fontSize: '22px', marginBottom: '8px', opacity: 0.3 }}>⚠</div>
+                        <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '12px', fontWeight: 600, color: textMid, marginBottom: '4px' }}>No risks logged</div>
+                        <div style={{ fontSize: '11px', color: textDim, marginBottom: '14px' }}>Every project has risks. Log them early — the AI will help you manage them.</div>
+                        <button style={{ ...s.btnGold, fontSize: '10px', padding: '7px 14px' }} onClick={() => {}}>Log First Risk →</button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -375,7 +403,13 @@ export default function Dashboard() {
                         </div>
                       </div>
                     ))}
-                    {projects.length === 0 && <div style={{ color: textDim, fontSize: '12px' }}>No projects yet</div>}
+                    {projects.length === 0 && (
+                      <div style={{ textAlign: 'center', padding: '28px 16px' }}>
+                        <div style={{ fontSize: '22px', marginBottom: '8px', opacity: 0.3 }}>◻</div>
+                        <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '12px', fontWeight: 600, color: textMid, marginBottom: '4px' }}>No projects yet</div>
+                        <div style={{ fontSize: '11px', color: textDim }}>Create your first project on the left to get started.</div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -401,7 +435,13 @@ export default function Dashboard() {
                       </div>
                     </div>
                   ))}
-                  {teamMembers.length === 0 && <div style={{ color: textDim, fontSize: '12px' }}>No team members yet</div>}
+                  {teamMembers.length === 0 && (
+                    <div style={{ textAlign: 'center', padding: '28px 16px' }}>
+                      <div style={{ fontSize: '22px', marginBottom: '8px', opacity: 0.3 }}>⊞</div>
+                      <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '12px', fontWeight: 600, color: textMid, marginBottom: '4px' }}>No team members yet</div>
+                      <div style={{ fontSize: '11px', color: textDim }}>Add your first team member above — they'll appear in workload and task assignment.</div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -428,7 +468,13 @@ export default function Dashboard() {
                       <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: whiteFaint }}>{t.owner}</span>
                     </div>
                   ))}
-                  {tasks.length === 0 && <div style={{ color: textDim, fontSize: '12px' }}>No tasks yet</div>}
+                  {tasks.length === 0 && (
+                    <div style={{ textAlign: 'center', padding: '28px 16px' }}>
+                      <div style={{ fontSize: '22px', marginBottom: '8px', opacity: 0.3 }}>✓</div>
+                      <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '12px', fontWeight: 600, color: textMid, marginBottom: '4px' }}>No tasks yet</div>
+                      <div style={{ fontSize: '11px', color: textDim, marginBottom: '14px' }}>Tasks keep your project moving. Add your first one to the left.</div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -551,7 +597,14 @@ export default function Dashboard() {
                       <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: whiteFaint, width: '80px', textAlign: 'right' }}>{m.capacity}% · {m.capacity > 80 ? 'Busy' : 'Available'}</span>
                     </div>
                   ))}
-                  {teamMembers.length === 0 && <div style={{ color: textDim, fontSize: '12px' }}>Add team members in the Projects tab</div>}
+                  {teamMembers.length === 0 && (
+                    <div style={{ textAlign: 'center', padding: '28px 16px' }}>
+                      <div style={{ fontSize: '22px', marginBottom: '8px', opacity: 0.3 }}>⊞</div>
+                      <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '12px', fontWeight: 600, color: textMid, marginBottom: '6px' }}>No team members yet</div>
+                      <div style={{ fontSize: '11px', color: textDim, marginBottom: '14px' }}>Add people in the Projects tab to start tracking workload and capacity.</div>
+                      <button style={{ ...s.btnGhost, fontSize: '10px', padding: '7px 14px' }} onClick={() => setTab('projects')}>Go to Projects →</button>
+                    </div>
+                  )}
                 </div>
                 <div style={s.card}>
                   <div style={s.sectionTitle}>✦ AI Rebalancing</div>
@@ -681,7 +734,88 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}`}</style>
+      <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}} @keyframes wizardIn{from{opacity:0;transform:scale(0.97)}to{opacity:1;transform:scale(1)}}`}</style>
+
+      {/* ═══ ONBOARDING WIZARD ═══ */}
+      {showWizard && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(5,13,26,0.92)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+          <div style={{ background: 'rgba(10,24,52,0.98)', border: `1px solid ${borderMd}`, borderRadius: '8px', width: '100%', maxWidth: '560px', padding: '36px 40px', animation: 'wizardIn 0.25s ease', position: 'relative' }}>
+
+            {/* Skip */}
+            <button onClick={completeOnboarding} style={{ position: 'absolute', top: '16px', right: '20px', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: 'rgba(255,255,255,0.25)', letterSpacing: '0.1em' }}>SKIP SETUP</button>
+
+            {/* Step dots */}
+            <div style={{ display: 'flex', gap: '6px', marginBottom: '28px' }}>
+              {[0,1,2,3].map(i => (
+                <div key={i} style={{ width: i === wizardStep ? '20px' : '6px', height: '6px', borderRadius: '3px', background: i === wizardStep ? gold : i < wizardStep ? goldDim : 'rgba(255,255,255,0.12)', transition: 'all 0.3s' }}/>
+              ))}
+            </div>
+
+            {/* Step 0 — Welcome */}
+            {wizardStep === 0 && (
+              <div>
+                <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '28px', color: textBright, marginBottom: '8px' }}>Welcome to <em style={{ color: gold }}>Empire PM</em></div>
+                <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: textDim, letterSpacing: '0.08em', marginBottom: '24px' }}>Your AI-powered command centre. Let's set it up in 3 quick steps.</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '28px' }}>
+                  {[
+                    { icon: '◻', title: 'Create your first project', desc: 'Set up a client project with timeline and budget' },
+                    { icon: '✓', title: 'Add a task', desc: 'Break your project into actionable tasks' },
+                    { icon: '⊞', title: 'Add a team member', desc: 'Bring in your first collaborator or client contact' },
+                  ].map((item, i) => (
+                    <div key={i} style={{ display: 'flex', gap: '14px', alignItems: 'flex-start', padding: '12px 14px', background: 'rgba(201,153,58,0.04)', border: `1px solid ${border}`, borderRadius: '4px' }}>
+                      <span style={{ fontSize: '16px', color: gold, flexShrink: 0, marginTop: '1px' }}>{item.icon}</span>
+                      <div>
+                        <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '12px', fontWeight: 600, color: textBright, marginBottom: '2px' }}>{item.title}</div>
+                        <div style={{ fontSize: '11px', color: textDim }}>{item.desc}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <button style={{ ...s.btnGold, width: '100%', padding: '11px' }} onClick={() => setWizardStep(1)}>Let's Begin →</button>
+              </div>
+            )}
+
+            {/* Step 1 — Create Project */}
+            {wizardStep === 1 && (
+              <div>
+                <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '22px', color: textBright, marginBottom: '4px' }}>Create your <em style={{ color: gold }}>first project</em></div>
+                <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: textDim, letterSpacing: '0.1em', marginBottom: '20px' }}>STEP 1 OF 3 — Everything in Empire PM lives inside a project</div>
+                <ProjectForm user={user} onCreated={() => { if (user) loadData(user.id); setWizardStep(2) }} supabase={supabase} />
+                <button style={{ ...s.btnGhost, width: '100%', marginTop: '10px', padding: '9px' }} onClick={() => setWizardStep(2)}>Skip this step →</button>
+              </div>
+            )}
+
+            {/* Step 2 — Add Task */}
+            {wizardStep === 2 && (
+              <div>
+                <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '22px', color: textBright, marginBottom: '4px' }}>Add your <em style={{ color: gold }}>first task</em></div>
+                <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: textDim, letterSpacing: '0.1em', marginBottom: '20px' }}>STEP 2 OF 3 — Tasks keep your project moving forward</div>
+                {projects.length === 0 ? (
+                  <div style={{ fontSize: '12px', color: textDim, padding: '16px', textAlign: 'center' }}>No project created yet — go back and create one first, or skip.</div>
+                ) : (
+                  <TaskForm user={user} projects={projects} teamMembers={teamMembers} onCreated={() => { if (user) loadData(user.id); setWizardStep(3) }} supabase={supabase} />
+                )}
+                <button style={{ ...s.btnGhost, width: '100%', marginTop: '10px', padding: '9px' }} onClick={() => setWizardStep(3)}>Skip this step →</button>
+              </div>
+            )}
+
+            {/* Step 3 — Add Team Member */}
+            {wizardStep === 3 && (
+              <div>
+                <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '22px', color: textBright, marginBottom: '4px' }}>Add a <em style={{ color: gold }}>team member</em></div>
+                <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: textDim, letterSpacing: '0.1em', marginBottom: '20px' }}>STEP 3 OF 3 — Solo? You can always add people later</div>
+                {projects.length === 0 ? (
+                  <div style={{ fontSize: '12px', color: textDim, padding: '16px', textAlign: 'center' }}>Create a project first to assign team members to it.</div>
+                ) : (
+                  <TeamMemberForm user={user} projects={projects} onCreated={() => { if (user) loadData(user.id) }} supabase={supabase} />
+                )}
+                <button style={{ ...s.btnGold, width: '100%', marginTop: '14px', padding: '11px' }} onClick={completeOnboarding}>Enter Empire PM →</button>
+              </div>
+            )}
+
+          </div>
+        </div>
+      )}
     </div>
   )
 }
