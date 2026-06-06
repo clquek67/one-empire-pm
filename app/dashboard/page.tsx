@@ -304,7 +304,7 @@ Proceed and set this task to active anyway?`)
   const pageCrumbs: Record<string,string> = { dashboard:'/ Overview', projects:'/ All Projects', tasks:'/ All Tasks', planner:'/ Generate Plan', meetings:'/ Process Notes', risks:'/ Risk Register', scope:'/ Change Log', clients:'/ Email Generator', workload:'/ Capacity', timeline:'/ Milestones & Gantt', reports:'/ Project Report', billing:'/ Timer & Invoices', settings:'/ Account' }
 
   return (
-    <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', height: '100vh', background: navy, overflow: 'hidden' }} onClick={() => setShowNotifications(false)}>
+    <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', height: '100dvh', width: '100vw', background: navy, overflow: 'hidden' }} onClick={() => setShowNotifications(false)}>
 
       {/* Circuit BG */}
       <svg style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', opacity: 0.1, pointerEvents: 'none', zIndex: 0 }}
@@ -322,10 +322,10 @@ Proceed and set this task to active anyway?`)
         </g>
       </svg>
 
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden', position: 'relative', zIndex: 1 }}>
+      <div style={{ display: 'flex', flex: 1, flexDirection: isMobile ? 'column' : 'row', overflow: 'hidden', position: 'relative', zIndex: 1 }}>
 
         {/* SIDEBAR */}
-        <aside style={{ width: isMobile ? '100%' : '220px', height: isMobile ? 'auto' : '100%', flexShrink: 0, background: 'rgba(8,20,40,0.95)', borderRight: isMobile ? 'none' : `1px solid ${border}`, borderBottom: isMobile ? `1px solid ${border}` : 'none', display: 'flex', flexDirection: isMobile ? 'row' : 'column', overflowX: isMobile ? 'auto' : 'hidden', overflowY: isMobile ? 'hidden' : 'auto', zIndex: 10 }}>
+        <aside style={{ width: '100%', maxWidth: isMobile ? '100%' : '220px', flexShrink: 0, flexGrow: 0, background: 'rgba(8,20,40,0.95)', borderRight: isMobile ? 'none' : `1px solid ${border}`, borderBottom: isMobile ? `1px solid rgba(201,153,58,0.2)` : 'none', display: 'flex', flexDirection: isMobile ? 'row' : 'column', overflowX: isMobile ? 'auto' : 'hidden', overflowY: isMobile ? 'hidden' : 'auto', zIndex: 10, height: isMobile ? 'auto' : '100%' }}>
           {/* Logo */}
           {!isMobile && (<div style={{ padding: '18px 16px', borderBottom: `1px solid rgba(201,153,58,0.12)`, display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
             <div style={{ width: '30px', height: '30px', background: 'rgba(201,153,58,0.1)', border: `1px solid rgba(201,153,58,0.35)`, borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -394,7 +394,7 @@ Proceed and set this task to active anyway?`)
         </aside>
 
         {/* MAIN */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0, minWidth: 0 }}>
           {/* Topbar */}
           <div className="empire-topbar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', height: '52px', background: 'rgba(8,20,40,0.95)', borderBottom: `1px solid rgba(201,153,58,0.12)`, flexShrink: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -457,7 +457,7 @@ Proceed and set this task to active anyway?`)
               <button style={{ ...s.btnGold, fontSize: '10px', padding: '5px 14px' }} onClick={() => setTab('projects')}>+ New Project</button>
             </div>
           </div>
-        <main style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '16px 14px' : '24px 28px', minHeight: 0 }}>
+        <main style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: isMobile ? '16px 14px' : '24px 28px', minHeight: 0, WebkitOverflowScrolling: 'touch' } as any}>
 
           {/* ═══ DASHBOARD ═══ */}
           {tab === 'dashboard' && (
