@@ -78,6 +78,15 @@ export default function Dashboard() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const [showWizard, setShowWizard] = useState(false)
   const [wizardStep, setWizardStep] = useState(0)
+  const [isMobile, setIsMobile] = useState(false)
+  const [showMobileMenu, setShowMobileMenu] = useState(false)
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth <= 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
   const [showNotifications, setShowNotifications] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editFields, setEditFields] = useState<Record<string, any>>({})
@@ -295,7 +304,7 @@ Proceed and set this task to active anyway?`)
   const pageCrumbs: Record<string,string> = { dashboard:'/ Overview', projects:'/ All Projects', tasks:'/ All Tasks', planner:'/ Generate Plan', meetings:'/ Process Notes', risks:'/ Risk Register', scope:'/ Change Log', clients:'/ Email Generator', workload:'/ Capacity', timeline:'/ Milestones & Gantt', reports:'/ Project Report', billing:'/ Timer & Invoices', settings:'/ Account' }
 
   return (
-    <div className="empire-layout" style={{ display: 'flex', height: '100vh', background: navy, overflow: 'hidden' }} onClick={() => setShowNotifications(false)}>
+    <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', height: '100vh', background: navy, overflow: 'hidden' }} onClick={() => setShowNotifications(false)}>
 
       {/* Circuit BG */}
       <svg style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', opacity: 0.1, pointerEvents: 'none', zIndex: 0 }}
@@ -316,9 +325,9 @@ Proceed and set this task to active anyway?`)
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden', position: 'relative', zIndex: 1 }}>
 
         {/* SIDEBAR */}
-        <aside className="empire-sidebar" style={{ width: '220px', flexShrink: 0, background: 'rgba(8,20,40,0.95)', borderRight: `1px solid ${border}`, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <aside style={{ width: isMobile ? '100%' : '220px', height: isMobile ? 'auto' : '100%', flexShrink: 0, background: 'rgba(8,20,40,0.95)', borderRight: isMobile ? 'none' : `1px solid ${border}`, borderBottom: isMobile ? `1px solid ${border}` : 'none', display: 'flex', flexDirection: isMobile ? 'row' : 'column', overflowX: isMobile ? 'auto' : 'hidden', overflowY: isMobile ? 'hidden' : 'auto', zIndex: 10 }}>
           {/* Logo */}
-          <div style={{ padding: '18px 16px', borderBottom: `1px solid rgba(201,153,58,0.12)`, display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+          {!isMobile && <div style={{ padding: '18px 16px', borderBottom: `1px solid rgba(201,153,58,0.12)`, display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>}
             <div style={{ width: '30px', height: '30px', background: 'rgba(201,153,58,0.1)', border: `1px solid rgba(201,153,58,0.35)`, borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
   <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
     <polygon points="10,1 1,16 4,13 10,18 16,13 19,16" stroke="#E8B84B" strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round"/>
@@ -332,27 +341,29 @@ Proceed and set this task to active anyway?`)
               <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '12px', fontWeight: 700, letterSpacing: '1.5px', color: gold, textTransform: 'uppercase' as const }}>Empire PM</div>
               <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(255,255,255,0.25)', letterSpacing: '0.5px' }}>One Empire</div>
             </div>
-          </div>
+          </div>}
           {/* Nav */}
-          <nav style={{ flex: 1, padding: '8px 10px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1px' }}>
+          <nav style={{ flex: isMobile ? 'none' : 1, padding: isMobile ? '6px 8px' : '8px 10px', overflowY: isMobile ? 'hidden' : 'auto', overflowX: isMobile ? 'auto' : 'hidden', display: 'flex', flexDirection: isMobile ? 'row' : 'column', gap: isMobile ? '2px' : '1px', alignItems: isMobile ? 'flex-start' : 'stretch' }}>
             {navItems.map((item, i) => (
               <div key={item.id}>
-                {item.section && (
+                {item.section && !isMobile && (
                   <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '8px', fontWeight: 600, letterSpacing: '0.22em', textTransform: 'uppercase' as const, color: 'rgba(201,153,58,0.4)', padding: '12px 8px 3px', marginTop: i > 0 ? '4px' : 0 }}>
                     {item.section}
                   </div>
                 )}
-                <div onClick={() => setTab(item.id)} style={{
-                  display: 'flex', alignItems: 'center', gap: '9px', padding: '8px 10px',
-                  borderRadius: '3px', fontFamily: 'Rajdhani, sans-serif', fontSize: '12px',
-                  fontWeight: 500, letterSpacing: '0.06em', cursor: 'pointer',
-                  borderLeft: tab === item.id ? `2px solid ${gold}` : '2px solid transparent',
+                <div onClick={() => { setTab(item.id) }} style={{
+                  display: 'flex', alignItems: 'center', gap: isMobile ? '2px' : '9px',
+                  padding: isMobile ? '8px 8px' : '8px 10px', flexDirection: isMobile ? 'column' : 'row',
+                  borderRadius: '4px', fontFamily: 'Rajdhani, sans-serif', fontSize: '12px',
+                  fontWeight: 500, letterSpacing: '0.06em', cursor: 'pointer', flexShrink: 0,
+                  borderLeft: isMobile ? 'none' : (tab === item.id ? `2px solid ${gold}` : '2px solid transparent'),
+                  borderBottom: isMobile ? (tab === item.id ? `2px solid ${gold}` : '2px solid transparent') : 'none',
                   transition: 'all 0.15s',
                   background: tab === item.id ? 'rgba(201,153,58,0.08)' : 'transparent',
                   color: tab === item.id ? gold : (item as any).gold ? 'rgba(232,184,75,0.8)' : 'rgba(216,228,244,0.8)',
                 }}>
-                  <span style={{ fontSize: '14px', flexShrink: 0, opacity: tab === item.id ? 1 : 0.85 }}>{item.icon}</span>
-                  <span style={{ flex: 1 }}>{item.label}</span>
+                  <span style={{ fontSize: isMobile ? '16px' : '14px', flexShrink: 0, opacity: tab === item.id ? 1 : 0.85 }}>{item.icon}</span>
+                  <span style={{ flex: isMobile ? 'unset' : 1, fontSize: isMobile ? '7px' : 'inherit', letterSpacing: isMobile ? '0.05em' : '0.06em' }}>{item.label}</span>
                   {(item as any).ai && !item.badge && (
                     <span style={{ fontSize: '8px', padding: '1px 5px', borderRadius: '8px', background: 'rgba(201,153,58,0.1)', color: 'rgba(201,168,80,0.85)', fontWeight: 600, letterSpacing: '0.3px' }}>AI</span>
                   )}
@@ -366,7 +377,7 @@ Proceed and set this task to active anyway?`)
             ))}
           </nav>
           {/* User footer */}
-          <div style={{ padding: '12px 14px', borderTop: `1px solid rgba(201,153,58,0.12)`, display: 'flex', alignItems: 'center', gap: '9px', flexShrink: 0 }}>
+          {!isMobile && <div style={{ padding: '12px 14px', borderTop: `1px solid rgba(201,153,58,0.12)`, display: 'flex', alignItems: 'center', gap: '9px', flexShrink: 0 }}>}
             {user?.user_metadata?.avatar_url ? (
               <img src={user.user_metadata.avatar_url} style={{ width: '28px', height: '28px', borderRadius: '50%', border: `1px solid rgba(201,153,58,0.3)`, flexShrink: 0 }} alt="avatar"/>
             ) : (
@@ -379,11 +390,11 @@ Proceed and set this task to active anyway?`)
               <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(201,153,58,0.5)' }}>One Empire</div>
             </div>
             <button onClick={signOut} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.25)', fontSize: '14px', padding: '2px', flexShrink: 0 }} title="Sign Out">⏻</button>
-          </div>
+          </div>}
         </aside>
 
         {/* MAIN */}
-        <div className="empire-main" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
           {/* Topbar */}
           <div className="empire-topbar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', height: '52px', background: 'rgba(8,20,40,0.95)', borderBottom: `1px solid rgba(201,153,58,0.12)`, flexShrink: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -446,7 +457,7 @@ Proceed and set this task to active anyway?`)
               <button style={{ ...s.btnGold, fontSize: '10px', padding: '5px 14px' }} onClick={() => setTab('projects')}>+ New Project</button>
             </div>
           </div>
-        <main className="empire-content" style={{ flex: 1, overflowY: 'auto', padding: '24px 28px' }}>
+        <main style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '16px 14px' : '24px 28px', minHeight: 0 }}>
 
           {/* ═══ DASHBOARD ═══ */}
           {tab === 'dashboard' && (
