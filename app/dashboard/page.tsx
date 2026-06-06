@@ -352,8 +352,8 @@ Proceed and set this task to active anyway?`)
                   </div>
                 )}
                 <div onClick={() => { setTab(item.id) }} style={{
-                  display: 'flex', alignItems: 'center', gap: isMobile ? '2px' : '9px',
-                  padding: isMobile ? '8px 8px' : '8px 10px', flexDirection: isMobile ? 'column' : 'row',
+                  display: 'flex', alignItems: 'center', gap: isMobile ? '1px' : '9px',
+                  padding: isMobile ? '6px 6px' : '8px 10px', flexDirection: isMobile ? 'column' : 'row',
                   borderRadius: '4px', fontFamily: 'Rajdhani, sans-serif', fontSize: '12px',
                   fontWeight: 500, letterSpacing: '0.06em', cursor: 'pointer', flexShrink: 0,
                   borderLeft: isMobile ? 'none' : (tab === item.id ? `2px solid ${gold}` : '2px solid transparent'),
@@ -361,9 +361,10 @@ Proceed and set this task to active anyway?`)
                   transition: 'all 0.15s',
                   background: tab === item.id ? 'rgba(201,153,58,0.08)' : 'transparent',
                   color: tab === item.id ? gold : (item as any).gold ? 'rgba(232,184,75,0.8)' : 'rgba(216,228,244,0.8)',
+                  minWidth: isMobile ? '44px' : 'auto', textAlign: 'center' as const,
                 }}>
-                  <span style={{ fontSize: isMobile ? '16px' : '14px', flexShrink: 0, opacity: tab === item.id ? 1 : 0.85 }}>{item.icon}</span>
-                  <span style={{ flex: isMobile ? 'unset' : 1, fontSize: isMobile ? '7px' : 'inherit', letterSpacing: isMobile ? '0.05em' : '0.06em' }}>{item.label}</span>
+                  <span style={{ fontSize: isMobile ? '14px' : '14px', flexShrink: 0, opacity: tab === item.id ? 1 : 0.85 }}>{item.icon}</span>
+                  <span style={{ flex: isMobile ? 'unset' : 1, fontSize: isMobile ? '6px' : 'inherit', letterSpacing: isMobile ? '0.03em' : '0.06em' }}>{item.label}</span>
                   {(item as any).ai && !item.badge && (
                     <span style={{ fontSize: '8px', padding: '1px 5px', borderRadius: '8px', background: 'rgba(201,153,58,0.1)', color: 'rgba(201,168,80,0.85)', fontWeight: 600, letterSpacing: '0.3px' }}>AI</span>
                   )}
@@ -478,7 +479,7 @@ Proceed and set this task to active anyway?`)
               </div>
 
               {/* Metrics */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '10px', marginBottom: '20px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap: '10px', marginBottom: '20px' }}>
                 {[
                   { label: 'Active Projects', val: activeProjects, color: textBright },
                   { label: 'Active Tasks', val: activeTasks, color: '#4DD8F0' },
@@ -504,7 +505,7 @@ Proceed and set this task to active anyway?`)
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '14px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.5fr 1fr', gap: '14px' }}>
                 <div>
                   <div style={s.card}>
                     <div style={s.sectionTitle}>Recent Tasks <span style={{ fontSize: '9px', color: gold, cursor: 'pointer', fontWeight: 400 }} onClick={() => setTab('tasks')}>View all →</span></div>
@@ -591,7 +592,7 @@ Proceed and set this task to active anyway?`)
                   <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: whiteFaint, marginTop: '5px' }}>Manage projects and team members</div>
                 </div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '14px' }}>
                 <div>
                   <div style={s.card}>
                     <div style={s.sectionTitle}>Create New Project</div>
@@ -616,7 +617,7 @@ Proceed and set this task to active anyway?`)
                           </div>
                         </div>
                         {editingId === p.id ? (
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginTop: '6px', marginBottom: '8px' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '6px', marginTop: '6px', marginBottom: '8px' }}>
                             <div style={{ gridColumn: '1/-1' }}>{inlineInput('name', 'Project name')}</div>
                             {inlineInput('client_name', 'Client name')}
                             {inlineSelect('status', ['active','on-hold','completed'])}
@@ -659,7 +660,7 @@ Proceed and set this task to active anyway?`)
                 </div>
               </div>
               {/* Team Members */}
-              <div style={{ marginTop: '14px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+              <div style={{ marginTop: '14px', display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '14px' }}>
                 <div style={s.card}>
                   <div style={s.sectionTitle}>Add Team Member</div>
                   <TeamMemberForm user={user} projects={projects} onCreated={() => user && loadData(user.id)} supabase={supabase} />
@@ -704,10 +705,10 @@ Proceed and set this task to active anyway?`)
               <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '26px', color: '#F0F6FF', marginBottom: '22px' }}>
                 Task <em style={{ color: gold, fontStyle: 'italic' }}>Manager</em>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '14px' }}>
                 <div style={s.card}>
                   <div style={s.sectionTitle}>Add New Task</div>
-                  <TaskForm user={user} projects={projects} teamMembers={teamMembers} tasks={tasks} onCreated={() => user && loadData(user.id)} supabase={supabase} />
+                  <TaskForm user={user} projects={projects} teamMembers={teamMembers} tasks={tasks} onCreated={() => user && loadData(user.id)} supabase={supabase} isMobile={isMobile} />
                 </div>
                 <div style={s.card}>
                   <div style={s.sectionTitle}>All Tasks</div>
@@ -726,7 +727,7 @@ Proceed and set this task to active anyway?`)
                         {deleteBtn('tasks', t.id)}
                       </div>
                       {editingId === t.id ? (
-                        <div style={{ marginTop: '8px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+                        <div style={{ marginTop: '8px', display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '6px' }}>
                           <div style={{ gridColumn: '1/-1' }}>{inlineInput('name', 'Task name')}</div>
                           {inlineSelect('status', ['todo','active','blocked','done'])}
                           {inlineSelect('priority', ['high','medium','low'])}
@@ -805,7 +806,7 @@ Proceed and set this task to active anyway?`)
                   )
                 }}>✦ AI Risk Scan</button>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '14px' }}>
                 <div>
                   <div style={s.card}>
                     <div style={s.sectionTitle}>Log New Risk</div>
@@ -831,7 +832,7 @@ Proceed and set this task to active anyway?`)
                           </div>
                         </div>
                         {editingId === r.id ? (
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginTop: '6px' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '6px', marginTop: '6px' }}>
                             <div style={{ gridColumn: '1/-1' }}>{inlineInput('title', 'Risk title')}</div>
                             <div style={{ gridColumn: '1/-1' }}>{inlineInput('description', 'Description')}</div>
                             {inlineSelect('level', ['low','medium','high','critical'])}
@@ -929,7 +930,7 @@ Proceed and set this task to active anyway?`)
                   )
                 }}>✦ AI Capacity Analysis</button>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '14px' }}>
                 <div style={s.card}>
                   <div style={s.sectionTitle}>Team Capacity</div>
                   {teamMembers.map(m => {
@@ -1014,7 +1015,7 @@ Proceed and set this task to active anyway?`)
                   }}>✦ Generate Invoice</button>
                 </div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '14px' }}>
                 <div>
                   <div style={s.card}>
                     <div style={s.sectionTitle}>Live Timer</div>
@@ -1218,7 +1219,7 @@ Proceed and set this task to active anyway?`)
                 {projects.length === 0 ? (
                   <div style={{ fontSize: '12px', color: textDim, padding: '16px', textAlign: 'center' }}>Create a project first to assign team members to it.</div>
                 ) : (
-                  <TeamMemberForm user={user} projects={projects} onCreated={() => { if (user) loadData(user.id); setWizardStep(3) }} supabase={supabase} />
+                  <TeamMemberForm user={user} projects={projects} onCreated={() => { if (user) loadData(user.id); setWizardStep(3) }} supabase={supabase} isMobile={isMobile} />
                 )}
                 <button style={{ ...s.btnGhost, width: '100%', marginTop: '10px', padding: '9px' }} onClick={() => setWizardStep(3)}>Skip this step →</button>
               </div>
@@ -1259,7 +1260,7 @@ function ProjectForm({ user, onCreated, supabase }: any) {
       <div style={{ marginBottom: '10px' }}><div style={s.label}>Project Name</div><input style={s.input} value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Enterprise CRM"/></div>
       <div style={{ marginBottom: '10px' }}><div style={s.label}>Client Name</div><input style={s.input} value={client} onChange={e => setClient(e.target.value)} placeholder="e.g. Acme Corp"/></div>
       <div style={{ marginBottom: '10px' }}><div style={s.label}>Budget ($)</div><input style={s.input} value={budget} onChange={e => setBudget(e.target.value)} placeholder="e.g. 50000" type="number"/></div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
         <div><div style={s.label}>Start Date</div><input style={s.input} value={startDate} onChange={e => setStartDate(e.target.value)} type="date"/></div>
         <div><div style={s.label}>End Date</div><input style={s.input} value={endDate} onChange={e => setEndDate(e.target.value)} type="date"/></div>
       </div>
@@ -1268,7 +1269,7 @@ function ProjectForm({ user, onCreated, supabase }: any) {
   )
 }
 
-function TeamMemberForm({ user, projects, onCreated, supabase }: any) {
+function TeamMemberForm({ user, projects, onCreated, supabase, isMobile }: any) {
   const [name, setName] = useState(''); const [email, setEmail] = useState(''); const [role, setRole] = useState(''); const [projectId, setProjectId] = useState(''); const [capacity, setCapacity] = useState('100')
   const submit = async () => {
     if (!name || !email || !projectId || !user) return
@@ -1277,11 +1278,11 @@ function TeamMemberForm({ user, projects, onCreated, supabase }: any) {
   }
   return (
     <div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
         <div><div style={s.label}>Name</div><input style={s.input} value={name} onChange={e => setName(e.target.value)} placeholder="Full name"/></div>
         <div><div style={s.label}>Email</div><input style={s.input} value={email} onChange={e => setEmail(e.target.value)} placeholder="email@company.com" type="email"/></div>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
         <div><div style={s.label}>Role</div><input style={s.input} value={role} onChange={e => setRole(e.target.value)} placeholder="e.g. Developer"/></div>
         <div><div style={s.label}>Capacity %</div><input style={s.input} value={capacity} onChange={e => setCapacity(e.target.value)} type="number" min="0" max="100"/></div>
       </div>
@@ -1297,7 +1298,7 @@ function TeamMemberForm({ user, projects, onCreated, supabase }: any) {
   )
 }
 
-function TaskForm({ user, projects, teamMembers, tasks, onCreated, supabase }: any) {
+function TaskForm({ user, projects, teamMembers, tasks, onCreated, supabase, isMobile }: any) {
   const [name, setName] = useState(''); const [status, setStatus] = useState('todo'); const [priority, setPriority] = useState('medium'); const [owner, setOwner] = useState(''); const [projectId, setProjectId] = useState(''); const [dueDate, setDueDate] = useState(''); const [dependsOn, setDependsOn] = useState('')
   const projectTasks = (tasks || []).filter((t: Task) => t.project_id === projectId)
   const submit = async () => {
@@ -1308,7 +1309,7 @@ function TaskForm({ user, projects, teamMembers, tasks, onCreated, supabase }: a
   return (
     <div>
       <div style={{ marginBottom: '10px' }}><div style={s.label}>Task Name</div><input style={s.input} value={name} onChange={e => setName(e.target.value)} placeholder="What needs to be done?"/></div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
         <div><div style={s.label}>Project</div>
           <select style={s.input} value={projectId} onChange={e => { setProjectId(e.target.value); setDependsOn('') }}>
             <option value="">Select...</option>
@@ -1321,7 +1322,7 @@ function TaskForm({ user, projects, teamMembers, tasks, onCreated, supabase }: a
           </select>
         </div>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
         <div><div style={s.label}>Owner <span style={{ color: textDim, fontWeight: 400 }}>(optional)</span></div>
           {teamMembers.length > 0 ? (
             <select style={s.input} value={owner} onChange={e => setOwner(e.target.value)}>
@@ -1370,7 +1371,7 @@ function RiskForm({ user, projects, onCreated, supabase }: any) {
     <div>
       <div style={{ marginBottom: '10px' }}><div style={s.label}>Risk Title</div><input style={s.input} value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Security audit delay"/></div>
       <div style={{ marginBottom: '10px' }}><div style={s.label}>Description</div><textarea style={{ ...s.input, minHeight: '70px', resize: 'vertical' as const }} value={desc} onChange={e => setDesc(e.target.value)} placeholder="Describe the risk and potential impact..."/></div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
         <div><div style={s.label}>Project</div>
           <select style={s.input} value={projectId} onChange={e => setProjectId(e.target.value)}>
             <option value="">Select...</option>
@@ -1383,7 +1384,7 @@ function RiskForm({ user, projects, onCreated, supabase }: any) {
           </select>
         </div>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
         <div><div style={s.label}>Resolve By</div><input style={s.input} value={dueDate} onChange={e => setDueDate(e.target.value)} type="date"/></div>
         <div><div style={s.label}>Notify (Email) — Optional</div><input style={s.input} value={notifyEmail} onChange={e => setNotifyEmail(e.target.value)} placeholder="team@company.com" type="email"/></div>
       </div>
@@ -1452,11 +1453,11 @@ Use this context to cross-reference action items with existing tasks and flag an
     setTimeout(() => { setTitle(''); setNotes(''); setEmail(''); setResult('') }, 5000)
   }
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '14px' }}>
       <div style={s.card}>
         <div style={s.sectionTitle}>Process Meeting Notes</div>
         <div style={{ marginBottom: '10px' }}><div style={s.label}>Meeting Title</div><input style={s.input} value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Alpha Sprint Review"/></div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
           <div><div style={s.label}>Project</div>
             <select style={s.input} value={projectId} onChange={e => setProjectId(e.target.value)}>
               <option value="">Select...</option>
@@ -1503,7 +1504,7 @@ Write a professional client status update email.`
   }
   return (
     <div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
         <div><div style={s.label}>Project</div>
           <select style={s.input} value={projectId} onChange={e => setProjectId(e.target.value)}>
             <option value="">Select...</option>
@@ -1628,12 +1629,12 @@ Rules: Use bullet points only. No markdown tables. Be specific, not generic. Ass
   }
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '14px' }}>
       <div style={s.card}>
         <div style={s.sectionTitle}>Project Brief</div>
         <div style={{ marginBottom: '10px' }}><div style={s.label}>Project Name</div><input style={s.input} value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Customer Portal v2"/></div>
         <div style={{ marginBottom: '10px' }}><div style={s.label}>Brief Description</div><textarea style={{ ...s.input, minHeight: '120px', resize: 'vertical' as const }} value={brief} onChange={e => setBrief(e.target.value)} placeholder="Describe your project, goals, constraints, deliverables..."/></div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
           <div><div style={s.label}>Timeline</div>
             <select style={s.input} value={timeline} onChange={e => setTimeline(e.target.value)}>
               <option>4 weeks</option><option>6 weeks</option><option>8 weeks</option><option>12 weeks</option><option>6 months</option>
@@ -1717,11 +1718,11 @@ Active tasks: ${projTasks.filter((t: Task) => t.status === 'active').length}, Bl
     )
   }
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '14px' }}>
       <div style={s.card}>
         <div style={s.sectionTitle}>Log Scope Change</div>
         <div style={{ marginBottom: '10px' }}><div style={s.label}>Change Description</div><textarea style={{ ...s.input, minHeight: '100px', resize: 'vertical' as const }} value={desc} onChange={e => setDesc(e.target.value)} placeholder="Describe the scope change requested..."/></div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
           <div><div style={s.label}>Project</div>
             <select style={s.input} value={projectId} onChange={e => setProjectId(e.target.value)}>
               <option value="">Select...</option>
@@ -2349,7 +2350,7 @@ Paragraph 3: Confidence statement and forward outlook.`
                   <div className="health-bar-fill" style={{ height: '8px', width: `${p.health}%`, background: p.health >= 70 ? 'linear-gradient(90deg,#1AABCC,#22C990)' : p.health >= 40 ? 'linear-gradient(90deg,#C9993A,#E8B84B)' : 'linear-gradient(90deg,#E24B4A,#FF9090)', borderRadius: '4px', transition: 'width 0.5s' }}/>
                 </div>
                 {/* Key metrics row */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: '8px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(5,1fr)', gap: '8px' }}>
                   {[
                     { label: 'Tasks Done', val: `${pDone}/${pTasks.length}`, color: textMid },
                     { label: 'Overdue Tasks', val: pOverdue, color: pOverdue > 0 ? '#FF9090' : '#22C990' },
@@ -2445,7 +2446,7 @@ Paragraph 3: Confidence statement and forward outlook.`
             </div>
           </div>
           {/* Status breakdown */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '8px', marginBottom: '16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap: '8px', marginBottom: '16px' }}>
             {[
               { label: 'To Do', val: ft.filter((t: Task) => t.status === 'todo').length, color: textDim },
               { label: 'Active', val: ft.filter((t: Task) => t.status === 'active').length, color: '#4DD8F0' },
@@ -2489,7 +2490,7 @@ Paragraph 3: Confidence statement and forward outlook.`
         {/* ── Section 4: Risk Register ── */}
         <div style={{ background: navyCard, border: `1px solid ${border}`, borderRadius: '6px', padding: '24px 28px', marginBottom: '14px' }}>
           {sectionHeader('4', 'RISK REGISTER', 'risks')}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '8px', marginBottom: '16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap: '8px', marginBottom: '16px' }}>
             {[
               { label: 'Total Risks', val: fr.length, color: textMid },
               { label: 'Open', val: openRisks.length, color: openRisks.length > 0 ? '#FFD080' : '#22C990' },
@@ -2534,7 +2535,7 @@ Paragraph 3: Confidence statement and forward outlook.`
         {/* ── Section 5: Time & Billing ── */}
         <div style={{ background: navyCard, border: `1px solid ${border}`, borderRadius: '6px', padding: '24px 28px', marginBottom: '14px' }}>
           {sectionHeader('5', 'TIME & BILLING SUMMARY', 'billing')}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '10px', marginBottom: '16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(3,1fr)', gap: '10px', marginBottom: '16px' }}>
             {[
               { label: 'Total Hours', val: `${totalHours.toFixed(1)}h`, color: textMid },
               { label: 'Billable Value', val: `$${totalBillable.toLocaleString()}`, color: gold },
