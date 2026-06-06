@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase-client'
 
 type User = { id: string; email: string; user_metadata: { full_name?: string; avatar_url?: string } }
 type Project = { id: string; name: string; client_name: string; status: string; health: number; budget?: number; start_date?: string; end_date?: string }
-type Task = { id: string; name: string; status: string; priority: string; owner: string; project_id: string; due_date?: string }
+type Task = { id: string; name: string; status: string; priority: string; owner: string; project_id: string; due_date?: string; depends_on?: string | null; created_at?: string }
 type Risk = { id: string; title: string; description: string; level: string; status: string; project_id: string; due_date?: string }
 type TeamMember = { id: string; name: string; email: string; role: string; capacity: number; project_id: string }
 type TimeLog = { id: string; description: string; hours: number; rate: number; billed: boolean; project_id: string; created_at: string; log_date?: string }
@@ -118,6 +118,21 @@ export default function Dashboard() {
   const cancelEdit = () => { setEditingId(null); setEditFields({}) }
   const saveEdit = async (table: string, id: string, extra?: Record<string, any>) => {
     const data = { ...editFields, ...extra }
+    // Dependency warning — if setting a task to active and dependency isn't done
+    if (table === 'tasks' && data.status === 'active') {
+      const depId = data.depends_on || tasks.find((t: Task) => t.id === id)?.depends_on
+      if (depId) {
+        const dep = tasks.find((t: Task) => t.id === depId)
+        if (dep && dep.status !== 'done') {
+          const proceed = window.confirm(`⚠ Dependency Warning
+
+"${dep.name}" is not yet complete (status: ${dep.status}).
+
+Proceed and set this task to active anyway?`)
+          if (!proceed) return
+        }
+      }
+    }
     await supabase.from(table).update(data).eq('id', id)
     if (user) loadData(user.id)
     cancelEdit()
@@ -207,6 +222,17 @@ export default function Dashboard() {
   const in14 = new Date(today); in14.setDate(in14.getDate() + 14)
 
   const notifications: { id: string; type: 'critical'|'warning'|'info'; title: string; detail: string; tab: string }[] = []
+
+  // Dependency overdue notifications
+  tasks.forEach((t: Task) => {
+    if (t.depends_on && t.status !== 'done') {
+      const dep = tasks.find((d: Task) => d.id === t.depends_on)
+      if (dep && dep.status !== 'done' && dep.due_date && new Date(dep.due_date) < today) {
+        const proj = projects.find((p: Project) => p.id === t.project_id)
+        notifications.push({ id: `dep-overdue-${t.id}`, type: 'warning', title: `Dependency overdue: ${dep.name}`, detail: `Required by "${t.name}" · ${proj?.name || '—'}`, tab: 'tasks' })
+      }
+    }
+  })
 
   tasks.forEach((t: Task) => {
     if (t.status === 'done') return
@@ -670,7 +696,7 @@ export default function Dashboard() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
                 <div style={s.card}>
                   <div style={s.sectionTitle}>Add New Task</div>
-                  <TaskForm user={user} projects={projects} teamMembers={teamMembers} onCreated={() => user && loadData(user.id)} supabase={supabase} />
+                  <TaskForm user={user} projects={projects} teamMembers={teamMembers} tasks={tasks} onCreated={() => user && loadData(user.id)} supabase={supabase} />
                 </div>
                 <div style={s.card}>
                   <div style={s.sectionTitle}>All Tasks</div>
@@ -679,13 +705,19 @@ export default function Dashboard() {
                     const isOverdue = t.due_date && new Date(t.due_date) < new Date() && t.status !== 'done'
                     const daysLeft = t.due_date ? Math.ceil((new Date(t.due_date).getTime() - new Date().getTime()) / (1000*60*60*24)) : null
                     return (
+                    {(() => {
+                      const dep = t.depends_on ? tasks.find((d: Task) => d.id === t.depends_on) : null
+                      const depIncomplete = dep && dep.status !== 'done'
+                      const depOverdue = dep && dep.status !== 'done' && dep.due_date && new Date(dep.due_date) < new Date()
+                      return null
+                    })()}
                     <div key={t.id} style={{ padding: '10px 0', borderBottom: `1px solid rgba(201,153,58,0.1)`, fontSize: '11px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                         <span style={s.badge(t.status === 'done' ? 'rgba(34,201,144,0.12)' : t.status === 'active' ? 'rgba(26,171,204,0.12)' : t.status === 'blocked' ? 'rgba(226,75,74,0.12)' : 'rgba(240,246,255,0.05)', t.status === 'done' ? '#4DFFB4' : t.status === 'active' ? '#4DD8F0' : t.status === 'blocked' ? '#FF9090' : whiteFaint, t.status === 'done' ? 'rgba(34,201,144,0.28)' : 'rgba(26,171,204,0.28)')}>{t.status}</span>
                         <span style={s.badge(t.priority === 'high' ? 'rgba(226,75,74,0.08)' : 'rgba(26,171,204,0.08)', t.priority === 'high' ? '#FFAAAA' : '#4DD8F0', 'rgba(26,171,204,0.18)')}>{t.priority}</span>
                         <span style={{ flex: 1, color: textMid, fontWeight: 500 }}>{t.name}</span>
                         {t.owner && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: whiteFaint, flexShrink: 0 }}>{t.owner}</span>}
-                        {editBtn(t.id, { name: t.name, status: t.status, priority: t.priority, owner: t.owner || '', due_date: t.due_date || '' })}
+                        {editBtn(t.id, { name: t.name, status: t.status, priority: t.priority, owner: t.owner || '', due_date: t.due_date || '', depends_on: t.depends_on || '' })}
                         {deleteBtn('tasks', t.id)}
                       </div>
                       {editingId === t.id ? (
@@ -695,18 +727,44 @@ export default function Dashboard() {
                           {inlineSelect('priority', ['high','medium','low'])}
                           {inlineInput('owner', 'Owner')}
                           {inlineInput('due_date', '', 'date')}
+                          <div style={{ gridColumn: '1/-1' }}>
+                            <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: goldDim, marginBottom: '4px', letterSpacing: '0.15em' }}>DEPENDS ON</div>
+                            <select value={editFields.depends_on || ''} onChange={e => setEditFields((prev: any) => ({...prev, depends_on: e.target.value}))}
+                              style={{ width: '100%', background: 'rgba(16,36,72,0.9)', border: `1px solid rgba(201,153,58,0.35)`, borderRadius: '3px', padding: '5px 8px', fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: '#E8F0FF', outline: 'none' }}>
+                              <option value="">No dependency</option>
+                              {tasks.filter((d: Task) => d.project_id === t.project_id && d.id !== t.id).map((d: Task) => <option key={d.id} value={d.id}>{d.name} [{d.status}]</option>)}
+                            </select>
+                          </div>
                           <div style={{ gridColumn: '1/-1', display: 'flex', justifyContent: 'flex-end', marginTop: '2px' }}>{saveBtnInline('tasks', t.id)}</div>
                         </div>
                       ) : (
-                        <div style={{ display: 'flex', justifyContent: 'space-between', paddingLeft: '4px' }}>
-                          <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(201,168,80,0.75)' }}>{proj?.name || '—'}</span>
-                          {t.due_date && (
-                            <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOverdue ? '#FF9090' : daysLeft !== null && daysLeft <= 3 ? '#FFD080' : textMid }}>
-                              {isOverdue ? `Overdue · ${fmtDate(t.due_date)}` : `Due ${fmtDate(t.due_date)}${daysLeft !== null && daysLeft <= 7 ? ` · ${daysLeft}d` : ''}`}
-                            </span>
-                          )}
-                          {!t.due_date && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(200,220,255,0.35)' }}>No due date</span>}
-                        </div>
+                        {(() => {
+                          const dep = t.depends_on ? tasks.find((d: Task) => d.id === t.depends_on) : null
+                          const depIncomplete = dep && dep.status !== 'done'
+                          const depOverdue = dep && dep.status !== 'done' && dep.due_date && new Date(dep.due_date) < new Date()
+                          return (
+                            <>
+                              {dep && (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', paddingLeft: '4px', marginBottom: '3px' }}>
+                                  <span style={{ fontSize: '8px', color: depOverdue ? '#FF9090' : depIncomplete ? '#FFD080' : '#22C990' }}>⊘</span>
+                                  <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: depOverdue ? '#FF9090' : depIncomplete ? '#FFD080' : '#22C990' }}>
+                                    {depOverdue ? 'Dep. OVERDUE: ' : depIncomplete ? 'Waiting on: ' : 'Dep. done: '}
+                                    {dep.name}
+                                  </span>
+                                </div>
+                              )}
+                              <div style={{ display: 'flex', justifyContent: 'space-between', paddingLeft: '4px' }}>
+                                <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(201,168,80,0.75)' }}>{proj?.name || '—'}</span>
+                                {t.due_date && (
+                                  <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOverdue ? '#FF9090' : daysLeft !== null && daysLeft <= 3 ? '#FFD080' : textMid }}>
+                                    {isOverdue ? `Overdue · ${fmtDate(t.due_date)}` : `Due ${fmtDate(t.due_date)}${daysLeft !== null && daysLeft <= 7 ? ` · ${daysLeft}d` : ''}`}
+                                  </span>
+                                )}
+                                {!t.due_date && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(200,220,255,0.35)' }}>No due date</span>}
+                              </div>
+                            </>
+                          )
+                        })()}
                       )}
                     </div>
                   )})}
@@ -1135,7 +1193,7 @@ export default function Dashboard() {
                 {projects.length === 0 ? (
                   <div style={{ fontSize: '12px', color: textDim, padding: '16px', textAlign: 'center' }}>No project created yet — go back and create one first, or skip.</div>
                 ) : (
-                  <TaskForm user={user} projects={projects} teamMembers={teamMembers} onCreated={() => { if (user) loadData(user.id) }} supabase={supabase} />
+                  <TaskForm user={user} projects={projects} teamMembers={teamMembers} tasks={tasks} onCreated={() => { if (user) loadData(user.id) }} supabase={supabase} />
                 )}
                 <button style={{ ...s.btnGold, width: '100%', marginTop: '14px', padding: '11px' }} onClick={completeOnboarding}>Enter Empire PM →</button>
               </div>
@@ -1200,19 +1258,20 @@ function TeamMemberForm({ user, projects, onCreated, supabase }: any) {
   )
 }
 
-function TaskForm({ user, projects, teamMembers, onCreated, supabase }: any) {
-  const [name, setName] = useState(''); const [status, setStatus] = useState('todo'); const [priority, setPriority] = useState('medium'); const [owner, setOwner] = useState(''); const [projectId, setProjectId] = useState(''); const [dueDate, setDueDate] = useState('')
+function TaskForm({ user, projects, teamMembers, tasks, onCreated, supabase }: any) {
+  const [name, setName] = useState(''); const [status, setStatus] = useState('todo'); const [priority, setPriority] = useState('medium'); const [owner, setOwner] = useState(''); const [projectId, setProjectId] = useState(''); const [dueDate, setDueDate] = useState(''); const [dependsOn, setDependsOn] = useState('')
+  const projectTasks = (tasks || []).filter((t: Task) => t.project_id === projectId)
   const submit = async () => {
     if (!name || !projectId || !user) return
-    await supabase.from('tasks').insert({ user_id: user.id, project_id: projectId, name, status, priority, owner, due_date: dueDate || null })
-    setName(''); setOwner(''); setDueDate(''); onCreated()
+    await supabase.from('tasks').insert({ user_id: user.id, project_id: projectId, name, status, priority, owner, due_date: dueDate || null, depends_on: dependsOn || null })
+    setName(''); setOwner(''); setDueDate(''); setDependsOn(''); onCreated()
   }
   return (
     <div>
       <div style={{ marginBottom: '10px' }}><div style={s.label}>Task Name</div><input style={s.input} value={name} onChange={e => setName(e.target.value)} placeholder="What needs to be done?"/></div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
         <div><div style={s.label}>Project</div>
-          <select style={s.input} value={projectId} onChange={e => setProjectId(e.target.value)}>
+          <select style={s.input} value={projectId} onChange={e => { setProjectId(e.target.value); setDependsOn('') }}>
             <option value="">Select...</option>
             {projects.map((p: Project) => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
@@ -1223,7 +1282,7 @@ function TaskForm({ user, projects, teamMembers, onCreated, supabase }: any) {
           </select>
         </div>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
         <div><div style={s.label}>Owner <span style={{ color: textDim, fontWeight: 400 }}>(optional)</span></div>
           {teamMembers.length > 0 ? (
             <select style={s.input} value={owner} onChange={e => setOwner(e.target.value)}>
@@ -1235,6 +1294,13 @@ function TaskForm({ user, projects, teamMembers, onCreated, supabase }: any) {
           )}
         </div>
         <div><div style={s.label}>Due Date</div><input style={s.input} value={dueDate} onChange={e => setDueDate(e.target.value)} type="date"/></div>
+      </div>
+      <div style={{ marginBottom: '12px' }}>
+        <div style={s.label}>Depends On <span style={{ color: textDim, fontWeight: 400 }}>(optional — must complete first)</span></div>
+        <select style={s.input} value={dependsOn} onChange={e => setDependsOn(e.target.value)}>
+          <option value="">No dependency</option>
+          {projectTasks.map((t: Task) => <option key={t.id} value={t.id}>{t.name} [{t.status}]</option>)}
+        </select>
       </div>
       <button style={{ ...s.btnGold, width: '100%' }} onClick={submit}>Add Task →</button>
     </div>
@@ -1805,19 +1871,38 @@ function TimelineView({ projects, tasks, milestones, user, supabase, onSaved, ed
               const startPct = Math.max(0, endPct - 8)
               const barWidth = Math.max(1.5, endPct - startPct)
               const isOverdue = t.due_date && new Date(t.due_date) < new Date() && t.status !== 'done'
+              const dep = t.depends_on ? projTasks.find((d: Task) => d.id === t.depends_on) : null
+              const depIncomplete = dep && dep.status !== 'done'
+              const depOverdue = dep && dep.status !== 'done' && dep.due_date && new Date(dep.due_date) < new Date()
               return (
                 <div key={t.id} style={{ display: 'flex', alignItems: 'center', padding: '5px 16px', minHeight: '30px' }}>
                   {/* Label */}
                   <div style={{ width: '204px', flexShrink: 0, paddingRight: '16px' }}>
                     <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', fontWeight: 500, color: isOverdue ? '#FF9090' : textMid, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.name}</div>
-                    <div style={{ display: 'flex', gap: '5px', marginTop: '2px' }}>
+                    <div style={{ display: 'flex', gap: '5px', marginTop: '2px', flexWrap: 'wrap' as const }}>
                       <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '8px', padding: '1px 4px', borderRadius: '2px', background: t.status === 'done' ? 'rgba(34,201,144,0.12)' : t.status === 'active' ? 'rgba(26,171,204,0.12)' : t.status === 'blocked' ? 'rgba(226,75,74,0.12)' : 'rgba(255,255,255,0.05)', color: t.status === 'done' ? '#4DFFB4' : t.status === 'active' ? '#4DD8F0' : t.status === 'blocked' ? '#FF9090' : whiteFaint }}>{t.status}</span>
                       {t.owner && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '8px', color: goldDim }}>{t.owner}</span>}
+                      {dep && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '8px', color: depOverdue ? '#FF9090' : depIncomplete ? '#FFD080' : '#22C990', padding: '1px 4px', background: depOverdue ? 'rgba(226,75,74,0.1)' : depIncomplete ? 'rgba(245,166,35,0.1)' : 'rgba(34,201,144,0.1)', borderRadius: '2px' }}>⊘ {dep.name.slice(0,14)}{dep.name.length > 14 ? '…' : ''}</span>}
                     </div>
                   </div>
                   {/* Track + bar */}
                   <div style={{ flex: 1, position: 'relative', height: '20px' }}>
                     <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: '1px', background: 'rgba(255,255,255,0.04)', transform: 'translateY(-50%)' }}/>
+                    {/* Dependency arrow — line from dep bar end to this bar start */}
+                    {dep && dep.due_date && (() => {
+                      const depEndPct = toPercent(dep.due_date)
+                      const thisStartPct = startPct
+                      if (depEndPct < thisStartPct) {
+                        const lineLeft = Math.min(depEndPct, thisStartPct)
+                        const lineWidth = Math.abs(thisStartPct - depEndPct)
+                        return (
+                          <div style={{ position: 'absolute', left: `${lineLeft}%`, width: `${lineWidth}%`, top: '50%', height: '1px', background: depOverdue ? 'rgba(226,75,74,0.5)' : 'rgba(255,208,128,0.35)', transform: 'translateY(-50%)' }}>
+                            <div style={{ position: 'absolute', right: 0, top: '-3px', width: 0, height: 0, borderTop: '3px solid transparent', borderBottom: '3px solid transparent', borderLeft: `5px solid ${depOverdue ? 'rgba(226,75,74,0.7)' : 'rgba(255,208,128,0.5)'}` }}/>
+                          </div>
+                        )
+                      }
+                      return null
+                    })()}
                     <div style={{ position: 'absolute', left: `${startPct}%`, width: `${barWidth}%`, top: '3px', height: '14px', background: taskBarColor(t), border: `1px solid ${taskBarBorder(t)}`, borderRadius: '2px', minWidth: '6px' }}>
                       {barWidth > 8 && <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600, color: '#FFFFFF', padding: '2px 4px', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{t.due_date ? formatDate(t.due_date) : ''}</div>}
                     </div>
