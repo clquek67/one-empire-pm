@@ -130,7 +130,7 @@ export default function Dashboard() {
 
   const editBtn = (id: string, fields: Record<string, any>) => (
     <button onClick={e => { e.stopPropagation(); editingId === id ? cancelEdit() : startEdit(id, fields) }}
-      style={{ background: 'none', border: 'none', cursor: 'pointer', color: editingId === id ? gold : 'rgba(255,255,255,0.25)', fontSize: '12px', padding: '2px 5px', flexShrink: 0 }}
+      style={{ background: 'none', border: 'none', cursor: 'pointer', color: editingId === id ? gold : 'rgba(200,220,255,0.6)', fontSize: '13px', padding: '2px 5px', flexShrink: 0, transition: 'color 0.15s' }}
       title={editingId === id ? 'Cancel' : 'Edit'}>
       {editingId === id ? '✕' : '✎'}
     </button>
@@ -138,7 +138,7 @@ export default function Dashboard() {
 
   const deleteBtn = (table: string, id: string) => (
     <button onClick={e => { e.stopPropagation(); deleteRow(table, id) }}
-      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(226,75,74,0.4)', fontSize: '13px', padding: '2px 5px', flexShrink: 0 }}
+      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(226,75,74,0.75)', fontSize: '13px', padding: '2px 5px', flexShrink: 0, transition: 'color 0.15s' }}
       title="Delete">🗑</button>
   )
 
@@ -322,12 +322,12 @@ export default function Dashboard() {
                   borderLeft: tab === item.id ? `2px solid ${gold}` : '2px solid transparent',
                   transition: 'all 0.15s',
                   background: tab === item.id ? 'rgba(201,153,58,0.08)' : 'transparent',
-                  color: tab === item.id ? gold : (item as any).gold ? 'rgba(232,184,75,0.55)' : 'rgba(216,228,244,0.55)',
+                  color: tab === item.id ? gold : (item as any).gold ? 'rgba(232,184,75,0.8)' : 'rgba(216,228,244,0.8)',
                 }}>
-                  <span style={{ fontSize: '13px', flexShrink: 0 }}>{item.icon}</span>
+                  <span style={{ fontSize: '14px', flexShrink: 0, opacity: tab === item.id ? 1 : 0.85 }}>{item.icon}</span>
                   <span style={{ flex: 1 }}>{item.label}</span>
                   {(item as any).ai && !item.badge && (
-                    <span style={{ fontSize: '8px', padding: '1px 5px', borderRadius: '8px', background: 'rgba(201,153,58,0.1)', color: 'rgba(201,153,58,0.6)', fontWeight: 600, letterSpacing: '0.3px' }}>AI</span>
+                    <span style={{ fontSize: '8px', padding: '1px 5px', borderRadius: '8px', background: 'rgba(201,153,58,0.1)', color: 'rgba(201,168,80,0.85)', fontWeight: 600, letterSpacing: '0.3px' }}>AI</span>
                   )}
                   {item.badge && (
                     <span style={{ fontSize: '9px', padding: '1px 6px', borderRadius: '10px', background: 'rgba(226,75,74,0.18)', color: '#FFB0B0', fontWeight: 700 }}>
@@ -372,7 +372,7 @@ export default function Dashboard() {
               {/* Bell icon */}
               <div style={{ position: 'relative' }}>
                 <button onClick={e => { e.stopPropagation(); setShowNotifications(v => !v) }} style={{ background: notifCount > 0 ? 'rgba(226,75,74,0.08)' : 'transparent', border: `1px solid ${notifCount > 0 ? 'rgba(226,75,74,0.3)' : 'rgba(201,153,58,0.2)'}`, borderRadius: '3px', padding: '5px 9px', cursor: 'pointer', position: 'relative', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                  <span style={{ fontSize: '14px', color: notifCount > 0 ? '#FF9090' : 'rgba(255,255,255,0.4)' }}>🔔</span>
+                  <span style={{ fontSize: '14px', color: notifCount > 0 ? '#FF9090' : 'rgba(200,220,255,0.65)' }}>🔔</span>
                   {notifCount > 0 && (
                     <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', fontWeight: 700, color: criticalCount > 0 ? '#FF9090' : '#FFD080', minWidth: '14px' }}>{notifCount}</span>
                   )}
@@ -383,7 +383,7 @@ export default function Dashboard() {
                   <div style={{ position: 'absolute', top: '42px', right: 0, width: '360px', background: 'rgba(8,20,44,0.98)', border: `1px solid rgba(201,153,58,0.3)`, borderRadius: '4px', zIndex: 500, boxShadow: '0 8px 32px rgba(0,0,0,0.6)' }}>
                     <div style={{ padding: '12px 16px', borderBottom: 'rgba(201,153,58,0.15) solid 1px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', fontWeight: 700, letterSpacing: '0.18em', color: goldDim }}>NOTIFICATIONS</span>
-                      {notifCount > 0 && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(255,255,255,0.3)' }}>{notifCount} alert{notifCount !== 1 ? 's' : ''}</span>}
+                      {notifCount > 0 && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(200,220,255,0.55)' }}>{notifCount} alert{notifCount !== 1 ? 's' : ''}</span>}
                     </div>
 
                     {notifications.length === 0 && (
@@ -407,7 +407,7 @@ export default function Dashboard() {
                             <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', fontWeight: 600, color: n.type === 'critical' ? '#FF9090' : n.type === 'warning' ? '#FFD080' : textMid, marginBottom: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.title}</div>
                             <div style={{ fontSize: '10px', color: textDim }}>{n.detail}</div>
                           </div>
-                          <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(255,255,255,0.2)', flexShrink: 0, marginTop: '3px' }}>→</span>
+                          <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(200,220,255,0.55)', flexShrink: 0, marginTop: '3px' }}>→</span>
                         </div>
                       ))}
                     </div>
