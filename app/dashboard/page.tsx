@@ -345,7 +345,7 @@ export default function Dashboard() {
                             {p.health}% {isOverdue ? '· Overdue' : daysLeft !== null ? `· ${daysLeft > 0 ? daysLeft+'d left' : 'due today'}` : ''}
                           </span>
                         </div>
-                        {p.end_date && <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOverdue ? '#FF9090' : 'rgba(200,220,255,0.55)', marginBottom: '4px' }}>Due {p.end_date}</div>}
+                        {p.end_date && <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOverdue ? '#FF9090' : '#C8D8F0', marginBottom: '4px' }}>Due {p.end_date}</div>}
                         <div style={{ height: '3px', background: 'rgba(240,246,255,0.07)', borderRadius: '2px', overflow: 'hidden' }}>
                           <div style={{ height: '3px', width: `${p.health}%`, background: isOverdue ? 'linear-gradient(90deg,#E24B4A,#FF9090)' : `linear-gradient(90deg, ${goldDim}, ${gold})`, borderRadius: '2px' }}/>
                         </div>
@@ -420,7 +420,7 @@ export default function Dashboard() {
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                           <div style={{ fontSize: '11px', color: textDim }}>{p.client_name || '—'}</div>
-                          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: isOverdue ? '#FF9090' : daysLeft !== null && daysLeft <= 7 ? '#FFD080' : whiteFaint }}>
+                          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: isOverdue ? '#FF9090' : daysLeft !== null && daysLeft <= 7 ? '#FFD080' : '#C8D8F0' }}>
                             {p.start_date && p.end_date ? `${p.start_date} → ${p.end_date}` : p.end_date ? `Due ${p.end_date}` : 'No dates set'}
                             {daysLeft !== null && !isOverdue && daysLeft <= 14 && <span style={{ marginLeft: '6px', color: '#FFD080' }}>({daysLeft}d left)</span>}
                             {isOverdue && <span style={{ marginLeft: '6px' }}>({Math.abs(daysLeft!)}d ago)</span>}
