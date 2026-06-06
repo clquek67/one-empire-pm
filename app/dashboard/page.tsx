@@ -596,7 +596,7 @@ Proceed and set this task to active anyway?`)
                 <div>
                   <div style={s.card}>
                     <div style={s.sectionTitle}>Create New Project</div>
-                    <ProjectForm user={user} onCreated={() => user && loadData(user.id)} supabase={supabase} />
+                    <ProjectForm user={user} onCreated={() => user && loadData(user.id)} supabase={supabase} isMobile={isMobile} />
                   </div>
                 </div>
                 <div>
@@ -810,7 +810,7 @@ Proceed and set this task to active anyway?`)
                 <div>
                   <div style={s.card}>
                     <div style={s.sectionTitle}>Log New Risk</div>
-                    <RiskForm user={user} projects={projects} onCreated={() => user && loadData(user.id)} supabase={supabase} />
+                    <RiskForm user={user} projects={projects} onCreated={() => user && loadData(user.id)} supabase={supabase} isMobile={isMobile} />
                   </div>
                   <div style={s.card}>
                     <div style={s.sectionTitle}>Active Risks</div>
@@ -876,7 +876,7 @@ Proceed and set this task to active anyway?`)
               <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '26px', color: '#F0F6FF', marginBottom: '22px' }}>
                 Meeting <em style={{ color: gold, fontStyle: 'italic' }}>Processor</em>
               </div>
-              <MeetingProcessor user={user} projects={projects} tasks={tasks} risks={risks} supabase={supabase} onSaved={() => user && loadData(user.id)} />
+              <MeetingProcessor user={user} projects={projects} tasks={tasks} risks={risks} supabase={supabase} onSaved={() => user && loadData(user.id)} isMobile={isMobile} />
             </div>
           )}
 
@@ -890,7 +890,7 @@ Proceed and set this task to active anyway?`)
               <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '14px' }}>
                 <div style={s.card}>
                   <div style={s.sectionTitle}>Generate Client Update</div>
-                  <ClientUpdateForm ai={ai} aiLoading={aiLoading} aiText={aiText} projects={projects} />
+                  <ClientUpdateForm ai={ai} aiLoading={aiLoading} aiText={aiText} projects={projects} isMobile={isMobile} />
                 </div>
                 <div>
                   {projects.map(p => {
@@ -1027,7 +1027,7 @@ Proceed and set this task to active anyway?`)
                   </div>
                   <div style={s.card}>
                     <div style={s.sectionTitle}>Log Time</div>
-                    <TimeLogForm user={user} projects={projects} onCreated={() => user && loadData(user.id)} supabase={supabase} />
+                    <TimeLogForm user={user} projects={projects} onCreated={() => user && loadData(user.id)} supabase={supabase} isMobile={isMobile} />
                   </div>
                 </div>
                 <div style={s.card}>
@@ -1077,6 +1077,7 @@ Proceed and set this task to active anyway?`)
               inlineInput={inlineInput}
               inlineSelect={inlineSelect}
               saveBtnInline={saveBtnInline}
+              isMobile={isMobile}
             />
           )}
 
@@ -1086,7 +1087,7 @@ Proceed and set this task to active anyway?`)
               <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '26px', color: '#F0F6FF', marginBottom: '22px' }}>
                 ✦ AI <em style={{ color: gold, fontStyle: 'italic' }}>Planner</em>
               </div>
-              <AIPlannerForm ai={ai} aiLoading={aiLoading} aiText={aiText} projects={projects} tasks={tasks} risks={risks} teamMembers={teamMembers} supabase={supabase} user={user} onPopulated={() => user && loadData(user.id)} setTab={setTab} />
+              <AIPlannerForm ai={ai} aiLoading={aiLoading} aiText={aiText} projects={projects} tasks={tasks} risks={risks} teamMembers={teamMembers} supabase={supabase} user={user} onPopulated={() => user && loadData(user.id)} setTab={setTab} isMobile={isMobile} />
             </div>
           )}
 
@@ -1096,7 +1097,7 @@ Proceed and set this task to active anyway?`)
               <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '26px', color: '#F0F6FF', marginBottom: '22px' }}>
                 Scope <em style={{ color: gold, fontStyle: 'italic' }}>Control</em>
               </div>
-              <ScopeForm ai={ai} aiLoading={aiLoading} aiText={aiText} projects={projects} tasks={tasks} />
+              <ScopeForm ai={ai} aiLoading={aiLoading} aiText={aiText} projects={projects} tasks={tasks} isMobile={isMobile} />
             </div>
           )}
 
@@ -1109,6 +1110,7 @@ Proceed and set this task to active anyway?`)
               timeLogs={timeLogs}
               milestones={milestones}
               teamMembers={teamMembers}
+              isMobile={isMobile}
             />
           )}
 
@@ -1206,7 +1208,7 @@ Proceed and set this task to active anyway?`)
               <div>
                 <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '22px', color: textBright, marginBottom: '4px' }}>Create your <em style={{ color: gold }}>first project</em></div>
                 <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: textDim, letterSpacing: '0.1em', marginBottom: '20px' }}>STEP 1 OF 3 — Everything in Empire PM lives inside a project</div>
-                <ProjectForm user={user} onCreated={() => { if (user) loadData(user.id); setWizardStep(2) }} supabase={supabase} />
+                <ProjectForm user={user} onCreated={() => { if (user) loadData(user.id); setWizardStep(2) }} supabase={supabase} isMobile={isMobile} />
                 <button style={{ ...s.btnGhost, width: '100%', marginTop: '10px', padding: '9px' }} onClick={() => setWizardStep(2)}>Skip this step →</button>
               </div>
             )}
@@ -1248,7 +1250,7 @@ Proceed and set this task to active anyway?`)
 
 // ─── SUB-COMPONENTS ───
 
-function ProjectForm({ user, onCreated, supabase }: any) {
+function ProjectForm({ user, onCreated, supabase, isMobile }: any) {
   const [name, setName] = useState(''); const [client, setClient] = useState(''); const [budget, setBudget] = useState(''); const [startDate, setStartDate] = useState(''); const [endDate, setEndDate] = useState('')
   const submit = async () => {
     if (!name || !user) return
@@ -1347,7 +1349,7 @@ function TaskForm({ user, projects, teamMembers, tasks, onCreated, supabase, isM
   )
 }
 
-function RiskForm({ user, projects, onCreated, supabase }: any) {
+function RiskForm({ user, projects, onCreated, supabase, isMobile }: any) {
   const [title, setTitle] = useState(''); const [desc, setDesc] = useState(''); const [level, setLevel] = useState('medium'); const [projectId, setProjectId] = useState(''); const [notifyEmail, setNotifyEmail] = useState(''); const [dueDate, setDueDate] = useState('')
   const submit = async () => {
     if (!title || !projectId || !user) return
@@ -1393,7 +1395,7 @@ function RiskForm({ user, projects, onCreated, supabase }: any) {
   )
 }
 
-function TimeLogForm({ user, projects, onCreated, supabase }: any) {
+function TimeLogForm({ user, projects, onCreated, supabase, isMobile }: any) {
   const [desc, setDesc] = useState(''); const [hours, setHours] = useState(''); const [rate, setRate] = useState('250'); const [projectId, setProjectId] = useState(''); const [logDate, setLogDate] = useState(new Date().toISOString().split('T')[0])
   const submit = async () => {
     if (!desc || !hours || !projectId || !user) return
@@ -1419,7 +1421,7 @@ function TimeLogForm({ user, projects, onCreated, supabase }: any) {
   )
 }
 
-function MeetingProcessor({ user, projects, tasks, risks, supabase, onSaved }: any) {
+function MeetingProcessor({ user, projects, tasks, risks, supabase, onSaved, isMobile }: any) {
   const [title, setTitle] = useState(''); const [notes, setNotes] = useState(''); const [email, setEmail] = useState(''); const [projectId, setProjectId] = useState(''); const [result, setResult] = useState(''); const [loading, setLoading] = useState(false); const [meetingDate, setMeetingDate] = useState(new Date().toISOString().split('T')[0])
   const process = async () => {
     if (!notes) return
@@ -1486,7 +1488,7 @@ Use this context to cross-reference action items with existing tasks and flag an
   )
 }
 
-function ClientUpdateForm({ ai, aiLoading, aiText, projects }: any) {
+function ClientUpdateForm({ ai, aiLoading, aiText, projects, isMobile }: any) {
   const [projectId, setProjectId] = useState(''); const [tone, setTone] = useState('Professional'); const [notes, setNotes] = useState('')
   const generate = () => {
     const project = projects.find((p: Project) => p.id === projectId)
@@ -1524,7 +1526,7 @@ Write a professional client status update email.`
   )
 }
 
-function AIPlannerForm({ ai, aiLoading, aiText, projects, tasks, risks, teamMembers, supabase, user, onPopulated, setTab }: any) {
+function AIPlannerForm({ ai, aiLoading, aiText, projects, tasks, risks, teamMembers, supabase, user, onPopulated, setTab, isMobile }: any) {
   const [name, setName] = useState(''); const [brief, setBrief] = useState(''); const [timeline, setTimeline] = useState('8 weeks'); const [team, setTeam] = useState('2–3 people')
   const [targetProjectId, setTargetProjectId] = useState('')
   const [populating, setPopulating] = useState(false)
@@ -1701,7 +1703,7 @@ Rules: Use bullet points only. No markdown tables. Be specific, not generic. Ass
   )
 }
 
-function ScopeForm({ ai, aiLoading, aiText, projects, tasks }: any) {
+function ScopeForm({ ai, aiLoading, aiText, projects, tasks, isMobile }: any) {
   const [desc, setDesc] = useState(''); const [projectId, setProjectId] = useState(''); const [by, setBy] = useState('')
   const analyse = () => {
     if (!desc) return
@@ -1832,7 +1834,7 @@ function SettingsForm({ user, supabase }: any) {
 
 // ─── TIMELINE VIEW ───────────────────────────────────────────────────────────
 
-function TimelineView({ projects, tasks, milestones, user, supabase, onSaved, editingId, editFields, startEdit, cancelEdit, saveEdit, deleteRow, editBtn, deleteBtn, inlineInput, inlineSelect, saveBtnInline }: any) {
+function TimelineView({ projects, tasks, milestones, user, supabase, onSaved, editingId, editFields, startEdit, cancelEdit, saveEdit, deleteRow, editBtn, deleteBtn, inlineInput, inlineSelect, saveBtnInline, isMobile }: any) {
   const [selectedProjectId, setSelectedProjectId] = useState('')
   const [showMilestoneForm, setShowMilestoneForm] = useState(false)
 
@@ -2137,7 +2139,7 @@ function MilestoneForm({ user, projectId, supabase, onCreated }: any) {
 
 // ─── REPORTS VIEW (v2 — Professional PM Report) ──────────────────────────────
 
-function ReportsView({ projects, tasks, risks, timeLogs, milestones, teamMembers }: any) {
+function ReportsView({ projects, tasks, risks, timeLogs, milestones, teamMembers, isMobile }: any) {
   const gold = '#E8B84B'; const goldDim = '#C9993A'; const navy = '#050D1A'
   const navyCard = 'rgba(16,36,72,0.7)'; const border = 'rgba(201,153,58,0.2)'
   const borderMd = 'rgba(201,153,58,0.35)'; const textBright = '#E8F0FF'
