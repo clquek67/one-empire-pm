@@ -896,11 +896,15 @@ function TaskForm({ user, projects, teamMembers, onCreated, supabase }: any) {
         </div>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
-        <div><div style={s.label}>Owner</div>
-          <select style={s.input} value={owner} onChange={e => setOwner(e.target.value)}>
-            <option value="">Select...</option>
-            {teamMembers.map((m: TeamMember) => <option key={m.id} value={m.name}>{m.name}</option>)}
-          </select>
+        <div><div style={s.label}>Owner <span style={{ color: textDim, fontWeight: 400 }}>(optional)</span></div>
+          {teamMembers.length > 0 ? (
+            <select style={s.input} value={owner} onChange={e => setOwner(e.target.value)}>
+              <option value="">Select...</option>
+              {teamMembers.map((m: TeamMember) => <option key={m.id} value={m.name}>{m.name}</option>)}
+            </select>
+          ) : (
+            <input style={s.input} value={owner} onChange={e => setOwner(e.target.value)} placeholder="e.g. your name or leave blank"/>
+          )}
         </div>
         <div><div style={s.label}>Due Date</div><input style={s.input} value={dueDate} onChange={e => setDueDate(e.target.value)} type="date"/></div>
       </div>
