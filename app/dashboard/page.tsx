@@ -79,6 +79,8 @@ export default function Dashboard() {
   const [showWizard, setShowWizard] = useState(false)
   const [wizardStep, setWizardStep] = useState(0)
   const [showNotifications, setShowNotifications] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editFields, setEditFields] = useState<Record<string, any>>({})
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -111,6 +113,54 @@ export default function Dashboard() {
     setShowWizard(false)
     setWizardStep(0)
   }
+
+  const startEdit = (id: string, fields: Record<string, any>) => { setEditingId(id); setEditFields(fields) }
+  const cancelEdit = () => { setEditingId(null); setEditFields({}) }
+  const saveEdit = async (table: string, id: string, extra?: Record<string, any>) => {
+    const data = { ...editFields, ...extra }
+    await supabase.from(table).update(data).eq('id', id)
+    if (user) loadData(user.id)
+    cancelEdit()
+  }
+  const deleteRow = async (table: string, id: string) => {
+    if (!confirm('Delete this item? This cannot be undone.')) return
+    await supabase.from(table).delete().eq('id', id)
+    if (user) loadData(user.id)
+  }
+
+  const editBtn = (id: string, fields: Record<string, any>) => (
+    <button onClick={e => { e.stopPropagation(); editingId === id ? cancelEdit() : startEdit(id, fields) }}
+      style={{ background: 'none', border: 'none', cursor: 'pointer', color: editingId === id ? gold : 'rgba(255,255,255,0.25)', fontSize: '12px', padding: '2px 5px', flexShrink: 0 }}
+      title={editingId === id ? 'Cancel' : 'Edit'}>
+      {editingId === id ? '✕' : '✎'}
+    </button>
+  )
+
+  const deleteBtn = (table: string, id: string) => (
+    <button onClick={e => { e.stopPropagation(); deleteRow(table, id) }}
+      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(226,75,74,0.4)', fontSize: '12px', padding: '2px 5px', flexShrink: 0 }}
+      title="Delete">✕</button>
+  )
+
+  const ef = (field: string) => editFields[field] ?? ''
+  const setEf = (field: string, val: any) => setEditFields(prev => ({ ...prev, [field]: val }))
+
+  const inlineInput = (field: string, placeholder?: string, type = 'text') => (
+    <input value={ef(field)} onChange={e => setEf(field, e.target.value)} type={type} placeholder={placeholder}
+      style={{ background: 'rgba(16,36,72,0.9)', border: `1px solid rgba(201,153,58,0.35)`, borderRadius: '3px', padding: '5px 8px', fontFamily: 'DM Sans, sans-serif', fontSize: '11px', color: '#E8F0FF', outline: 'none', width: '100%' }}/>
+  )
+  const inlineSelect = (field: string, options: string[]) => (
+    <select value={ef(field)} onChange={e => setEf(field, e.target.value)}
+      style={{ background: 'rgba(16,36,72,0.9)', border: `1px solid rgba(201,153,58,0.35)`, borderRadius: '3px', padding: '5px 8px', fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: '#E8F0FF', outline: 'none', width: '100%' }}>
+      {options.map(o => <option key={o} value={o}>{o}</option>)}
+    </select>
+  )
+  const saveBtnInline = (table: string, id: string) => (
+    <button onClick={() => saveEdit(table, id)}
+      style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 700, letterSpacing: '0.12em', background: `linear-gradient(135deg, #C9993A, #E8B84B)`, color: '#050D1A', border: 'none', padding: '5px 12px', borderRadius: '2px', cursor: 'pointer', whiteSpace: 'nowrap' as const }}>
+      Save →
+    </button>
+  )
 
   const ai = async (key: string, system: string, content: string) => {
     setAiLoading(prev => ({ ...prev, [key]: true }))
@@ -523,22 +573,41 @@ export default function Dashboard() {
                           <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
                             {isOverdue && <span style={s.badge('rgba(226,75,74,0.12)', '#FF9090', 'rgba(226,75,74,0.28)')}>OVERDUE</span>}
                             <span style={s.badge('rgba(201,153,58,0.08)', gold, 'rgba(201,153,58,0.25)')}>{p.status}</span>
+                            {editBtn(p.id, { name: p.name, client_name: p.client_name || '', status: p.status, health: p.health, budget: p.budget || '', start_date: p.start_date || '', end_date: p.end_date || '' })}
+                            {deleteBtn('projects', p.id)}
                           </div>
                         </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                          <div style={{ fontSize: '11px', color: textDim }}>{p.client_name || '—'}</div>
-                          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: isOverdue ? '#FF9090' : daysLeft !== null && daysLeft <= 7 ? '#FFD080' : '#C8D8F0' }}>
-                            {p.start_date && p.end_date ? `${fmtDate(p.start_date)} → ${fmtDate(p.end_date)}` : p.end_date ? `Due ${fmtDate(p.end_date)}` : 'No dates set'}
-                            {daysLeft !== null && !isOverdue && daysLeft <= 14 && <span style={{ marginLeft: '6px', color: '#FFD080' }}>({daysLeft}d left)</span>}
-                            {isOverdue && <span style={{ marginLeft: '6px' }}>({Math.abs(daysLeft!)}d ago)</span>}
+                        {editingId === p.id ? (
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginTop: '6px', marginBottom: '8px' }}>
+                            <div style={{ gridColumn: '1/-1' }}>{inlineInput('name', 'Project name')}</div>
+                            {inlineInput('client_name', 'Client name')}
+                            {inlineSelect('status', ['active','on-hold','completed'])}
+                            {inlineInput('start_date', '', 'date')}
+                            {inlineInput('end_date', '', 'date')}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: goldDim }}>HEALTH %</span>
+                              {inlineInput('health', '100', 'number')}
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-end' }}>{saveBtnInline('projects', p.id)}</div>
                           </div>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <div style={{ flex: 1, height: '2px', background: 'rgba(240,246,255,0.07)', borderRadius: '1px', overflow: 'hidden' }}>
-                            <div style={{ height: '2px', width: `${p.health}%`, background: `linear-gradient(90deg, ${goldDim}, ${gold})` }}/>
-                          </div>
-                          <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: whiteFaint, flexShrink: 0 }}>{p.health}%</span>
-                        </div>
+                        ) : (
+                          <>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                              <div style={{ fontSize: '11px', color: textDim }}>{p.client_name || '—'}</div>
+                              <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: isOverdue ? '#FF9090' : daysLeft !== null && daysLeft <= 7 ? '#FFD080' : '#C8D8F0' }}>
+                                {p.start_date && p.end_date ? `${fmtDate(p.start_date)} → ${fmtDate(p.end_date)}` : p.end_date ? `Due ${fmtDate(p.end_date)}` : 'No dates set'}
+                                {daysLeft !== null && !isOverdue && daysLeft <= 14 && <span style={{ marginLeft: '6px', color: '#FFD080' }}>({daysLeft}d left)</span>}
+                                {isOverdue && <span style={{ marginLeft: '6px' }}>({Math.abs(daysLeft!)}d ago)</span>}
+                              </div>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <div style={{ flex: 1, height: '2px', background: 'rgba(240,246,255,0.07)', borderRadius: '1px', overflow: 'hidden' }}>
+                                <div style={{ height: '2px', width: `${p.health}%`, background: `linear-gradient(90deg, ${goldDim}, ${gold})` }}/>
+                              </div>
+                              <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: whiteFaint, flexShrink: 0 }}>{p.health}%</span>
+                            </div>
+                          </>
+                        )}
                       </div>
                     )})}
                     {projects.length === 0 && (
@@ -615,16 +684,29 @@ export default function Dashboard() {
                         <span style={s.badge(t.priority === 'high' ? 'rgba(226,75,74,0.08)' : 'rgba(26,171,204,0.08)', t.priority === 'high' ? '#FFAAAA' : '#4DD8F0', 'rgba(26,171,204,0.18)')}>{t.priority}</span>
                         <span style={{ flex: 1, color: textMid, fontWeight: 500 }}>{t.name}</span>
                         {t.owner && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: whiteFaint, flexShrink: 0 }}>{t.owner}</span>}
+                        {editBtn(t.id, { name: t.name, status: t.status, priority: t.priority, owner: t.owner || '', due_date: t.due_date || '' })}
+                        {deleteBtn('tasks', t.id)}
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', paddingLeft: '4px' }}>
-                        <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(201,168,80,0.75)' }}>{proj?.name || '—'}</span>
-                        {t.due_date && (
-                          <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOverdue ? '#FF9090' : daysLeft !== null && daysLeft <= 3 ? '#FFD080' : textMid }}>
-                            {isOverdue ? `Overdue · ${fmtDate(t.due_date)}` : `Due ${fmtDate(t.due_date)}${daysLeft !== null && daysLeft <= 7 ? ` · ${daysLeft}d` : ''}`}
-                          </span>
-                        )}
-                        {!t.due_date && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(200,220,255,0.35)' }}>No due date</span>}
-                      </div>
+                      {editingId === t.id ? (
+                        <div style={{ marginTop: '8px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+                          <div style={{ gridColumn: '1/-1' }}>{inlineInput('name', 'Task name')}</div>
+                          {inlineSelect('status', ['todo','active','blocked','done'])}
+                          {inlineSelect('priority', ['high','medium','low'])}
+                          {inlineInput('owner', 'Owner')}
+                          {inlineInput('due_date', '', 'date')}
+                          <div style={{ gridColumn: '1/-1', display: 'flex', justifyContent: 'flex-end', marginTop: '2px' }}>{saveBtnInline('tasks', t.id)}</div>
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', paddingLeft: '4px' }}>
+                          <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(201,168,80,0.75)' }}>{proj?.name || '—'}</span>
+                          {t.due_date && (
+                            <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOverdue ? '#FF9090' : daysLeft !== null && daysLeft <= 3 ? '#FFD080' : textMid }}>
+                              {isOverdue ? `Overdue · ${fmtDate(t.due_date)}` : `Due ${fmtDate(t.due_date)}${daysLeft !== null && daysLeft <= 7 ? ` · ${daysLeft}d` : ''}`}
+                            </span>
+                          )}
+                          {!t.due_date && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(200,220,255,0.35)' }}>No due date</span>}
+                        </div>
+                      )}
                     </div>
                   )})}
                   {tasks.length === 0 && (
@@ -680,13 +762,30 @@ export default function Dashboard() {
                       <div key={r.id} style={{ borderLeft: `3px solid ${levelColor}`, padding: '10px 12px', marginBottom: '10px', background: 'rgba(16,36,72,0.5)', borderRadius: '0 3px 3px 0' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
                           <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '12px', fontWeight: 600, color: textBright }}>{r.title}</div>
-                          <span style={s.badge(levelBg, levelText, levelBdr)}>{r.level}</span>
+                          <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                            <span style={s.badge(levelBg, levelText, levelBdr)}>{r.level}</span>
+                            {editBtn(r.id, { title: r.title, description: r.description || '', level: r.level, status: r.status, due_date: r.due_date || '' })}
+                            {deleteBtn('risks', r.id)}
+                          </div>
                         </div>
-                        <div style={{ fontSize: '11px', color: textDim, marginBottom: '5px' }}>{r.description}</div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(201,168,80,0.75)' }}>{proj?.name || '—'}</span>
-                          {r.due_date && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOverdue ? '#FF9090' : textMid }}>{isOverdue ? '⚠ Overdue · ' : 'Resolve by '}{fmtDate(r.due_date)}</span>}
-                        </div>
+                        {editingId === r.id ? (
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginTop: '6px' }}>
+                            <div style={{ gridColumn: '1/-1' }}>{inlineInput('title', 'Risk title')}</div>
+                            <div style={{ gridColumn: '1/-1' }}>{inlineInput('description', 'Description')}</div>
+                            {inlineSelect('level', ['low','medium','high','critical'])}
+                            {inlineSelect('status', ['open','mitigated','closed'])}
+                            {inlineInput('due_date', '', 'date')}
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '2px' }}>{saveBtnInline('risks', r.id)}</div>
+                          </div>
+                        ) : (
+                          <>
+                            <div style={{ fontSize: '11px', color: textDim, marginBottom: '5px' }}>{r.description}</div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(201,168,80,0.75)' }}>{proj?.name || '—'}</span>
+                              {r.due_date && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOverdue ? '#FF9090' : textMid }}>{isOverdue ? '⚠ Overdue · ' : 'Resolve by '}{fmtDate(r.due_date)}</span>}
+                            </div>
+                          </>
+                        )}
                       </div>
                     )})}
                     {risks.length === 0 && <div style={{ color: textDim, fontSize: '12px' }}>No risks logged yet</div>}
@@ -893,6 +992,17 @@ export default function Dashboard() {
               user={user}
               supabase={supabase}
               onSaved={() => user && loadData(user.id)}
+              editingId={editingId}
+              editFields={editFields}
+              startEdit={startEdit}
+              cancelEdit={cancelEdit}
+              saveEdit={saveEdit}
+              deleteRow={deleteRow}
+              editBtn={editBtn}
+              deleteBtn={deleteBtn}
+              inlineInput={inlineInput}
+              inlineSelect={inlineSelect}
+              saveBtnInline={saveBtnInline}
             />
           )}
 
@@ -1481,7 +1591,7 @@ function SettingsForm({ user, supabase }: any) {
 
 // ─── TIMELINE VIEW ───────────────────────────────────────────────────────────
 
-function TimelineView({ projects, tasks, milestones, user, supabase, onSaved }: any) {
+function TimelineView({ projects, tasks, milestones, user, supabase, onSaved, editingId, editFields, startEdit, cancelEdit, saveEdit, deleteRow, editBtn, deleteBtn, inlineInput, inlineSelect, saveBtnInline }: any) {
   const [selectedProjectId, setSelectedProjectId] = useState('')
   const [showMilestoneForm, setShowMilestoneForm] = useState(false)
 
@@ -1638,15 +1748,28 @@ function TimelineView({ projects, tasks, milestones, user, supabase, onSaved }: 
               return (
                 <div key={m.id} style={{ display: 'flex', alignItems: 'center', padding: '6px 16px', position: 'relative', minHeight: '32px' }}>
                   {/* Label */}
-                  <div style={{ width: '204px', flexShrink: 0, paddingRight: '16px' }}>
-                    <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', fontWeight: 600, color: isOverdue ? '#FF9090' : textMid, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.title}</div>
-                    <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', fontWeight: 600, color: isOverdue ? '#FF9090' : '#C8D8F0' }}>{m.due_date ? formatDate(m.due_date) : 'No date'}</div>
+                  <div style={{ width: '204px', flexShrink: 0, paddingRight: '8px' }}>
+                    {editingId === m.id ? (
+                      <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '4px' }}>
+                        {inlineInput('title', 'Milestone name')}
+                        {inlineInput('due_date', '', 'date')}
+                        {inlineSelect('status', ['pending','in-progress','completed'])}
+                        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>{saveBtnInline('milestones', m.id)}</div>
+                      </div>
+                    ) : (
+                      <>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', fontWeight: 600, color: isOverdue ? '#FF9090' : textMid, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{m.title}</div>
+                          {editBtn(m.id, { title: m.title, due_date: m.due_date || '', status: m.status })}
+                          {deleteBtn('milestones', m.id)}
+                        </div>
+                        <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', fontWeight: 600, color: isOverdue ? '#FF9090' : '#C8D8F0' }}>{m.due_date ? formatDate(m.due_date) : 'No date'}</div>
+                      </>
+                    )}
                   </div>
                   {/* Track */}
                   <div style={{ flex: 1, position: 'relative', height: '2px', background: 'rgba(255,255,255,0.05)', borderRadius: '1px' }}>
-                    {/* Dot on track */}
                     <div style={{ position: 'absolute', left: `${pct}%`, top: '50%', transform: 'translate(-50%, -50%)', width: '12px', height: '12px', borderRadius: '50%', background: dotColor, border: `2px solid ${navy}`, boxShadow: `0 0 6px ${dotColor}`, zIndex: 3 }}/>
-                    {/* Vertical tick */}
                     <div style={{ position: 'absolute', left: `${pct}%`, top: '-8px', height: '18px', width: '1px', background: `${dotColor}55` }}/>
                   </div>
                 </div>
