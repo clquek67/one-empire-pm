@@ -731,8 +731,7 @@ Proceed and set this task to active anyway?`)
                           </div>
                           <div style={{ gridColumn: '1/-1', display: 'flex', justifyContent: 'flex-end', marginTop: '2px' }}>{saveBtnInline('tasks', t.id)}</div>
                         </div>
-                      ) : (
-                        {(() => {
+                      ) : (() => {
                           const dep = t.depends_on ? tasks.find((d: Task) => d.id === t.depends_on) : null
                           const depIncomplete = dep && dep.status !== 'done'
                           const depOverdue = dep && dep.status !== 'done' && dep.due_date && new Date(dep.due_date) < new Date()
@@ -759,7 +758,6 @@ Proceed and set this task to active anyway?`)
                             </>
                           )
                         })()}
-                      )}
                     </div>
                   )})}
                   {tasks.length === 0 && (
