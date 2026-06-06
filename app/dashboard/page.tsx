@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase-client'
 
 type User = { id: string; email: string; user_metadata: { full_name?: string; avatar_url?: string } }
-type Project = { id: string; name: string; client_name: string; status: string; health: number; start_date?: string; end_date?: string }
+type Project = { id: string; name: string; client_name: string; status: string; health: number; budget?: number; start_date?: string; end_date?: string }
 type Task = { id: string; name: string; status: string; priority: string; owner: string; project_id: string; due_date?: string }
 type Risk = { id: string; title: string; description: string; level: string; status: string; project_id: string; due_date?: string }
 type TeamMember = { id: string; name: string; email: string; role: string; capacity: number; project_id: string }
