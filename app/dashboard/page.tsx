@@ -1412,7 +1412,7 @@ function TimelineView({ projects, tasks, milestones, user, supabase, onSaved }: 
     return Math.min(100, Math.max(0, ((t - minDate) / span) * 100))
   }
 
-  const formatDate = (d: string) => new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+  const formatDate = (d: string) => new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' })
   const today = new Date().toISOString().split('T')[0]
   const todayPct = toPercent(today)
 
@@ -1506,7 +1506,7 @@ function TimelineView({ projects, tasks, milestones, user, supabase, onSaved }: 
       <div style={{ background: navyCard, border: `1px solid ${border}`, borderRadius: '4px 4px 0 0', padding: '8px 16px 8px 220px', display: 'flex', justifyContent: 'space-between' }}>
         {[0, 25, 50, 75, 100].map(pct => {
           const d = new Date(minDate + (pct / 100) * span)
-          return <span key={pct} style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: goldDim, letterSpacing: '0.08em' }}>{d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>
+          return <span key={pct} style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', fontWeight: 600, color: '#C8D8F0', letterSpacing: '0.06em' }}>{d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' })}</span>
         })}
       </div>
 
@@ -1538,7 +1538,7 @@ function TimelineView({ projects, tasks, milestones, user, supabase, onSaved }: 
                   {/* Label */}
                   <div style={{ width: '204px', flexShrink: 0, paddingRight: '16px' }}>
                     <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', fontWeight: 600, color: isOverdue ? '#FF9090' : textMid, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.title}</div>
-                    <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOverdue ? 'rgba(255,144,144,0.7)' : goldDim }}>{m.due_date ? formatDate(m.due_date) : 'No date'}</div>
+                    <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', fontWeight: 600, color: isOverdue ? '#FF9090' : '#C8D8F0' }}>{m.due_date ? formatDate(m.due_date) : 'No date'}</div>
                   </div>
                   {/* Track */}
                   <div style={{ flex: 1, position: 'relative', height: '2px', background: 'rgba(255,255,255,0.05)', borderRadius: '1px' }}>
@@ -1581,7 +1581,7 @@ function TimelineView({ projects, tasks, milestones, user, supabase, onSaved }: 
                   <div style={{ flex: 1, position: 'relative', height: '20px' }}>
                     <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: '1px', background: 'rgba(255,255,255,0.04)', transform: 'translateY(-50%)' }}/>
                     <div style={{ position: 'absolute', left: `${startPct}%`, width: `${barWidth}%`, top: '3px', height: '14px', background: taskBarColor(t), border: `1px solid ${taskBarBorder(t)}`, borderRadius: '2px', minWidth: '6px' }}>
-                      {barWidth > 8 && <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '8px', color: textBright, padding: '2px 4px', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{t.due_date ? formatDate(t.due_date) : ''}</div>}
+                      {barWidth > 8 && <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600, color: '#FFFFFF', padding: '2px 4px', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{t.due_date ? formatDate(t.due_date) : ''}</div>}
                     </div>
                   </div>
                 </div>
