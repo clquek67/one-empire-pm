@@ -92,7 +92,7 @@ export default function Dashboard() {
     if (r.data) setRisks(r.data)
     if (tm.data) setTeamMembers(tm.data)
     if (tl.data) setTimeLogs(tl.data)
-    if (profile.data && !profile.data.onboarded) setShowWizard(true)
+    if (profile.data && (profile.data.onboarded === false || profile.data.onboarded === null)) setShowWizard(true)
   }
 
   const completeOnboarding = async () => {
@@ -759,8 +759,8 @@ export default function Dashboard() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '28px' }}>
                   {[
                     { icon: '◻', title: 'Create your first project', desc: 'Set up a client project with timeline and budget' },
-                    { icon: '✓', title: 'Add a task', desc: 'Break your project into actionable tasks' },
                     { icon: '⊞', title: 'Add a team member', desc: 'Bring in your first collaborator or client contact' },
+                    { icon: '✓', title: 'Add a task', desc: 'Break your project into actionable tasks with owners' },
                   ].map((item, i) => (
                     <div key={i} style={{ display: 'flex', gap: '14px', alignItems: 'flex-start', padding: '12px 14px', background: 'rgba(201,153,58,0.04)', border: `1px solid ${border}`, borderRadius: '4px' }}>
                       <span style={{ fontSize: '16px', color: gold, flexShrink: 0, marginTop: '1px' }}>{item.icon}</span>
@@ -785,29 +785,29 @@ export default function Dashboard() {
               </div>
             )}
 
-            {/* Step 2 — Add Task */}
+            {/* Step 2 — Add Team Member */}
             {wizardStep === 2 && (
               <div>
-                <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '22px', color: textBright, marginBottom: '4px' }}>Add your <em style={{ color: gold }}>first task</em></div>
-                <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: textDim, letterSpacing: '0.1em', marginBottom: '20px' }}>STEP 2 OF 3 — Tasks keep your project moving forward</div>
+                <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '22px', color: textBright, marginBottom: '4px' }}>Add a <em style={{ color: gold }}>team member</em></div>
+                <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: textDim, letterSpacing: '0.1em', marginBottom: '20px' }}>STEP 2 OF 3 — Add people first so you can assign tasks to them</div>
                 {projects.length === 0 ? (
-                  <div style={{ fontSize: '12px', color: textDim, padding: '16px', textAlign: 'center' }}>No project created yet — go back and create one first, or skip.</div>
+                  <div style={{ fontSize: '12px', color: textDim, padding: '16px', textAlign: 'center' }}>Create a project first to assign team members to it.</div>
                 ) : (
-                  <TaskForm user={user} projects={projects} teamMembers={teamMembers} onCreated={() => { if (user) loadData(user.id); setWizardStep(3) }} supabase={supabase} />
+                  <TeamMemberForm user={user} projects={projects} onCreated={() => { if (user) loadData(user.id); setWizardStep(3) }} supabase={supabase} />
                 )}
                 <button style={{ ...s.btnGhost, width: '100%', marginTop: '10px', padding: '9px' }} onClick={() => setWizardStep(3)}>Skip this step →</button>
               </div>
             )}
 
-            {/* Step 3 — Add Team Member */}
+            {/* Step 3 — Add Task */}
             {wizardStep === 3 && (
               <div>
-                <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '22px', color: textBright, marginBottom: '4px' }}>Add a <em style={{ color: gold }}>team member</em></div>
-                <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: textDim, letterSpacing: '0.1em', marginBottom: '20px' }}>STEP 3 OF 3 — Solo? You can always add people later</div>
+                <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '22px', color: textBright, marginBottom: '4px' }}>Add your <em style={{ color: gold }}>first task</em></div>
+                <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: textDim, letterSpacing: '0.1em', marginBottom: '20px' }}>STEP 3 OF 3 — Tasks keep your project moving forward</div>
                 {projects.length === 0 ? (
-                  <div style={{ fontSize: '12px', color: textDim, padding: '16px', textAlign: 'center' }}>Create a project first to assign team members to it.</div>
+                  <div style={{ fontSize: '12px', color: textDim, padding: '16px', textAlign: 'center' }}>No project created yet — go back and create one first, or skip.</div>
                 ) : (
-                  <TeamMemberForm user={user} projects={projects} onCreated={() => { if (user) loadData(user.id) }} supabase={supabase} />
+                  <TaskForm user={user} projects={projects} teamMembers={teamMembers} onCreated={() => { if (user) loadData(user.id) }} supabase={supabase} />
                 )}
                 <button style={{ ...s.btnGold, width: '100%', marginTop: '14px', padding: '11px' }} onClick={completeOnboarding}>Enter Empire PM →</button>
               </div>
