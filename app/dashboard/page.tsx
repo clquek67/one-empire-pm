@@ -322,7 +322,7 @@ export default function Dashboard() {
                           <span style={{ flex: 1, color: textMid }}>{t.name}</span>
                           {t.owner && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: whiteFaint }}>{t.owner}</span>}
                         </div>
-                        {t.due_date && <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOverdue ? '#FF9090' : whiteFaint, paddingLeft: '2px' }}>{isOverdue ? '⚠ Overdue · ' : 'Due '}{t.due_date}</div>}
+                        {t.due_date && <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOverdue ? '#FF9090' : textMid, paddingLeft: '2px' }}>{isOverdue ? '⚠ Overdue · ' : 'Due '}{t.due_date}</div>}
                       </div>
                     )})}
                     {tasks.length === 0 && (
@@ -345,7 +345,7 @@ export default function Dashboard() {
                             {p.health}% {isOverdue ? '· Overdue' : daysLeft !== null ? `· ${daysLeft > 0 ? daysLeft+'d left' : 'due today'}` : ''}
                           </span>
                         </div>
-                        {p.end_date && <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOverdue ? 'rgba(255,144,144,0.6)' : 'rgba(255,255,255,0.2)', marginBottom: '4px' }}>Due {p.end_date}</div>}
+                        {p.end_date && <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOverdue ? '#FF9090' : 'rgba(200,220,255,0.55)', marginBottom: '4px' }}>Due {p.end_date}</div>}
                         <div style={{ height: '3px', background: 'rgba(240,246,255,0.07)', borderRadius: '2px', overflow: 'hidden' }}>
                           <div style={{ height: '3px', width: `${p.health}%`, background: isOverdue ? 'linear-gradient(90deg,#E24B4A,#FF9090)' : `linear-gradient(90deg, ${goldDim}, ${gold})`, borderRadius: '2px' }}/>
                         </div>
@@ -368,7 +368,7 @@ export default function Dashboard() {
                       <div key={r.id} style={{ borderLeft: `3px solid ${r.level === 'critical' || r.level === 'high' ? '#E24B4A' : r.level === 'medium' ? '#F5A623' : '#22C990'}`, padding: '10px 12px', marginBottom: '8px', background: 'rgba(16,36,72,0.5)', borderRadius: '0 3px 3px 0' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
                           <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '12px', fontWeight: 600, color: textBright }}>{r.title}</div>
-                          <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(201,153,58,0.5)' }}>{proj?.name || '—'}</span>
+                          <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(201,168,80,0.75)' }}>{proj?.name || '—'}</span>
                         </div>
                         <div style={{ fontSize: '11px', color: textDim }}>{r.description}</div>
                       </div>
@@ -462,7 +462,7 @@ export default function Dashboard() {
                       <div style={{ flex: 1 }}>
                         <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '12px', fontWeight: 600, color: textMid }}>{m.name}</div>
                         <div style={{ fontSize: '10px', color: textDim }}>{m.email} · {m.role || 'No role'}</div>
-                        <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(201,153,58,0.45)', marginTop: '1px' }}>{proj?.name || 'No project assigned'}</div>
+                        <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(201,168,80,0.75)', marginTop: '1px' }}>{proj?.name || 'No project assigned'}</div>
                       </div>
                       <div style={{ textAlign: 'right' }}>
                         <div style={{ width: '80px', height: '3px', background: 'rgba(240,246,255,0.07)', borderRadius: '2px', overflow: 'hidden', marginBottom: '3px' }}>
@@ -510,13 +510,13 @@ export default function Dashboard() {
                         {t.owner && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: whiteFaint, flexShrink: 0 }}>{t.owner}</span>}
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', paddingLeft: '4px' }}>
-                        <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(201,153,58,0.5)' }}>{proj?.name || '—'}</span>
+                        <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(201,168,80,0.75)' }}>{proj?.name || '—'}</span>
                         {t.due_date && (
-                          <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOverdue ? '#FF9090' : daysLeft !== null && daysLeft <= 3 ? '#FFD080' : whiteFaint }}>
+                          <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOverdue ? '#FF9090' : daysLeft !== null && daysLeft <= 3 ? '#FFD080' : textMid }}>
                             {isOverdue ? `Overdue · ${t.due_date}` : `Due ${t.due_date}${daysLeft !== null && daysLeft <= 7 ? ` · ${daysLeft}d` : ''}`}
                           </span>
                         )}
-                        {!t.due_date && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(255,255,255,0.15)' }}>No due date</span>}
+                        {!t.due_date && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(200,220,255,0.35)' }}>No due date</span>}
                       </div>
                     </div>
                   )})}
@@ -577,8 +577,8 @@ export default function Dashboard() {
                         </div>
                         <div style={{ fontSize: '11px', color: textDim, marginBottom: '5px' }}>{r.description}</div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(201,153,58,0.5)' }}>{proj?.name || '—'}</span>
-                          {r.due_date && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOverdue ? '#FF9090' : whiteFaint }}>{isOverdue ? '⚠ Overdue · ' : 'Resolve by '}{r.due_date}</span>}
+                          <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(201,168,80,0.75)' }}>{proj?.name || '—'}</span>
+                          {r.due_date && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOverdue ? '#FF9090' : textMid }}>{isOverdue ? '⚠ Overdue · ' : 'Resolve by '}{r.due_date}</span>}
                         </div>
                       </div>
                     )})}
@@ -635,7 +635,7 @@ export default function Dashboard() {
                         <span style={s.badge(isOverdue ? 'rgba(226,75,74,0.12)' : 'rgba(201,153,58,0.08)', isOverdue ? '#FF9090' : gold, isOverdue ? 'rgba(226,75,74,0.28)' : border)}>{isOverdue ? 'OVERDUE' : p.status}</span>
                       </div>
                       <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: whiteFaint, marginBottom: '6px' }}>{p.name} · {p.health}% complete · {doneTasks}/{projTasks.length} tasks done</div>
-                      {p.end_date && <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOverdue ? '#FF9090' : 'rgba(255,255,255,0.25)' }}>Due {p.end_date}</div>}
+                      {p.end_date && <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOverdue ? '#FF9090' : textMid }}>Due {p.end_date}</div>}
                     </div>
                   )})}
                 </div>
@@ -664,7 +664,7 @@ export default function Dashboard() {
                         </div>
                         <div style={{ flex: 1 }}>
                           <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '12px', fontWeight: 600, color: textMid }}>{m.name}</div>
-                          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(201,153,58,0.5)' }}>{m.role || 'No role'} · {proj?.name || 'No project'} · {memberTasks.length} active task{memberTasks.length !== 1 ? 's' : ''}</div>
+                          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(201,168,80,0.75)' }}>{m.role || 'No role'} · {proj?.name || 'No project'} · {memberTasks.length} active task{memberTasks.length !== 1 ? 's' : ''}</div>
                         </div>
                         <div style={{ textAlign: 'right' }}>
                           <div style={{ width: '100px', height: '4px', background: 'rgba(240,246,255,0.07)', borderRadius: '2px', overflow: 'hidden', marginBottom: '3px' }}>
@@ -762,8 +762,8 @@ export default function Dashboard() {
                         <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '14px', color: gold, width: '70px', textAlign: 'right' }}>${(l.hours * l.rate).toLocaleString()}</span>
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(201,153,58,0.5)' }}>{proj?.name || '—'}</span>
-                        {l.log_date && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(255,255,255,0.2)' }}>{l.log_date}</span>}
+                        <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(201,168,80,0.75)' }}>{proj?.name || '—'}</span>
+                        {l.log_date && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(200,220,255,0.55)' }}>{l.log_date}</span>}
                       </div>
                     </div>
                   )})}
