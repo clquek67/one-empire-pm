@@ -260,12 +260,13 @@ export default function Dashboard() {
     { id: 'clients', icon: '◈', label: 'Client Portal', section: null, ai: true },
     { id: 'workload', icon: '⊞', label: 'Workload', section: null, ai: true },
     { id: 'timeline', icon: '▷', label: 'Timeline', section: null },
+    { id: 'reports', icon: '◈', label: 'Reports', section: null },
     { id: 'billing', icon: '◷', label: 'Time & Billing', section: null },
     { id: 'settings', icon: '⚙', label: 'Settings', section: 'Account' },
   ]
 
-  const pageLabels: Record<string,string> = { dashboard:'Dashboard', projects:'Projects', tasks:'Tasks', planner:'AI Planner', meetings:'Meetings', risks:'Risk Radar', scope:'Scope Control', clients:'Client Portal', workload:'Workload', timeline:'Timeline', billing:'Time & Billing', settings:'Settings' }
-  const pageCrumbs: Record<string,string> = { dashboard:'/ Overview', projects:'/ All Projects', tasks:'/ All Tasks', planner:'/ Generate Plan', meetings:'/ Process Notes', risks:'/ Risk Register', scope:'/ Change Log', clients:'/ Email Generator', workload:'/ Capacity', timeline:'/ Milestones & Gantt', billing:'/ Timer & Invoices', settings:'/ Account' }
+  const pageLabels: Record<string,string> = { dashboard:'Dashboard', projects:'Projects', tasks:'Tasks', planner:'AI Planner', meetings:'Meetings', risks:'Risk Radar', scope:'Scope Control', clients:'Client Portal', workload:'Workload', timeline:'Timeline', reports:'Reports', billing:'Time & Billing', settings:'Settings' }
+  const pageCrumbs: Record<string,string> = { dashboard:'/ Overview', projects:'/ All Projects', tasks:'/ All Tasks', planner:'/ Generate Plan', meetings:'/ Process Notes', risks:'/ Risk Register', scope:'/ Change Log', clients:'/ Email Generator', workload:'/ Capacity', timeline:'/ Milestones & Gantt', reports:'/ Project Report', billing:'/ Timer & Invoices', settings:'/ Account' }
 
   return (
     <div style={{ display: 'flex', height: '100vh', background: navy, overflow: 'hidden' }} onClick={() => setShowNotifications(false)}>
@@ -1024,6 +1025,18 @@ export default function Dashboard() {
               </div>
               <ScopeForm ai={ai} aiLoading={aiLoading} aiText={aiText} projects={projects} tasks={tasks} />
             </div>
+          )}
+
+          {/* ═══ REPORTS ═══ */}
+          {tab === 'reports' && (
+            <ReportsView
+              projects={projects}
+              tasks={tasks}
+              risks={risks}
+              timeLogs={timeLogs}
+              milestones={milestones}
+              teamMembers={teamMembers}
+            />
           )}
 
           {/* ═══ SETTINGS ═══ */}
@@ -1868,6 +1881,340 @@ function MilestoneForm({ user, projectId, supabase, onCreated }: any) {
         </select>
       </div>
       <button style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', fontWeight: 700, letterSpacing: '0.14em', background: `linear-gradient(135deg, ${goldDim}, ${gold})`, color: navy, border: 'none', padding: '9px 16px', borderRadius: '2px', cursor: 'pointer', whiteSpace: 'nowrap' as const }} onClick={submit}>Add →</button>
+    </div>
+  )
+}
+
+// ─── REPORTS VIEW ────────────────────────────────────────────────────────────
+
+function ReportsView({ projects, tasks, risks, timeLogs, milestones, teamMembers }: any) {
+  const gold = '#E8B84B'; const goldDim = '#C9993A'; const navy = '#050D1A'
+  const navyCard = 'rgba(16,36,72,0.7)'; const border = 'rgba(201,153,58,0.2)'
+  const borderMd = 'rgba(201,153,58,0.35)'; const textBright = '#E8F0FF'
+  const textMid = '#D8E4F4'; const textDim = 'rgba(192,208,232,0.75)'
+
+  const [selectedProjectId, setSelectedProjectId] = useState<string>('all')
+  const [execSummary, setExecSummary] = useState('')
+  const [editingSummary, setEditingSummary] = useState(false)
+  const [loadingAI, setLoadingAI] = useState(false)
+  const [editNotes, setEditNotes] = useState<Record<string, string>>({})
+  const [editingSection, setEditingSection] = useState<string | null>(null)
+
+  const filteredProjects = selectedProjectId === 'all' ? projects : projects.filter((p: Project) => p.id === selectedProjectId)
+  const filteredTasks = tasks.filter((t: Task) => selectedProjectId === 'all' || t.project_id === selectedProjectId)
+  const filteredRisks = risks.filter((r: Risk) => selectedProjectId === 'all' || r.project_id === selectedProjectId)
+  const filteredLogs = timeLogs.filter((l: TimeLog) => selectedProjectId === 'all' || l.project_id === selectedProjectId)
+  const filteredMilestones = milestones.filter((m: Milestone) => selectedProjectId === 'all' || m.project_id === selectedProjectId)
+
+  // ── Computed stats ──
+  const totalTasks = filteredTasks.length
+  const doneTasks = filteredTasks.filter((t: Task) => t.status === 'done').length
+  const overdueTasks = filteredTasks.filter((t: Task) => t.due_date && new Date(t.due_date) < new Date() && t.status !== 'done')
+  const blockedTasks = filteredTasks.filter((t: Task) => t.status === 'blocked')
+  const completionRate = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0
+
+  const openRisks = filteredRisks.filter((r: Risk) => r.status !== 'closed')
+  const criticalRisks = openRisks.filter((r: Risk) => r.level === 'critical' || r.level === 'high')
+  const mitigatedRisks = filteredRisks.filter((r: Risk) => r.status === 'mitigated')
+
+  const totalHours = filteredLogs.reduce((sum: number, l: TimeLog) => sum + Number(l.hours), 0)
+  const totalBillable = filteredLogs.reduce((sum: number, l: TimeLog) => sum + (Number(l.hours) * Number(l.rate)), 0)
+  const avgHealth = filteredProjects.length > 0 ? Math.round(filteredProjects.reduce((sum: number, p: Project) => sum + p.health, 0) / filteredProjects.length) : 0
+  const completedMilestones = filteredMilestones.filter((m: Milestone) => m.status === 'completed').length
+
+  const generateAISummary = async () => {
+    setLoadingAI(true)
+    const prompt = `Generate a concise executive project status report (3-4 paragraphs) for a client or stakeholder. Write in professional first-person PM voice. No markdown tables or bullet points — flowing prose only.
+
+Data:
+Projects: ${filteredProjects.map((p: Project) => `${p.name} (${p.status}, ${p.health}% health, client: ${p.client_name || 'Internal'})`).join(', ')}
+Tasks: ${doneTasks}/${totalTasks} complete (${completionRate}%), ${overdueTasks.length} overdue, ${blockedTasks.length} blocked
+Risks: ${openRisks.length} open (${criticalRisks.length} critical/high), ${mitigatedRisks.length} mitigated
+Milestones: ${completedMilestones}/${filteredMilestones.length} completed
+Hours logged: ${totalHours.toFixed(1)}h, Billable value: $${totalBillable.toLocaleString()}
+
+Write the executive summary now.`
+    const text = await callAI('You are a senior PM writing a professional project status report for a client. Be direct, confident and factual. No bullet points or markdown tables.', prompt)
+    setExecSummary(text)
+    setLoadingAI(false)
+  }
+
+  const sectionNote = (key: string) => editNotes[key] || ''
+  const setSectionNote = (key: string, val: string) => setEditNotes(prev => ({ ...prev, [key]: val }))
+
+  const s_card: React.CSSProperties = { background: navyCard, border: `1px solid ${border}`, borderRadius: '4px', padding: '20px 22px', marginBottom: '14px' }
+  const s_label: React.CSSProperties = { fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600, letterSpacing: '0.2em', color: goldDim, marginBottom: '10px', textTransform: 'uppercase' }
+  const s_stat = (val: string | number, sub: string, color = textBright) => (
+    <div style={{ textAlign: 'center', padding: '8px 16px' }}>
+      <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '28px', color, marginBottom: '2px' }}>{val}</div>
+      <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: textDim, letterSpacing: '0.12em' }}>{sub.toUpperCase()}</div>
+    </div>
+  )
+
+  const statRow = (items: { val: string | number; sub: string; color?: string }[]) => (
+    <div style={{ display: 'flex', justifyContent: 'space-around', borderBottom: `1px solid ${border}`, paddingBottom: '14px', marginBottom: '14px' }}>
+      {items.map((i, idx) => <div key={idx}>{s_stat(i.val, i.sub, i.color)}</div>)}
+    </div>
+  )
+
+  const editNoteToggle = (key: string) => (
+    <button onClick={() => setEditingSection(editingSection === key ? null : key)}
+      style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: editingSection === key ? gold : 'rgba(200,220,255,0.6)', letterSpacing: '0.1em', padding: '0' }}>
+      {editingSection === key ? 'DONE' : '✎ ADD NOTE'}
+    </button>
+  )
+
+  return (
+    <div>
+      {/* Print styles */}
+      <style>{`
+        @media print {
+          body * { visibility: hidden !important; }
+          #empire-report, #empire-report * { visibility: visible !important; }
+          #empire-report { position: absolute; left: 0; top: 0; width: 100%; }
+          .no-print { display: none !important; }
+          @page { margin: 20mm; }
+        }
+      `}</style>
+
+      {/* Header */}
+      <div className="no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '22px' }}>
+        <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '26px', color: '#F0F6FF' }}>
+          Project <em style={{ color: gold }}>Report</em>
+        </div>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <select value={selectedProjectId} onChange={e => setSelectedProjectId(e.target.value)}
+            style={{ background: 'rgba(16,36,72,0.8)', border: `1px solid ${borderMd}`, borderRadius: '3px', padding: '7px 12px', fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: textBright, outline: 'none' }}>
+            <option value="all">All Projects</option>
+            {projects.map((p: Project) => <option key={p.id} value={p.id}>{p.name}</option>)}
+          </select>
+          <button onClick={generateAISummary} disabled={loadingAI}
+            style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', fontWeight: 700, letterSpacing: '0.14em', background: 'rgba(201,153,58,0.1)', border: `1px solid ${borderMd}`, color: gold, padding: '8px 14px', borderRadius: '2px', cursor: 'pointer' }}>
+            {loadingAI ? '✦ Generating...' : '✦ AI Summary'}
+          </button>
+          <button onClick={() => window.print()}
+            style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', fontWeight: 700, letterSpacing: '0.14em', background: `linear-gradient(135deg, ${goldDim}, ${gold})`, color: navy, border: 'none', padding: '8px 16px', borderRadius: '2px', cursor: 'pointer' }}>
+            ⬇ Export PDF
+          </button>
+        </div>
+      </div>
+
+      {/* Report body */}
+      <div id="empire-report">
+
+        {/* Report header — visible in print */}
+        <div style={{ marginBottom: '20px', paddingBottom: '16px', borderBottom: `1px solid ${borderMd}` }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+            <div>
+              <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '22px', color: textBright }}>Empire PM — <em style={{ color: gold }}>Project Status Report</em></div>
+              <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: textDim, marginTop: '4px', letterSpacing: '0.1em' }}>
+                {selectedProjectId === 'all' ? `ALL PROJECTS (${filteredProjects.length})` : filteredProjects[0]?.name?.toUpperCase()} · GENERATED {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase()}
+              </div>
+            </div>
+            <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: textDim, textAlign: 'right', letterSpacing: '0.08em' }}>
+              <div>pm.one-empire.com</div>
+              <div style={{ color: avgHealth >= 70 ? '#22C990' : avgHealth >= 40 ? '#FFD080' : '#FF9090' }}>AVG HEALTH {avgHealth}%</div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Section 1: Project Health ── */}
+        <div style={s_card}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+            <div style={s_label}>1. Project Health Summary</div>
+            <span className="no-print">{editNoteToggle('health')}</span>
+          </div>
+          {statRow([
+            { val: filteredProjects.length, sub: 'Total Projects' },
+            { val: filteredProjects.filter((p: Project) => p.status === 'active').length, sub: 'Active', color: '#4DD8F0' },
+            { val: `${avgHealth}%`, sub: 'Avg Health', color: avgHealth >= 70 ? '#22C990' : avgHealth >= 40 ? '#FFD080' : '#FF9090' },
+            { val: filteredProjects.filter((p: Project) => p.status === 'completed').length, sub: 'Completed', color: '#22C990' },
+          ])}
+          {filteredProjects.map((p: Project) => {
+            const pTasks = tasks.filter((t: Task) => t.project_id === p.id)
+            const pDone = pTasks.filter((t: Task) => t.status === 'done').length
+            return (
+              <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 0', borderBottom: `1px solid rgba(201,153,58,0.08)` }}>
+                <div style={{ width: '180px', flexShrink: 0 }}>
+                  <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', fontWeight: 600, color: textMid }}>{p.name}</div>
+                  <div style={{ fontSize: '10px', color: textDim }}>{p.client_name || 'Internal'}</div>
+                </div>
+                <div style={{ flex: 1, height: '4px', background: 'rgba(255,255,255,0.06)', borderRadius: '2px', overflow: 'hidden' }}>
+                  <div style={{ height: '4px', width: `${p.health}%`, background: p.health >= 70 ? 'linear-gradient(90deg,#1AABCC,#22C990)' : p.health >= 40 ? 'linear-gradient(90deg,#C9993A,#E8B84B)' : 'linear-gradient(90deg,#E24B4A,#FF9090)', borderRadius: '2px' }}/>
+                </div>
+                <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: p.health >= 70 ? '#22C990' : p.health >= 40 ? '#FFD080' : '#FF9090', width: '36px', textAlign: 'right' }}>{p.health}%</span>
+                <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: textDim, width: '70px', textAlign: 'right' }}>{pDone}/{pTasks.length} tasks</span>
+                <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: textDim, width: '100px', textAlign: 'right' }}>{fmtDate(p.end_date)}</span>
+              </div>
+            )
+          })}
+          {editingSection === 'health' && (
+            <textarea value={sectionNote('health')} onChange={e => setSectionNote('health', e.target.value)} placeholder="Add PM notes for this section..."
+              style={{ width: '100%', marginTop: '12px', background: 'rgba(16,36,72,0.9)', border: `1px solid ${borderMd}`, borderRadius: '3px', padding: '10px', color: textMid, fontFamily: 'DM Sans, sans-serif', fontSize: '12px', resize: 'vertical', minHeight: '60px', outline: 'none' }}/>
+          )}
+          {sectionNote('health') && editingSection !== 'health' && (
+            <div style={{ marginTop: '10px', padding: '10px', background: 'rgba(201,153,58,0.04)', borderLeft: `2px solid ${goldDim}`, fontSize: '11px', color: textMid, fontStyle: 'italic' }}>{sectionNote('health')}</div>
+          )}
+        </div>
+
+        {/* ── Section 2: Task Completion ── */}
+        <div style={s_card}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+            <div style={s_label}>2. Task Completion</div>
+            <span className="no-print">{editNoteToggle('tasks')}</span>
+          </div>
+          {statRow([
+            { val: `${completionRate}%`, sub: 'Completion Rate', color: completionRate >= 70 ? '#22C990' : '#FFD080' },
+            { val: `${doneTasks}/${totalTasks}`, sub: 'Tasks Done' },
+            { val: overdueTasks.length, sub: 'Overdue', color: overdueTasks.length > 0 ? '#FF9090' : textBright },
+            { val: blockedTasks.length, sub: 'Blocked', color: blockedTasks.length > 0 ? '#FFD080' : textBright },
+          ])}
+          {overdueTasks.length > 0 && (
+            <div style={{ marginBottom: '10px' }}>
+              <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: '#FF9090', letterSpacing: '0.15em', marginBottom: '6px' }}>OVERDUE TASKS</div>
+              {overdueTasks.map((t: Task) => {
+                const proj = projects.find((p: Project) => p.id === t.project_id)
+                return (
+                  <div key={t.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', borderBottom: `1px solid rgba(255,255,255,0.04)`, fontSize: '11px' }}>
+                    <span style={{ color: textMid }}>{t.name}</span>
+                    <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: '#FF9090' }}>{proj?.name} · {fmtDate(t.due_date)}</span>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+          {blockedTasks.length > 0 && (
+            <div>
+              <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: '#FFD080', letterSpacing: '0.15em', marginBottom: '6px' }}>BLOCKED TASKS</div>
+              {blockedTasks.map((t: Task) => (
+                <div key={t.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', borderBottom: `1px solid rgba(255,255,255,0.04)`, fontSize: '11px' }}>
+                  <span style={{ color: textMid }}>{t.name}</span>
+                  <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: '#FFD080' }}>{t.owner || 'Unassigned'}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          {editingSection === 'tasks' && (
+            <textarea value={sectionNote('tasks')} onChange={e => setSectionNote('tasks', e.target.value)} placeholder="Add PM notes for this section..."
+              style={{ width: '100%', marginTop: '12px', background: 'rgba(16,36,72,0.9)', border: `1px solid ${borderMd}`, borderRadius: '3px', padding: '10px', color: textMid, fontFamily: 'DM Sans, sans-serif', fontSize: '12px', resize: 'vertical', minHeight: '60px', outline: 'none' }}/>
+          )}
+          {sectionNote('tasks') && editingSection !== 'tasks' && (
+            <div style={{ marginTop: '10px', padding: '10px', background: 'rgba(201,153,58,0.04)', borderLeft: `2px solid ${goldDim}`, fontSize: '11px', color: textMid, fontStyle: 'italic' }}>{sectionNote('tasks')}</div>
+          )}
+        </div>
+
+        {/* ── Section 3: Risk Status ── */}
+        <div style={s_card}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+            <div style={s_label}>3. Risk Status</div>
+            <span className="no-print">{editNoteToggle('risks')}</span>
+          </div>
+          {statRow([
+            { val: filteredRisks.length, sub: 'Total Risks' },
+            { val: openRisks.length, sub: 'Open', color: openRisks.length > 0 ? '#FFD080' : textBright },
+            { val: criticalRisks.length, sub: 'Critical / High', color: criticalRisks.length > 0 ? '#FF9090' : textBright },
+            { val: mitigatedRisks.length, sub: 'Mitigated', color: '#22C990' },
+          ])}
+          {openRisks.length > 0 && openRisks.map((r: Risk) => {
+            const proj = projects.find((p: Project) => p.id === r.project_id)
+            const levelColor = r.level === 'critical' ? '#FF9090' : r.level === 'high' ? '#FFAA88' : r.level === 'medium' ? '#FFD080' : '#4DD8F0'
+            return (
+              <div key={r.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '7px 0', borderBottom: `1px solid rgba(255,255,255,0.04)` }}>
+                <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: levelColor, flexShrink: 0, marginTop: '4px' }}/>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', fontWeight: 600, color: textMid }}>{r.title}</div>
+                  <div style={{ fontSize: '10px', color: textDim }}>{r.description}</div>
+                </div>
+                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                  <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: levelColor }}>{r.level?.toUpperCase()}</div>
+                  <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: textDim }}>{proj?.name}</div>
+                </div>
+              </div>
+            )
+          })}
+          {filteredRisks.length === 0 && <div style={{ fontSize: '11px', color: textDim, padding: '8px 0' }}>No risks logged for this selection.</div>}
+          {editingSection === 'risks' && (
+            <textarea value={sectionNote('risks')} onChange={e => setSectionNote('risks', e.target.value)} placeholder="Add PM notes for this section..."
+              style={{ width: '100%', marginTop: '12px', background: 'rgba(16,36,72,0.9)', border: `1px solid ${borderMd}`, borderRadius: '3px', padding: '10px', color: textMid, fontFamily: 'DM Sans, sans-serif', fontSize: '12px', resize: 'vertical', minHeight: '60px', outline: 'none' }}/>
+          )}
+          {sectionNote('risks') && editingSection !== 'risks' && (
+            <div style={{ marginTop: '10px', padding: '10px', background: 'rgba(201,153,58,0.04)', borderLeft: `2px solid ${goldDim}`, fontSize: '11px', color: textMid, fontStyle: 'italic' }}>{sectionNote('risks')}</div>
+          )}
+        </div>
+
+        {/* ── Section 4: Time & Billing ── */}
+        <div style={s_card}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+            <div style={s_label}>4. Time & Billing Summary</div>
+            <span className="no-print">{editNoteToggle('billing')}</span>
+          </div>
+          {statRow([
+            { val: `${totalHours.toFixed(1)}h`, sub: 'Hours Logged' },
+            { val: `$${totalBillable.toLocaleString()}`, sub: 'Billable Value', color: gold },
+            { val: filteredLogs.length, sub: 'Log Entries' },
+            { val: `$${(totalHours > 0 ? totalBillable / totalHours : 0).toFixed(0)}`, sub: 'Avg Rate / Hr', color: textMid },
+          ])}
+          {filteredProjects.map((p: Project) => {
+            const pLogs = timeLogs.filter((l: TimeLog) => l.project_id === p.id)
+            const pHours = pLogs.reduce((sum: number, l: TimeLog) => sum + Number(l.hours), 0)
+            const pBillable = pLogs.reduce((sum: number, l: TimeLog) => sum + (Number(l.hours) * Number(l.rate)), 0)
+            if (pLogs.length === 0) return null
+            return (
+              <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: `1px solid rgba(255,255,255,0.04)`, fontSize: '11px' }}>
+                <span style={{ fontFamily: 'Rajdhani, sans-serif', fontWeight: 600, color: textMid }}>{p.name}</span>
+                <div style={{ display: 'flex', gap: '20px' }}>
+                  <span style={{ color: textDim }}>{pHours.toFixed(1)}h</span>
+                  <span style={{ color: gold, fontFamily: 'Cormorant Garamond, serif', fontSize: '13px' }}>${pBillable.toLocaleString()}</span>
+                </div>
+              </div>
+            )
+          })}
+          {editingSection === 'billing' && (
+            <textarea value={sectionNote('billing')} onChange={e => setSectionNote('billing', e.target.value)} placeholder="Add PM notes for this section..."
+              style={{ width: '100%', marginTop: '12px', background: 'rgba(16,36,72,0.9)', border: `1px solid ${borderMd}`, borderRadius: '3px', padding: '10px', color: textMid, fontFamily: 'DM Sans, sans-serif', fontSize: '12px', resize: 'vertical', minHeight: '60px', outline: 'none' }}/>
+          )}
+          {sectionNote('billing') && editingSection !== 'billing' && (
+            <div style={{ marginTop: '10px', padding: '10px', background: 'rgba(201,153,58,0.04)', borderLeft: `2px solid ${goldDim}`, fontSize: '11px', color: textMid, fontStyle: 'italic' }}>{sectionNote('billing')}</div>
+          )}
+        </div>
+
+        {/* ── Section 5: AI Executive Summary ── */}
+        <div style={s_card}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+            <div style={s_label}>5. Executive Summary</div>
+            {execSummary && !editingSummary && (
+              <button className="no-print" onClick={() => setEditingSummary(true)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(200,220,255,0.6)', letterSpacing: '0.1em' }}>✎ EDIT</button>
+            )}
+          </div>
+          {!execSummary && !loadingAI && (
+            <div style={{ textAlign: 'center', padding: '28px 16px' }}>
+              <div style={{ fontSize: '22px', opacity: 0.2, marginBottom: '8px' }}>✦</div>
+              <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '12px', color: textMid, marginBottom: '6px' }}>No summary yet</div>
+              <div style={{ fontSize: '11px', color: textDim, marginBottom: '14px' }}>Click "✦ AI Summary" above to generate a professional executive summary from your project data.</div>
+            </div>
+          )}
+          {loadingAI && (
+            <div style={{ textAlign: 'center', padding: '24px', color: gold, fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', letterSpacing: '0.1em' }}>✦ Generating executive summary...</div>
+          )}
+          {execSummary && !editingSummary && (
+            <div style={{ fontSize: '13px', color: textMid, lineHeight: '1.7', fontFamily: 'DM Sans, sans-serif' }}>{execSummary}</div>
+          )}
+          {editingSummary && (
+            <div>
+              <textarea value={execSummary} onChange={e => setExecSummary(e.target.value)}
+                style={{ width: '100%', background: 'rgba(16,36,72,0.9)', border: `1px solid ${borderMd}`, borderRadius: '3px', padding: '12px', color: textMid, fontFamily: 'DM Sans, sans-serif', fontSize: '13px', lineHeight: '1.7', resize: 'vertical', minHeight: '140px', outline: 'none' }}/>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px' }}>
+                <button onClick={() => setEditingSummary(false)}
+                  style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 700, letterSpacing: '0.14em', background: `linear-gradient(135deg, ${goldDim}, ${gold})`, color: navy, border: 'none', padding: '6px 14px', borderRadius: '2px', cursor: 'pointer' }}>
+                  Done →
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+      </div>
     </div>
   )
 }
