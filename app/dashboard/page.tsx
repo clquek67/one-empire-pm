@@ -138,8 +138,8 @@ export default function Dashboard() {
 
   const deleteBtn = (table: string, id: string) => (
     <button onClick={e => { e.stopPropagation(); deleteRow(table, id) }}
-      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(226,75,74,0.4)', fontSize: '12px', padding: '2px 5px', flexShrink: 0 }}
-      title="Delete">✕</button>
+      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(226,75,74,0.4)', fontSize: '13px', padding: '2px 5px', flexShrink: 0 }}
+      title="Delete">🗑</button>
   )
 
   const ef = (field: string) => editFields[field] ?? ''
