@@ -6,7 +6,7 @@ type User = { id: string; email: string; user_metadata: { full_name?: string; av
 type Project = { id: string; name: string; client_name: string; status: string; health: number; budget?: number; start_date?: string; end_date?: string }
 type Task = { id: string; name: string; status: string; priority: string; owner: string; project_id: string; due_date?: string; depends_on?: string | null; created_at?: string }
 type Risk = { id: string; title: string; description: string; level: string; status: string; project_id: string; due_date?: string }
-type TeamMember = { id: string; name: string; email: string; role: string; capacity: number; project_id: string }
+type TeamMember = { id: string; name: string; email: string; role: string; capacity: number; project_id: string; weekly_hours?: number }
 type TimeLog = { id: string; description: string; hours: number; rate: number; billed: boolean; project_id: string; created_at: string; log_date?: string }
 type Milestone = { id: string; title: string; due_date?: string; status: string; project_id: string; user_id: string; created_at: string }
 
@@ -295,7 +295,7 @@ Proceed and set this task to active anyway?`)
   const pageCrumbs: Record<string,string> = { dashboard:'/ Overview', projects:'/ All Projects', tasks:'/ All Tasks', planner:'/ Generate Plan', meetings:'/ Process Notes', risks:'/ Risk Register', scope:'/ Change Log', clients:'/ Email Generator', workload:'/ Capacity', timeline:'/ Milestones & Gantt', reports:'/ Project Report', billing:'/ Timer & Invoices', settings:'/ Account' }
 
   return (
-    <div style={{ display: 'flex', height: '100vh', background: navy, overflow: 'hidden' }} onClick={() => setShowNotifications(false)}>
+    <div className="empire-layout" style={{ display: 'flex', height: '100vh', background: navy, overflow: 'hidden' }} onClick={() => setShowNotifications(false)}>
 
       {/* Circuit BG */}
       <svg style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', opacity: 0.1, pointerEvents: 'none', zIndex: 0 }}
@@ -316,7 +316,7 @@ Proceed and set this task to active anyway?`)
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden', position: 'relative', zIndex: 1 }}>
 
         {/* SIDEBAR */}
-        <aside style={{ width: '220px', flexShrink: 0, background: 'rgba(8,20,40,0.95)', borderRight: `1px solid ${border}`, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <aside className="empire-sidebar" style={{ width: '220px', flexShrink: 0, background: 'rgba(8,20,40,0.95)', borderRight: `1px solid ${border}`, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           {/* Logo */}
           <div style={{ padding: '18px 16px', borderBottom: `1px solid rgba(201,153,58,0.12)`, display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
             <div style={{ width: '30px', height: '30px', background: 'rgba(201,153,58,0.1)', border: `1px solid rgba(201,153,58,0.35)`, borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -383,9 +383,9 @@ Proceed and set this task to active anyway?`)
         </aside>
 
         {/* MAIN */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div className="empire-main" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           {/* Topbar */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', height: '52px', background: 'rgba(8,20,40,0.95)', borderBottom: `1px solid rgba(201,153,58,0.12)`, flexShrink: 0 }}>
+          <div className="empire-topbar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', height: '52px', background: 'rgba(8,20,40,0.95)', borderBottom: `1px solid rgba(201,153,58,0.12)`, flexShrink: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center' }}>
               <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '14px', fontWeight: 600, color: '#F0F6FF', letterSpacing: '0.04em' }}>{pageLabels[tab] || tab}</span>
               <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: 'rgba(255,255,255,0.25)', marginLeft: '8px' }}>{pageCrumbs[tab] || ''}</span>
@@ -446,7 +446,7 @@ Proceed and set this task to active anyway?`)
               <button style={{ ...s.btnGold, fontSize: '10px', padding: '5px 14px' }} onClick={() => setTab('projects')}>+ New Project</button>
             </div>
           </div>
-        <main style={{ flex: 1, overflowY: 'auto', padding: '24px 28px' }}>
+        <main className="empire-content" style={{ flex: 1, overflowY: 'auto', padding: '24px 28px' }}>
 
           {/* ═══ DASHBOARD ═══ */}
           {tab === 'dashboard' && (
@@ -905,7 +905,18 @@ Proceed and set this task to active anyway?`)
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '22px' }}>
                 <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '26px', color: '#F0F6FF' }}>Team <em style={{ color: gold, fontStyle: 'italic' }}>Workload</em></div>
-                <button style={s.btnGold} onClick={() => ai('workload', 'You are an expert resource manager. Analyse team workload and provide specific rebalancing recommendations.', `Team: ${teamMembers.map(m => `${m.name} (${m.capacity}% capacity)`).join(', ')}. Tasks: ${tasks.filter(t => t.status === 'active').length} active.`)}>✦ AI Rebalance</button>
+                <button style={s.btnGold} onClick={() => {
+                  const capacityData = teamMembers.map((m: TeamMember) => {
+                    const memberTasks = tasks.filter((t: Task) => t.owner === m.name && t.status !== 'done')
+                    const overdue = memberTasks.filter((t: Task) => t.due_date && new Date(t.due_date) < new Date())
+                    const proj = projects.find((p: Project) => p.id === m.project_id)
+                    return `${m.name} (${m.role || 'No role'}, ${m.capacity}% capacity, project: ${proj?.name || 'None'}): ${memberTasks.length} active tasks, ${overdue.length} overdue`
+                  }).join('\n')
+                  ai('workload',
+                    'You are an expert resource manager with 20 years experience. Analyse team workload and provide specific, actionable rebalancing recommendations. Use bullet points only — no markdown tables.',
+                    `Team capacity analysis:\n${capacityData || 'No team members yet'}\n\nTotal active tasks: ${tasks.filter((t: Task) => t.status === 'active').length}\nTotal blocked tasks: ${tasks.filter((t: Task) => t.status === 'blocked').length}\n\nProvide: 1. Overloaded members (risk of burnout), 2. Underutilised capacity, 3. Specific task rebalancing suggestions by name, 4. Bottleneck risks.`
+                  )
+                }}>✦ AI Capacity Analysis</button>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
                 <div style={s.card}>
@@ -1063,7 +1074,7 @@ Proceed and set this task to active anyway?`)
               <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '26px', color: '#F0F6FF', marginBottom: '22px' }}>
                 ✦ AI <em style={{ color: gold, fontStyle: 'italic' }}>Planner</em>
               </div>
-              <AIPlannerForm ai={ai} aiLoading={aiLoading} aiText={aiText} projects={projects} tasks={tasks} risks={risks} teamMembers={teamMembers} />
+              <AIPlannerForm ai={ai} aiLoading={aiLoading} aiText={aiText} projects={projects} tasks={tasks} risks={risks} teamMembers={teamMembers} supabase={supabase} user={user} onPopulated={() => user && loadData(user.id)} setTab={setTab} />
             </div>
           )}
 
@@ -1112,7 +1123,32 @@ Proceed and set this task to active anyway?`)
         </div>
       </div>
 
-      <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}} @keyframes wizardIn{from{opacity:0;transform:scale(0.97)}to{opacity:1;transform:scale(1)}}`}</style>
+      <style>{`
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+        @keyframes wizardIn{from{opacity:0;transform:scale(0.97)}to{opacity:1;transform:scale(1)}}
+        * { box-sizing: border-box; }
+        ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: rgba(201,153,58,0.3); border-radius: 2px; }
+        @media (max-width: 768px) {
+          .empire-layout { flex-direction: column !important; }
+          .empire-sidebar { width: 100% !important; height: auto !important; flex-direction: row !important; overflow-x: auto !important; padding: 8px !important; border-right: none !important; border-bottom: 1px solid rgba(201,153,58,0.15) !important; }
+          .empire-sidebar .nav-section-label { display: none !important; }
+          .empire-sidebar .nav-item { padding: 6px 10px !important; flex-shrink: 0 !important; border-radius: 4px !important; }
+          .empire-sidebar .nav-item span:last-child { display: none !important; }
+          .empire-main { height: calc(100vh - 110px) !important; }
+          .empire-topbar { padding: 0 12px !important; }
+          .empire-topbar .topbar-actions span, .empire-topbar .topbar-crumb { display: none !important; }
+          .empire-content { padding: 16px 14px !important; }
+          .empire-grid-2 { grid-template-columns: 1fr !important; }
+          .empire-grid-3 { grid-template-columns: 1fr !important; }
+          .empire-grid-4 { grid-template-columns: 1fr 1fr !important; }
+          .empire-wizard { padding: 24px 20px !important; margin: 12px !important; }
+          .empire-report-stats { grid-template-columns: 1fr 1fr !important; }
+        }
+        @media (max-width: 480px) {
+          .empire-sidebar .nav-item-label { display: none !important; }
+          .empire-grid-4 { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
 
       {/* ═══ ONBOARDING WIZARD ═══ */}
       {showWizard && (
@@ -1476,26 +1512,116 @@ Write a professional client status update email.`
   )
 }
 
-function AIPlannerForm({ ai, aiLoading, aiText, projects, tasks, risks, teamMembers }: any) {
+function AIPlannerForm({ ai, aiLoading, aiText, projects, tasks, risks, teamMembers, supabase, user, onPopulated, setTab }: any) {
   const [name, setName] = useState(''); const [brief, setBrief] = useState(''); const [timeline, setTimeline] = useState('8 weeks'); const [team, setTeam] = useState('2–3 people')
+  const [targetProjectId, setTargetProjectId] = useState('')
+  const [populating, setPopulating] = useState(false)
+  const [populateResult, setPopulateResult] = useState<{tasks: number, risks: number, milestones: number} | null>(null)
+
+  const gold = '#E8B84B'; const goldDim = '#C9993A'
+
   const generate = () => {
     if (!brief) return
     const existingContext = projects.length > 0 ? `\n\nEXISTING PORTFOLIO CONTEXT (avoid duplicating effort):
 Active projects: ${projects.filter((p: Project) => p.status === 'active').map((p: Project) => `${p.name} (${p.health}% health, ends ${p.end_date || 'TBD'})`).join(', ') || 'None'}
 Available team members: ${teamMembers.length > 0 ? teamMembers.map((m: TeamMember) => `${m.name} — ${m.role} (${m.capacity}% capacity)`).join(', ') : 'Not specified — use team size below'}
-Current open risks across portfolio: ${risks.filter((r: Risk) => r.status !== 'closed').length} open risks — consider these when identifying risks for the new project
-Total active tasks in flight: ${tasks.filter((t: Task) => t.status === 'active').length} — factor team availability accordingly` : ''
+Current open risks across portfolio: ${risks.filter((r: Risk) => r.status !== 'closed').length} open risks
+Total active tasks in flight: ${tasks.filter((t: Task) => t.status === 'active').length}` : ''
     ai('planner',
-      'You are an expert PM with 20 years experience. Generate a comprehensive, actionable project plan. Use bullet points only — no markdown tables. Structure: 1. Phase Breakdown (with milestone dates relative to start), 2. Key Tasks (owner, priority, estimated duration), 3. Risk Register (likelihood, impact, mitigation), 4. KPIs and success criteria, 5. Budget considerations, 6. Team allocation recommendations. Be specific — avoid generic advice. If existing team members are listed, assign tasks to them by name.',
+      `You are an expert PM with 20 years experience. Generate a comprehensive project plan using EXACTLY this structure with these EXACT section headers (used for parsing):
+
+TASKS:
+- Task name | priority (high/medium/low) | owner name or "Unassigned" | due date as YYYY-MM-DD or "TBD"
+
+RISKS:
+- Risk title | level (critical/high/medium/low) | description
+
+MILESTONES:
+- Milestone name | due date as YYYY-MM-DD
+
+SUMMARY:
+2-3 sentences overview.
+
+PHASES:
+Phase breakdown with dates.
+
+KPIS:
+Success metrics.
+
+Rules: Use bullet points only. No markdown tables. Be specific, not generic. Assign tasks to named team members if provided.`,
       `New Project: ${name || 'New Project'}\nTimeline: ${timeline}\nTeam Size: ${team}\n\nBrief:\n${brief}${existingContext}`
     )
+    setPopulateResult(null)
   }
+
+  const autoPopulate = async () => {
+    if (!aiText['planner'] || !targetProjectId || !user) return
+    setPopulating(true)
+    const raw = aiText['planner']
+
+    // Parse TASKS section
+    const tasksMatch = raw.match(/TASKS[:\s]*\n([\s\S]*?)(?=\n[A-Z]+:|$)/i)
+    const tasksRaw = tasksMatch ? tasksMatch[1] : ''
+    const taskLines = tasksRaw.split('\n').filter((l: string) => l.trim().startsWith('-')).map((l: string) => l.replace(/^-\s*/, '').trim())
+
+    // Parse RISKS section
+    const risksMatch = raw.match(/RISKS[:\s]*\n([\s\S]*?)(?=\n[A-Z]+:|$)/i)
+    const risksRaw = risksMatch ? risksMatch[1] : ''
+    const riskLines = risksRaw.split('\n').filter((l: string) => l.trim().startsWith('-')).map((l: string) => l.replace(/^-\s*/, '').trim())
+
+    // Parse MILESTONES section
+    const msMatch = raw.match(/MILESTONES[:\s]*\n([\s\S]*?)(?=\n[A-Z]+:|$)/i)
+    const msRaw = msMatch ? msMatch[1] : ''
+    const msLines = msRaw.split('\n').filter((l: string) => l.trim().startsWith('-')).map((l: string) => l.replace(/^-\s*/, '').trim())
+
+    let taskCount = 0; let riskCount = 0; let msCount = 0
+
+    // Insert tasks
+    for (const line of taskLines) {
+      const parts = line.split('|').map((p: string) => p.trim())
+      if (!parts[0]) continue
+      const taskName = parts[0]
+      const priority = ['high','medium','low'].includes(parts[1]?.toLowerCase()) ? parts[1].toLowerCase() : 'medium'
+      const owner = parts[2] === 'Unassigned' || !parts[2] ? '' : parts[2]
+      const dueRaw = parts[3]
+      const dueDate = dueRaw && dueRaw !== 'TBD' && /\d{4}-\d{2}-\d{2}/.test(dueRaw) ? dueRaw : null
+      const { error } = await supabase.from('tasks').insert({ user_id: user.id, project_id: targetProjectId, name: taskName, status: 'todo', priority, owner, due_date: dueDate })
+      if (!error) taskCount++
+    }
+
+    // Insert risks
+    for (const line of riskLines) {
+      const parts = line.split('|').map((p: string) => p.trim())
+      if (!parts[0]) continue
+      const title = parts[0]
+      const level = ['critical','high','medium','low'].includes(parts[1]?.toLowerCase()) ? parts[1].toLowerCase() : 'medium'
+      const description = parts[2] || ''
+      const { error } = await supabase.from('risks').insert({ user_id: user.id, project_id: targetProjectId, title, level, description, status: 'open' })
+      if (!error) riskCount++
+    }
+
+    // Insert milestones
+    for (const line of msLines) {
+      const parts = line.split('|').map((p: string) => p.trim())
+      if (!parts[0]) continue
+      const title = parts[0]
+      const dueRaw = parts[1]
+      const dueDate = dueRaw && dueRaw !== 'TBD' && /\d{4}-\d{2}-\d{2}/.test(dueRaw) ? dueRaw : null
+      const { error } = await supabase.from('milestones').insert({ user_id: user.id, project_id: targetProjectId, title, due_date: dueDate, status: 'pending' })
+      if (!error) msCount++
+    }
+
+    setPopulateResult({ tasks: taskCount, risks: riskCount, milestones: msCount })
+    setPopulating(false)
+    if (onPopulated) onPopulated()
+  }
+
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
       <div style={s.card}>
         <div style={s.sectionTitle}>Project Brief</div>
         <div style={{ marginBottom: '10px' }}><div style={s.label}>Project Name</div><input style={s.input} value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Customer Portal v2"/></div>
-        <div style={{ marginBottom: '10px' }}><div style={s.label}>Brief Description</div><textarea style={{ ...s.input, minHeight: '120px', resize: 'vertical' as const }} value={brief} onChange={e => setBrief(e.target.value)} placeholder="Describe your project, goals, constraints..."/></div>
+        <div style={{ marginBottom: '10px' }}><div style={s.label}>Brief Description</div><textarea style={{ ...s.input, minHeight: '120px', resize: 'vertical' as const }} value={brief} onChange={e => setBrief(e.target.value)} placeholder="Describe your project, goals, constraints, deliverables..."/></div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
           <div><div style={s.label}>Timeline</div>
             <select style={s.input} value={timeline} onChange={e => setTimeline(e.target.value)}>
@@ -1508,21 +1634,53 @@ Total active tasks in flight: ${tasks.filter((t: Task) => t.status === 'active')
             </select>
           </div>
         </div>
-        <button style={{ ...s.btnGold, width: '100%' }} onClick={generate}>{aiLoading['planner'] ? 'Generating...' : '✦ Generate Full Project Plan →'}</button>
+        <button style={{ ...s.btnGold, width: '100%' }} onClick={generate}>{aiLoading['planner'] ? '✦ Generating...' : '✦ Generate Full Project Plan →'}</button>
+
+        {/* Auto-populate panel — appears after plan is generated */}
+        {aiText['planner'] && !aiLoading['planner'] && (
+          <div style={{ marginTop: '14px', padding: '14px', background: 'rgba(201,153,58,0.05)', border: `1px solid rgba(201,153,58,0.25)`, borderRadius: '4px' }}>
+            <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 700, letterSpacing: '0.2em', color: goldDim, marginBottom: '10px' }}>⚡ AUTO-POPULATE PROJECT</div>
+            <div style={{ fontSize: '11px', color: 'rgba(192,208,232,0.75)', marginBottom: '10px', lineHeight: 1.6 }}>
+              Select a project and click Populate — tasks, risks and milestones from this plan will be created automatically.
+            </div>
+            <div style={{ marginBottom: '10px' }}>
+              <div style={s.label}>Target Project</div>
+              <select style={s.input} value={targetProjectId} onChange={e => setTargetProjectId(e.target.value)}>
+                <option value="">Select project...</option>
+                {projects.map((p: Project) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+            </div>
+            {populateResult && (
+              <div style={{ marginBottom: '10px', padding: '10px 12px', background: 'rgba(34,201,144,0.08)', border: '1px solid rgba(34,201,144,0.25)', borderRadius: '3px' }}>
+                <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: '#22C990', marginBottom: '4px', fontWeight: 700 }}>✓ Successfully populated!</div>
+                <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: 'rgba(192,208,232,0.75)' }}>
+                  {populateResult.tasks} tasks · {populateResult.risks} risks · {populateResult.milestones} milestones created
+                </div>
+                <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                  <button style={{ ...s.btnGhost, fontSize: '9px', padding: '4px 10px' }} onClick={() => setTab('tasks')}>View Tasks →</button>
+                  <button style={{ ...s.btnGhost, fontSize: '9px', padding: '4px 10px' }} onClick={() => setTab('timeline')}>View Timeline →</button>
+                </div>
+              </div>
+            )}
+            <button style={{ ...s.btnGold, width: '100%' }} onClick={autoPopulate} disabled={!targetProjectId || populating}>
+              {populating ? '⚡ Populating...' : `⚡ Populate "${projects.find((p: Project) => p.id === targetProjectId)?.name || 'Project'}" →`}
+            </button>
+          </div>
+        )}
       </div>
       <div style={s.card}>
-        {aiLoading['planner'] && <div style={{ color: textDim, fontSize: '12px' }}>Generating your project plan...</div>}
+        {aiLoading['planner'] && <div style={{ color: textDim, fontSize: '12px', textAlign: 'center', padding: '20px' }}>✦ Generating your project plan...</div>}
         {aiText['planner'] && <div style={s.aiResponse} dangerouslySetInnerHTML={{ __html: formatAI(aiText['planner']) }}/>}
         {!aiLoading['planner'] && !aiText['planner'] && (
           <div>
             <div style={s.sectionTitle}>How It Works</div>
             <div style={{ fontSize: '12px', color: textDim, lineHeight: 1.8 }}>
-              Fill in your brief and Empire AI generates:<br/><br/>
-              <span style={{ color: gold }}>▸</span> Phase breakdown with milestones<br/>
-              <span style={{ color: gold }}>▸</span> Task list with owners and priorities<br/>
-              <span style={{ color: gold }}>▸</span> Risk register with mitigation<br/>
-              <span style={{ color: gold }}>▸</span> KPIs to measure success<br/>
-              <span style={{ color: gold }}>▸</span> Budget considerations
+              Fill in your brief and Empire AI generates a full structured plan. Then use <span style={{ color: gold }}>⚡ Auto-Populate</span> to create everything in one click:<br/><br/>
+              <span style={{ color: gold }}>▸</span> Tasks with owners, priorities and due dates<br/>
+              <span style={{ color: gold }}>▸</span> Risk register with levels and descriptions<br/>
+              <span style={{ color: gold }}>▸</span> Milestones on your Timeline<br/>
+              <span style={{ color: gold }}>▸</span> Phase breakdown and KPIs<br/><br/>
+              <span style={{ color: 'rgba(192,208,232,0.5)', fontSize: '11px' }}>No manual entry. Plan → Populate → Execute.</span>
             </div>
           </div>
         )}
