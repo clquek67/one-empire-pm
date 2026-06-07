@@ -71,6 +71,7 @@ export default function Dashboard() {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
   const [timeLogs, setTimeLogs] = useState<TimeLog[]>([])
   const [milestones, setMilestones] = useState<Milestone[]>([])
+  const [subscription, setSubscription] = useState<any>(null)
   const [aiText, setAiText] = useState<Record<string, string>>({})
   const [aiLoading, setAiLoading] = useState<Record<string, boolean>>({})
   const [timerSeconds, setTimerSeconds] = useState(0)
@@ -98,7 +99,7 @@ export default function Dashboard() {
   }, [])
 
   const loadData = async (userId: string) => {
-    const [p, t, r, tm, tl, profile, ms] = await Promise.all([
+    const [p, t, r, tm, tl, profile, ms, subData] = await Promise.all([
       supabase.from('projects').select('*').eq('user_id', userId),
       supabase.from('tasks').select('*').eq('user_id', userId),
       supabase.from('risks').select('*').eq('user_id', userId),
@@ -106,6 +107,7 @@ export default function Dashboard() {
       supabase.from('time_logs').select('*').eq('user_id', userId).eq('billed', false),
       supabase.from('profiles').select('onboarded').eq('id', userId).single(),
       supabase.from('milestones').select('*').eq('user_id', userId).order('due_date', { ascending: true }),
+      supabase.from('subscriptions').select('plan,status').eq('user_id', userId).single(),
     ])
     if (p.data) setProjects(p.data)
     if (t.data) setTasks(t.data)
@@ -113,6 +115,7 @@ export default function Dashboard() {
     if (tm.data) setTeamMembers(tm.data)
     if (tl.data) setTimeLogs(tl.data)
     if (ms.data) setMilestones(ms.data)
+    if (subData.data) setSubscription(subData.data)
     if (profile.data && (profile.data.onboarded === false || profile.data.onboarded === null)) setShowWizard(true)
   }
 
