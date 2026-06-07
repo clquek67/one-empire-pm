@@ -25,7 +25,13 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Public routes
-  if (pathname === '/login' || pathname === '/pricing' || pathname.startsWith('/api')) {
+  if (
+    pathname === '/login' ||
+    pathname === '/pricing' ||
+    pathname.startsWith('/api') ||
+    pathname.startsWith('/invite') ||
+    pathname.startsWith('/client')
+  ) {
     return supabaseResponse
   }
 
@@ -34,8 +40,28 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // Check subscription for dashboard routes
+  // Get user profile role
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  const role = profile?.role || 'owner'
+
+  // Role-based routing
   if (pathname.startsWith('/dashboard')) {
+    // Team members → redirect to their dashboard
+    if (role === 'team_member') {
+      return NextResponse.redirect(new URL('/team-dashboard', request.url))
+    }
+
+    // Clients → redirect to client view
+    if (role === 'client') {
+      return NextResponse.redirect(new URL('/client-dashboard', request.url))
+    }
+
+    // Owners → check subscription
     const { data: subscription } = await supabase
       .from('subscriptions')
       .select('status')
@@ -45,6 +71,16 @@ export async function middleware(request: NextRequest) {
     if (!subscription || subscription.status !== 'active') {
       return NextResponse.redirect(new URL('/pricing', request.url))
     }
+  }
+
+  // Team dashboard access
+  if (pathname.startsWith('/team-dashboard') && role !== 'team_member') {
+    return NextResponse.redirect(new URL('/dashboard', request.url))
+  }
+
+  // Client dashboard access
+  if (pathname.startsWith('/client-dashboard') && role !== 'client') {
+    return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
   return supabaseResponse
