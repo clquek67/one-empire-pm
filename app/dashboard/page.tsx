@@ -400,8 +400,8 @@ Proceed and set this task to active anyway?`)
                   </div>
                 )}
                 <div onClick={() => { setTab(item.id) }} style={{
-                  display: 'flex', alignItems: 'center', gap: isMobile ? '1px' : '9px',
-                  padding: isMobile ? '6px 6px' : '8px 10px', flexDirection: isMobile ? 'column' : 'row',
+                  display: 'flex', alignItems: 'center', gap: isMobile ? '1px' : '10px',
+                  padding: isMobile ? '6px 6px' : '7px 12px', flexDirection: isMobile ? 'column' : 'row',
                   borderRadius: '4px', fontFamily: 'Rajdhani, sans-serif', fontSize: '12px',
                   fontWeight: 500, letterSpacing: '0.06em', cursor: 'pointer', flexShrink: 0,
                   borderLeft: isMobile ? 'none' : (tab === item.id ? `2px solid ${gold}` : '2px solid transparent'),
@@ -409,10 +409,10 @@ Proceed and set this task to active anyway?`)
                   transition: 'all 0.15s',
                   background: tab === item.id ? 'rgba(201,153,58,0.08)' : 'transparent',
                   color: tab === item.id ? gold : (item as any).gold ? 'rgba(232,184,75,0.8)' : 'rgba(216,228,244,0.8)',
-                  minWidth: isMobile ? '44px' : 'auto', textAlign: 'center' as const,
+                  minWidth: isMobile ? '44px' : 'auto', textAlign: isMobile ? 'center' as const : 'left' as const,
                 }}>
-                  <span style={{ fontSize: isMobile ? '14px' : '14px', flexShrink: 0, opacity: tab === item.id ? 1 : 0.85 }}>{item.icon}</span>
-                  <span style={{ flex: isMobile ? 'unset' : 1, fontSize: isMobile ? '6px' : 'inherit', letterSpacing: isMobile ? '0.03em' : '0.06em' }}>{item.label}</span>
+                  <span style={{ fontSize: '14px', flexShrink: 0, opacity: tab === item.id ? 1 : 0.85, width: isMobile ? 'auto' : '18px', textAlign: 'center' as const, display: 'inline-block' }}>{item.icon}</span>
+                  <span style={{ flex: isMobile ? 'unset' : 1, fontSize: isMobile ? '6px' : '12px', letterSpacing: isMobile ? '0.03em' : '0.06em' }}>{item.label}</span>
                   {(item as any).ai && !item.badge && (
                     <span style={{ fontSize: '8px', padding: '1px 5px', borderRadius: '8px', background: 'rgba(201,153,58,0.1)', color: 'rgba(201,168,80,0.85)', fontWeight: 600, letterSpacing: '0.3px' }}>AI</span>
                   )}
