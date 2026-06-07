@@ -6,7 +6,7 @@ type User = { id: string; email: string; user_metadata: { full_name?: string; av
 type Project = { id: string; name: string; client_name: string; status: string; health: number; budget?: number; start_date?: string; end_date?: string }
 type Task = { id: string; name: string; status: string; priority: string; owner: string; project_id: string; due_date?: string; depends_on?: string | null; created_at?: string }
 type Risk = { id: string; title: string; description: string; level: string; status: string; project_id: string; due_date?: string }
-type TeamMember = { id: string; name: string; email: string; role: string; capacity: number; project_id: string; weekly_hours?: number }
+type TeamMember = { id: string; name: string; email: string; role: string; capacity: number; project_id: string; weekly_hours?: number; invited_email?: string; invite_status?: string; linked_user_id?: string }
 type TimeLog = { id: string; description: string; hours: number; rate: number; billed: boolean; project_id: string; created_at: string; log_date?: string }
 type Milestone = { id: string; title: string; due_date?: string; status: string; project_id: string; user_id: string; created_at: string }
 
@@ -186,6 +186,23 @@ Proceed and set this task to active anyway?`)
     </button>
   )
 
+  const sendInvite = async (memberId: string, email: string, name: string, role: string, projectId: string) => {
+    if (!email) { alert('This team member has no email set. Please edit their record to add an email first.'); return }
+    const confirmMsg = `Send invitation to ${email}?\n\nThey will receive an email to join Empire PM as a ${role === 'client' ? 'Client (read-only)' : 'Team Member'}.`
+    if (!confirm(confirmMsg)) return
+    try {
+      const res = await fetch('/api/invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, name, role: role || 'team_member', projectId, teamMemberId: memberId })
+      })
+      if (res.ok) { alert(`✓ Invitation sent to ${email}`) }
+      else { alert('Failed to send invitation. Please try again.') }
+    } catch (err) {
+      alert('Error sending invitation.')
+    }
+  }
+
   const ai = async (key: string, system: string, content: string) => {
     setAiLoading(prev => ({ ...prev, [key]: true }))
     setAiText(prev => ({ ...prev, [key]: '' }))
@@ -284,19 +301,47 @@ Proceed and set this task to active anyway?`)
   const criticalCount = notifications.filter(n => n.type === 'critical').length
   const notifCount = notifications.length
 
+  // ── Plan Limits ──
+  const plan = subscription?.plan || 'starter'
+  const planLimits: Record<string, { projects: number; teamMembers: number; aiFeatures: string[] }> = {
+    starter: {
+      projects: 3,
+      teamMembers: 3,
+      aiFeatures: ['risks', 'planner', 'meetings', 'scope', 'workload', 'reports', 'timeline', 'billing']
+    },
+    pro: {
+      projects: 10,
+      teamMembers: 8,
+      aiFeatures: ['risks', 'planner', 'meetings', 'scope', 'clients', 'workload', 'reports', 'timeline', 'billing']
+    },
+    agency: {
+      projects: Infinity,
+      teamMembers: Infinity,
+      aiFeatures: ['risks', 'planner', 'meetings', 'scope', 'clients', 'workload', 'reports', 'timeline', 'billing']
+    }
+  }
+  const limits = planLimits[plan] || planLimits.starter
+  const activeProjectCount = projects.filter((p: Project) => p.status !== 'completed').length
+  const canAddProject = activeProjectCount < limits.projects
+  const canAddTeamMember = (projectId: string) => {
+    const count = teamMembers.filter((m: TeamMember) => m.project_id === projectId).length
+    return count < limits.teamMembers
+  }
+  const hasAIFeature = (feature: string) => limits.aiFeatures.includes(feature)
+
   const navItems = [
     { id: 'dashboard', icon: '◈', label: 'Dashboard', section: 'Command' },
     { id: 'projects', icon: '◻', label: 'Projects', section: null, badge: activeProjects > 0 ? activeProjects : null },
     { id: 'tasks', icon: '✓', label: 'Tasks', section: null, badge: activeTasks > 0 ? activeTasks : null },
-    { id: 'planner', icon: '✦', label: 'AI Planner', section: null, gold: true, ai: true },
-    { id: 'meetings', icon: '◎', label: 'Meetings', section: 'Operations', ai: true },
+    { id: 'planner', icon: '✦', label: 'AI Planner', section: null, gold: true, ai: true, locked: !hasAIFeature('planner') },
+    { id: 'meetings', icon: '◎', label: 'Meetings', section: 'Operations', ai: true, locked: !hasAIFeature('meetings') },
     { id: 'risks', icon: '⚠', label: 'Risk Radar', section: null, badge: openRisks > 0 ? openRisks : null, ai: true },
-    { id: 'scope', icon: '⊕', label: 'Scope Control', section: null, ai: true },
-    { id: 'clients', icon: '◈', label: 'Client Portal', section: null, ai: true },
+    { id: 'scope', icon: '⊕', label: 'Scope Control', section: null, ai: true, locked: !hasAIFeature('scope') },
+    { id: 'clients', icon: '◈', label: 'Client Portal', section: null, ai: true, locked: !hasAIFeature('clients') },
     { id: 'workload', icon: '⊞', label: 'Workload', section: null, ai: true },
     { id: 'timeline', icon: '▷', label: 'Timeline', section: null },
-    { id: 'reports', icon: '◈', label: 'Reports', section: null },
-    { id: 'billing', icon: '◷', label: 'Time & Billing', section: null },
+    { id: 'reports', icon: '◈', label: 'Reports', section: null, locked: !hasAIFeature('reports') },
+    { id: 'billing', icon: '◷', label: 'Time & Billing', section: null, locked: !hasAIFeature('billing') },
     { id: 'settings', icon: '⚙', label: 'Settings', section: 'Account' },
   ]
 
@@ -596,7 +641,7 @@ Proceed and set this task to active anyway?`)
                 <div>
                   <div style={s.card}>
                     <div style={s.sectionTitle}>Create New Project</div>
-                    <ProjectForm user={user} onCreated={() => user && loadData(user.id)} supabase={supabase} isMobile={isMobile} />
+                    <ProjectForm user={user} onCreated={() => user && loadData(user.id)} supabase={supabase} isMobile={isMobile} canAddProject={canAddProject} limits={limits} plan={plan} />
                   </div>
                 </div>
                 <div>
@@ -663,28 +708,45 @@ Proceed and set this task to active anyway?`)
               <div style={{ marginTop: '14px', display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '14px' }}>
                 <div style={s.card}>
                   <div style={s.sectionTitle}>Add Team Member</div>
-                  <TeamMemberForm user={user} projects={projects} onCreated={() => user && loadData(user.id)} supabase={supabase} />
+                  <TeamMemberForm user={user} projects={projects} onCreated={() => user && loadData(user.id)} supabase={supabase} isMobile={isMobile} canAddTeamMember={canAddTeamMember} limits={limits} plan={plan} />
                 </div>
                 <div style={s.card}>
                   <div style={s.sectionTitle}>Team Members</div>
                   {teamMembers.map(m => {
                     const proj = projects.find(p => p.id === m.project_id)
+                    const inviteStatus = m.invite_status || 'not_invited'
+                    const statusColor = inviteStatus === 'accepted' ? '#22C990' : inviteStatus === 'invited' ? '#FFD080' : 'rgba(255,255,255,0.25)'
+                    const statusLabel = inviteStatus === 'accepted' ? '● Active' : inviteStatus === 'invited' ? '◌ Invited' : '○ Not invited'
                     return (
-                    <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 0', borderBottom: `1px solid rgba(201,153,58,0.1)` }}>
-                      <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(201,153,58,0.12)', border: `1px solid ${border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', fontWeight: 700, color: gold, flexShrink: 0 }}>
-                        {m.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)}
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '12px', fontWeight: 600, color: textMid }}>{m.name}</div>
-                        <div style={{ fontSize: '10px', color: textDim }}>{m.email} · {m.role || 'No role'}</div>
-                        <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(201,168,80,0.75)', marginTop: '1px' }}>{proj?.name || 'No project assigned'}</div>
-                      </div>
-                      <div style={{ textAlign: 'right' }}>
-                        <div style={{ width: '80px', height: '3px', background: 'rgba(240,246,255,0.07)', borderRadius: '2px', overflow: 'hidden', marginBottom: '3px' }}>
-                          <div style={{ height: '3px', width: `${m.capacity}%`, background: m.capacity > 80 ? 'linear-gradient(90deg,#E24B4A,#FF9090)' : `linear-gradient(90deg,#1AABCC,#4DD8F0)` }}/>
+                    <div key={m.id} style={{ padding: '10px 0', borderBottom: `1px solid rgba(201,153,58,0.1)` }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: inviteStatus === 'accepted' ? 'rgba(34,201,144,0.15)' : 'rgba(201,153,58,0.12)', border: `1px solid ${inviteStatus === 'accepted' ? 'rgba(34,201,144,0.4)' : border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', fontWeight: 700, color: inviteStatus === 'accepted' ? '#22C990' : gold, flexShrink: 0 }}>
+                          {m.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)}
                         </div>
-                        <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: m.capacity > 80 ? '#FF9090' : whiteFaint }}>{m.capacity}%</span>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '12px', fontWeight: 600, color: textMid }}>{m.name}</div>
+                          <div style={{ fontSize: '10px', color: textDim }}>{m.email} · {m.role || 'No role'}</div>
+                          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(201,168,80,0.75)', marginTop: '1px' }}>{proj?.name || 'No project assigned'}</div>
+                        </div>
+                        <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column' as const, alignItems: 'flex-end', gap: '4px' }}>
+                          <div style={{ width: '80px', height: '3px', background: 'rgba(240,246,255,0.07)', borderRadius: '2px', overflow: 'hidden' }}>
+                            <div style={{ height: '3px', width: `${m.capacity}%`, background: m.capacity > 80 ? 'linear-gradient(90deg,#E24B4A,#FF9090)' : `linear-gradient(90deg,#1AABCC,#4DD8F0)` }}/>
+                          </div>
+                          <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '8px', color: statusColor }}>{statusLabel}</span>
+                        </div>
                       </div>
+                      {inviteStatus !== 'accepted' && (
+                        <div style={{ display: 'flex', gap: '6px', marginTop: '8px', paddingLeft: '42px' }}>
+                          <button onClick={() => sendInvite(m.id, m.email, m.name, 'team_member', m.project_id)}
+                            style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 700, letterSpacing: '0.1em', background: 'rgba(201,153,58,0.1)', border: `1px solid rgba(201,153,58,0.3)`, color: gold, padding: '4px 10px', borderRadius: '2px', cursor: 'pointer' }}>
+                            {inviteStatus === 'invited' ? '↺ Resend Invite' : '✉ Invite as Team Member'}
+                          </button>
+                          <button onClick={() => sendInvite(m.id, m.email, m.name, 'client', m.project_id)}
+                            style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 700, letterSpacing: '0.1em', background: 'rgba(26,171,204,0.08)', border: `1px solid rgba(26,171,204,0.25)`, color: '#4DD8F0', padding: '4px 10px', borderRadius: '2px', cursor: 'pointer' }}>
+                            ◇ Invite as Client
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )})}
                   {teamMembers.length === 0 && (
@@ -1208,7 +1270,7 @@ Proceed and set this task to active anyway?`)
               <div>
                 <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '22px', color: textBright, marginBottom: '4px' }}>Create your <em style={{ color: gold }}>first project</em></div>
                 <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: textDim, letterSpacing: '0.1em', marginBottom: '20px' }}>STEP 1 OF 3 — Everything in Empire PM lives inside a project</div>
-                <ProjectForm user={user} onCreated={() => { if (user) loadData(user.id); setWizardStep(2) }} supabase={supabase} isMobile={isMobile} />
+                <ProjectForm user={user} onCreated={() => { if (user) loadData(user.id); setWizardStep(2) }} supabase={supabase} isMobile={isMobile} canAddProject={canAddProject} limits={limits} plan={plan} />
                 <button style={{ ...s.btnGhost, width: '100%', marginTop: '10px', padding: '9px' }} onClick={() => setWizardStep(2)}>Skip this step →</button>
               </div>
             )}
@@ -1221,7 +1283,7 @@ Proceed and set this task to active anyway?`)
                 {projects.length === 0 ? (
                   <div style={{ fontSize: '12px', color: textDim, padding: '16px', textAlign: 'center' }}>Create a project first to assign team members to it.</div>
                 ) : (
-                  <TeamMemberForm user={user} projects={projects} onCreated={() => { if (user) loadData(user.id); setWizardStep(3) }} supabase={supabase} isMobile={isMobile} />
+                  <TeamMemberForm user={user} projects={projects} onCreated={() => { if (user) loadData(user.id); setWizardStep(3) }} supabase={supabase} isMobile={isMobile} canAddTeamMember={canAddTeamMember} limits={limits} plan={plan} />
                 )}
                 <button style={{ ...s.btnGhost, width: '100%', marginTop: '10px', padding: '9px' }} onClick={() => setWizardStep(3)}>Skip this step →</button>
               </div>
@@ -1250,7 +1312,7 @@ Proceed and set this task to active anyway?`)
 
 // ─── SUB-COMPONENTS ───
 
-function ProjectForm({ user, onCreated, supabase, isMobile }: any) {
+function ProjectForm({ user, onCreated, supabase, isMobile, canAddProject, limits, plan }: any) {
   const [name, setName] = useState(''); const [client, setClient] = useState(''); const [budget, setBudget] = useState(''); const [startDate, setStartDate] = useState(''); const [endDate, setEndDate] = useState('')
   const submit = async () => {
     if (!name || !user) return
@@ -1266,12 +1328,19 @@ function ProjectForm({ user, onCreated, supabase, isMobile }: any) {
         <div><div style={s.label}>Start Date</div><input style={s.input} value={startDate} onChange={e => setStartDate(e.target.value)} type="date"/></div>
         <div><div style={s.label}>End Date</div><input style={s.input} value={endDate} onChange={e => setEndDate(e.target.value)} type="date"/></div>
       </div>
-      <button style={{ ...s.btnGold, width: '100%' }} onClick={submit}>Create Project →</button>
+      {canAddProject === false ? (
+        <div style={{ padding: '12px', background: 'rgba(226,75,74,0.08)', border: '1px solid rgba(226,75,74,0.25)', borderRadius: '4px', textAlign: 'center' }}>
+          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: '#FF9090', marginBottom: '4px', fontWeight: 600 }}>⬆ Project limit reached ({limits?.projects} on {(plan||'starter').charAt(0).toUpperCase()+(plan||'starter').slice(1)} plan)</div>
+          <div style={{ fontSize: '11px', color: 'rgba(192,208,232,0.75)' }}>Upgrade your plan to add more projects.</div>
+        </div>
+      ) : (
+        <button style={{ ...s.btnGold, width: '100%' }} onClick={submit}>Create Project →</button>
+      )}
     </div>
   )
 }
 
-function TeamMemberForm({ user, projects, onCreated, supabase, isMobile }: any) {
+function TeamMemberForm({ user, projects, onCreated, supabase, isMobile, canAddTeamMember, limits, plan }: any) {
   const [name, setName] = useState(''); const [email, setEmail] = useState(''); const [role, setRole] = useState(''); const [projectId, setProjectId] = useState(''); const [capacity, setCapacity] = useState('100')
   const submit = async () => {
     if (!name || !email || !projectId || !user) return
@@ -1295,7 +1364,14 @@ function TeamMemberForm({ user, projects, onCreated, supabase, isMobile }: any) 
           {projects.map((p: Project) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
       </div>
-      <button style={{ ...s.btnGold, width: '100%' }} onClick={submit}>Add Team Member →</button>
+      {projectId && canAddTeamMember && !canAddTeamMember(projectId) ? (
+        <div style={{ padding: '12px', background: 'rgba(226,75,74,0.08)', border: '1px solid rgba(226,75,74,0.25)', borderRadius: '4px', textAlign: 'center' }}>
+          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: '#FF9090', marginBottom: '4px', fontWeight: 600 }}>⬆ Team limit reached ({limits?.teamMembers}/project on {(plan||'starter').charAt(0).toUpperCase()+(plan||'starter').slice(1)} plan)</div>
+          <div style={{ fontSize: '11px', color: 'rgba(192,208,232,0.75)' }}>Upgrade to add more team members.</div>
+        </div>
+      ) : (
+        <button style={{ ...s.btnGold, width: '100%' }} onClick={submit}>Add Team Member →</button>
+      )}
     </div>
   )
 }
@@ -1780,6 +1856,11 @@ function SettingsForm({ user, supabase }: any) {
   }
 
   const planNames: any = { starter: 'Starter', pro: 'Pro', agency: 'Agency' }
+  const planLimitsDisplay: any = {
+    starter: '3 projects · 3 team members/project · All AI features · Time & Billing included',
+    pro: '10 projects · 8 team members/project · All AI features · Client Portal · n8n Automations',
+    agency: 'Unlimited projects · Unlimited team members · All features · White label emails · Priority support'
+  }
   const planPrices: any = { starter: { monthly: '$17', quarterly: '$42', yearly: '$147' }, pro: { monthly: '$37', quarterly: '$89', yearly: '$297' }, agency: { monthly: '$67', quarterly: '$161', yearly: '$537' } }
 
   return (
@@ -1815,6 +1896,11 @@ function SettingsForm({ user, supabase }: any) {
                 <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase' as const, color: goldDim, marginBottom: '4px' }}>Renews</div>
                 <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '14px', fontWeight: 600, color: textMid }}>{sub.current_period_end ? fmtDate(sub.current_period_end) : '—'}</div>
               </div>
+            </div>
+            {/* Plan limits display */}
+            <div style={{ marginBottom: '16px', padding: '12px 14px', background: 'rgba(8,20,44,0.5)', border: '1px solid rgba(201,153,58,0.15)', borderRadius: '4px' }}>
+              <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600, letterSpacing: '0.16em', color: goldDim, marginBottom: '6px' }}>PLAN LIMITS</div>
+              <div style={{ fontSize: '11px', color: textMid }}>{planLimitsDisplay[sub.plan] || planLimitsDisplay.starter}</div>
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
               <button style={{ ...s.btnGold, flex: 1 }} onClick={manageSubscription} disabled={portalLoading}>{portalLoading ? 'Loading...' : 'Manage Subscription →'}</button>
