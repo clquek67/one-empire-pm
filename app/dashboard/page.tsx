@@ -2346,10 +2346,10 @@ Paragraph 3: Confidence statement and forward outlook.`
         <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'rgba(201,153,58,0.15)', border: `1px solid ${borderMd}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', fontWeight: 700, color: gold, flexShrink: 0 }}>{num}</div>
         <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', fontWeight: 700, letterSpacing: '0.2em', color: textBright }}>{title}</div>
       </div>
-      <button className="no-print" onClick={() => setEditingSection(editingSection === key ? null : key)}
-        style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: editingSection === key ? gold : 'rgba(200,220,255,0.6)', letterSpacing: '0.1em', padding: 0 }}>
-        {editingSection === key ? 'DONE' : '✎ ADD NOTE'}
-      </button>
+      {editingSection !== key && <button className="no-print" onClick={() => setEditingSection(key)}
+        style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(200,220,255,0.6)', letterSpacing: '0.1em', padding: 0 }}>
+        ✎ ADD NOTE
+      </button>}
     </div>
   )
 
@@ -2757,10 +2757,10 @@ Paragraph 3: Confidence statement and forward outlook.`
               <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'rgba(201,153,58,0.15)', border: `1px solid ${borderMd}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', fontWeight: 700, color: gold }}>7</div>
               <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', fontWeight: 700, letterSpacing: '0.2em', color: textBright }}>NEXT STEPS & ACTIONS</div>
             </div>
-            <button className="no-print" onClick={() => setEditingNextSteps(v => !v)}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: editingNextSteps ? gold : 'rgba(200,220,255,0.6)', letterSpacing: '0.1em' }}>
-              {editingNextSteps ? 'DONE' : '✎ EDIT'}
-            </button>
+            {!editingNextSteps && <button className="no-print" onClick={() => setEditingNextSteps(true)}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(200,220,255,0.6)', letterSpacing: '0.1em' }}>
+              ✎ EDIT
+            </button>}
           </div>
           {editingNextSteps ? (
             <div>
