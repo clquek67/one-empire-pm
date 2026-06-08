@@ -5,10 +5,15 @@ export default function LoginPage() {
   const supabase = createClient()
 
   const signInWithGoogle = async () => {
+    // Force account selection prompt every time — prevents auto-login security exposure
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/api/auth/callback`,
+        queryParams: {
+          prompt: 'select_account',  // Always show account picker
+          access_type: 'offline',
+        },
       },
     })
   }
