@@ -66,6 +66,10 @@ function AcceptInviteContent() {
       provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/api/auth/callback?next=/invite/accept?token=${token}&project=${projectId}&role=${role}`,
+        queryParams: {
+          prompt: 'select_account',
+          access_type: 'offline',
+        },
       },
     })
   }
