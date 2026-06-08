@@ -2356,9 +2356,17 @@ Paragraph 3: Confidence statement and forward outlook.`
   const noteBlock = (key: string) => (
     <>
       {editingSection === key && (
-        <textarea value={sectionNotes[key] || ''} onChange={e => setSectionNotes(p => ({...p, [key]: e.target.value}))}
-          placeholder="Add PM notes — this will appear in the printed report..."
-          style={{ width: '100%', marginTop: '14px', background: 'rgba(8,20,44,0.8)', border: `1px solid ${borderMd}`, borderRadius: '3px', padding: '10px 12px', color: textMid, fontFamily: 'DM Sans, sans-serif', fontSize: '12px', resize: 'vertical', minHeight: '64px', outline: 'none' }}/>
+        <div style={{ marginTop: '14px' }}>
+          <textarea value={sectionNotes[key] || ''} onChange={e => setSectionNotes(p => ({...p, [key]: e.target.value}))}
+            placeholder="Add PM notes — this will appear in the printed report..."
+            style={{ width: '100%', background: 'rgba(8,20,44,0.8)', border: `1px solid ${borderMd}`, borderRadius: '3px', padding: '10px 12px', color: textMid, fontFamily: 'DM Sans, sans-serif', fontSize: '12px', resize: 'vertical', minHeight: '64px', outline: 'none' }}/>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '6px' }}>
+            <button onClick={() => setEditingSection(null)}
+              style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 700, letterSpacing: '0.12em', background: `linear-gradient(135deg, #C9993A, #E8B84B)`, color: '#050D1A', border: 'none', padding: '6px 14px', borderRadius: '2px', cursor: 'pointer' }}>
+              Save Note →
+            </button>
+          </div>
+        </div>
       )}
       {sectionNotes[key] && editingSection !== key && (
         <div style={{ marginTop: '14px', padding: '12px 14px', background: 'rgba(201,153,58,0.04)', borderLeft: `3px solid ${goldDim}`, borderRadius: '0 3px 3px 0' }}>
@@ -2729,8 +2737,16 @@ Paragraph 3: Confidence statement and forward outlook.`
           {loadingAI && <div style={{ textAlign: 'center', padding: '24px', color: gold, fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', letterSpacing: '0.12em', animation: 'pulse 1.5s infinite' }}>✦ Generating executive summary...</div>}
           {execSummary && !editingSummary && <div style={{ fontSize: '13px', color: textMid, lineHeight: '1.8', fontFamily: 'DM Sans, sans-serif', whiteSpace: 'pre-wrap' }}>{execSummary}</div>}
           {editingSummary && (
-            <textarea value={execSummary} onChange={e => setExecSummary(e.target.value)}
-              style={{ width: '100%', background: 'rgba(8,20,44,0.8)', border: `1px solid ${borderMd}`, borderRadius: '3px', padding: '14px', color: textMid, fontFamily: 'DM Sans, sans-serif', fontSize: '13px', lineHeight: '1.8', resize: 'vertical', minHeight: '160px', outline: 'none' }}/>
+            <div>
+              <textarea value={execSummary} onChange={e => setExecSummary(e.target.value)}
+                style={{ width: '100%', background: 'rgba(8,20,44,0.8)', border: `1px solid ${borderMd}`, borderRadius: '3px', padding: '14px', color: textMid, fontFamily: 'DM Sans, sans-serif', fontSize: '13px', lineHeight: '1.8', resize: 'vertical', minHeight: '160px', outline: 'none' }}/>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px' }}>
+                <button onClick={() => setEditingSummary(false)}
+                  style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', fontWeight: 700, letterSpacing: '0.14em', background: `linear-gradient(135deg, #C9993A, #E8B84B)`, color: '#050D1A', border: 'none', padding: '8px 18px', borderRadius: '2px', cursor: 'pointer' }}>
+                  Save Summary →
+                </button>
+              </div>
+            </div>
           )}
         </div>
 
@@ -2747,9 +2763,17 @@ Paragraph 3: Confidence statement and forward outlook.`
             </button>
           </div>
           {editingNextSteps ? (
-            <textarea value={nextSteps} onChange={e => setNextSteps(e.target.value)}
-              placeholder={`Enter next steps and actions for the client.\n\nExample:\n1. Client review meeting scheduled for [date]\n2. Final UAT sign-off required by [date]\n3. Outstanding deliverable: [name] due [date]`}
-              style={{ width: '100%', background: 'rgba(8,20,44,0.8)', border: `1px solid ${borderMd}`, borderRadius: '3px', padding: '14px', color: textMid, fontFamily: 'DM Sans, sans-serif', fontSize: '13px', lineHeight: '1.8', resize: 'vertical', minHeight: '120px', outline: 'none' }}/>
+            <div>
+              <textarea value={nextSteps} onChange={e => setNextSteps(e.target.value)}
+                placeholder={`Enter next steps and actions for the client.\n\nExample:\n1. Client review meeting scheduled for [date]\n2. Final UAT sign-off required by [date]\n3. Outstanding deliverable: [name] due [date]`}
+                style={{ width: '100%', background: 'rgba(8,20,44,0.8)', border: `1px solid ${borderMd}`, borderRadius: '3px', padding: '14px', color: textMid, fontFamily: 'DM Sans, sans-serif', fontSize: '13px', lineHeight: '1.8', resize: 'vertical', minHeight: '120px', outline: 'none' }}/>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px' }}>
+                <button onClick={() => setEditingNextSteps(false)}
+                  style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', fontWeight: 700, letterSpacing: '0.14em', background: `linear-gradient(135deg, #C9993A, #E8B84B)`, color: '#050D1A', border: 'none', padding: '8px 18px', borderRadius: '2px', cursor: 'pointer' }}>
+                  Save Next Steps →
+                </button>
+              </div>
+            </div>
           ) : nextSteps ? (
             <div style={{ fontSize: '13px', color: textMid, lineHeight: '1.8', fontFamily: 'DM Sans, sans-serif', whiteSpace: 'pre-wrap' }}>{nextSteps}</div>
           ) : (
