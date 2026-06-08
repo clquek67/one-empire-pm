@@ -858,11 +858,11 @@ Proceed and set this task to active anyway?`)
                               <div style={{ display: 'flex', justifyContent: 'space-between', paddingLeft: '4px' }}>
                                 <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(201,168,80,0.75)' }}>{proj?.name || '—'}</span>
                                 {t.due_date && (
-                                  <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOverdue ? '#FF9090' : daysLeft !== null && daysLeft <= 3 ? '#FFD080' : textMid }}>
-                                    {isOverdue ? `Overdue · ${fmtDate(t.due_date)}` : `Due ${fmtDate(t.due_date)}${daysLeft !== null && daysLeft <= 7 ? ` · ${daysLeft}d` : ''}`}
+                                  <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOverdue ? '#FF9090' : t.status === 'done' ? 'rgba(200,220,255,0.35)' : daysLeft !== null && daysLeft <= 3 ? '#FFD080' : textMid }}>
+                                    {isOverdue ? `Overdue · ${fmtDate(t.due_date)}` : `Due ${fmtDate(t.due_date)}${t.status !== 'done' && daysLeft !== null && daysLeft <= 7 ? ` · ${daysLeft}d` : ''}`}
                                   </span>
                                 )}
-                                {!t.due_date && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(200,220,255,0.35)' }}>No due date</span>}
+                                {!t.due_date && t.status !== 'done' && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(200,220,255,0.35)' }}>No due date</span>}
                               </div>
                             </>
                           )
