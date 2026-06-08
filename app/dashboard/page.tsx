@@ -129,7 +129,16 @@ export default function Dashboard() {
   const startEdit = (id: string, fields: Record<string, any>) => { setEditingId(id); setEditFields(fields) }
   const cancelEdit = () => { setEditingId(null); setEditFields({}) }
   const saveEdit = async (table: string, id: string, extra?: Record<string, any>) => {
-    const data = { ...editFields, ...extra }
+    const raw = { ...editFields, ...extra }
+    // Null-coerce empty strings for FK/date fields to prevent DB errors
+    const data: Record<string, any> = {}
+    for (const [k, v] of Object.entries(raw)) {
+      if (v === '' && ['depends_on', 'due_date', 'linked_user_id', 'owner'].includes(k)) {
+        data[k] = null
+      } else {
+        data[k] = v
+      }
+    }
     // Dependency warning — if setting a task to active and dependency isn't done
     if (table === 'tasks' && data.status === 'active') {
       const depId = data.depends_on || tasks.find((t: Task) => t.id === id)?.depends_on
@@ -266,10 +275,13 @@ Proceed and set this task to active anyway?`)
   tasks.forEach((t: Task) => {
     if (t.status === 'done') return
     if (t.due_date) {
-      const d = new Date(t.due_date); d.setHours(0,0,0,0)
+      const todayDateStr = new Date().toISOString().split('T')[0]
       const proj = projects.find((p: Project) => p.id === t.project_id)
-      if (d < today) notifications.push({ id: `task-overdue-${t.id}`, type: 'critical', title: `Task overdue: ${t.name}`, detail: `${proj?.name || 'Unknown project'} · due ${fmtDate(t.due_date)}`, tab: 'tasks' })
-      else if (d <= in3) notifications.push({ id: `task-soon-${t.id}`, type: 'warning', title: `Task due soon: ${t.name}`, detail: `${proj?.name || 'Unknown project'} · due ${fmtDate(t.due_date)}`, tab: 'tasks' })
+      if (t.due_date < todayDateStr) notifications.push({ id: `task-overdue-${t.id}`, type: 'critical', title: `Task overdue: ${t.name}`, detail: `${proj?.name || 'Unknown project'} · due ${fmtDate(t.due_date)}`, tab: 'tasks' })
+      else {
+        const d = new Date(t.due_date); d.setHours(0,0,0,0)
+        if (d <= in3) notifications.push({ id: `task-soon-${t.id}`, type: 'warning', title: `Task due soon: ${t.name}`, detail: `${proj?.name || 'Unknown project'} · due ${fmtDate(t.due_date)}`, tab: 'tasks' })
+      }
     }
   })
 
@@ -558,7 +570,8 @@ Proceed and set this task to active anyway?`)
                   <div style={s.card}>
                     <div style={s.sectionTitle}>Recent Tasks <span style={{ fontSize: '9px', color: gold, cursor: 'pointer', fontWeight: 400 }} onClick={() => setTab('tasks')}>View all →</span></div>
                     {tasks.slice(0, 5).map(t => {
-                      const isOverdue = t.due_date && new Date(t.due_date) < new Date() && t.status !== 'done'
+                      const todayStr = new Date().toISOString().split('T')[0]
+                      const isOverdue = t.due_date && t.due_date < todayStr && t.status !== 'done'
                       return (
                       <div key={t.id} style={{ padding: '8px 0', borderBottom: `1px solid rgba(201,153,58,0.1)`, fontSize: '11px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
@@ -732,13 +745,26 @@ Proceed and set this task to active anyway?`)
                           <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(201,168,80,0.75)', marginTop: '1px' }}>{proj?.name || 'No project assigned'}</div>
                         </div>
                         <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column' as const, alignItems: 'flex-end', gap: '4px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            {editBtn(m.id, { name: m.name, email: m.email, role: m.role || '', capacity: m.capacity })}
+                            {deleteBtn('team_members', m.id)}
+                          </div>
                           <div style={{ width: '80px', height: '3px', background: 'rgba(240,246,255,0.07)', borderRadius: '2px', overflow: 'hidden' }}>
                             <div style={{ height: '3px', width: `${m.capacity}%`, background: m.capacity > 80 ? 'linear-gradient(90deg,#E24B4A,#FF9090)' : `linear-gradient(90deg,#1AABCC,#4DD8F0)` }}/>
                           </div>
                           <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '8px', color: statusColor }}>{statusLabel}</span>
                         </div>
                       </div>
-                      {inviteStatus !== 'accepted' && (
+                      {editingId === m.id && (
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginTop: '8px', paddingLeft: '42px' }}>
+                          {inlineInput('name', 'Full name')}
+                          {inlineInput('email', 'Email')}
+                          {inlineInput('role', 'Role')}
+                          {inlineInput('capacity', 'Capacity %', 'number')}
+                          <div style={{ gridColumn: '1/-1', display: 'flex', justifyContent: 'flex-end' }}>{saveBtnInline('team_members', m.id)}</div>
+                        </div>
+                      )}
+                      {inviteStatus !== 'accepted' && editingId !== m.id && (
                         <div style={{ display: 'flex', gap: '6px', marginTop: '8px', paddingLeft: '42px' }}>
                           <button onClick={() => sendInvite(m.id, m.email, m.name, 'team_member', m.project_id)}
                             style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 700, letterSpacing: '0.1em', background: 'rgba(201,153,58,0.1)', border: `1px solid rgba(201,153,58,0.3)`, color: gold, padding: '4px 10px', borderRadius: '2px', cursor: 'pointer' }}>
@@ -748,6 +774,11 @@ Proceed and set this task to active anyway?`)
                             style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 700, letterSpacing: '0.1em', background: 'rgba(26,171,204,0.08)', border: `1px solid rgba(26,171,204,0.25)`, color: '#4DD8F0', padding: '4px 10px', borderRadius: '2px', cursor: 'pointer' }}>
                             ◇ Invite as Client
                           </button>
+                        </div>
+                      )}
+                      {inviteStatus === 'accepted' && editingId !== m.id && (
+                        <div style={{ paddingLeft: '42px', marginTop: '4px' }}>
+                          <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(34,201,144,0.6)' }}>✓ Active user — can access team dashboard</span>
                         </div>
                       )}
                     </div>
@@ -779,8 +810,9 @@ Proceed and set this task to active anyway?`)
                   <div style={s.sectionTitle}>All Tasks</div>
                   {tasks.map(t => {
                     const proj = projects.find((p: Project) => p.id === t.project_id)
-                    const isOverdue = t.due_date && new Date(t.due_date) < new Date() && t.status !== 'done'
-                    const daysLeft = t.due_date ? Math.ceil((new Date(t.due_date).getTime() - new Date().getTime()) / (1000*60*60*24)) : null
+                    const todayStr = new Date().toISOString().split('T')[0]
+                    const isOverdue = t.due_date && t.due_date < todayStr && t.status !== 'done'
+                    const daysLeft = t.due_date ? Math.ceil((new Date(t.due_date).getTime() - new Date(todayStr).getTime()) / (1000*60*60*24)) : null
                     return (
                     <div key={t.id} style={{ padding: '10px 0', borderBottom: `1px solid rgba(201,153,58,0.1)`, fontSize: '11px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
