@@ -886,22 +886,28 @@ Proceed and set this task to active anyway?`)
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '22px' }}>
                 <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '26px', color: '#F0F6FF' }}>Risk <em style={{ color: gold, fontStyle: 'italic' }}>Radar</em></div>
-                <button style={s.btnGold} onClick={() => {
-                  const projectContext = projects.map(p => {
-                    const projTasks = tasks.filter(t => t.project_id === p.id)
-                    const projRisks = risks.filter(r => r.project_id === p.id && r.status !== 'closed')
-                    const projTeam = teamMembers.filter(m => m.project_id === p.id)
-                    const overdueTasks = projTasks.filter(t => t.due_date && new Date(t.due_date) < new Date() && t.status !== 'done')
-                    return `PROJECT: ${p.name} (Client: ${p.client_name || 'Internal'}, Health: ${p.health}%, Status: ${p.status}, Timeline: ${p.start_date || 'TBD'} → ${p.end_date || 'TBD'})
-  Tasks: ${projTasks.length} total, ${projTasks.filter(t => t.status === 'active').length} active, ${projTasks.filter(t => t.status === 'blocked').length} blocked, ${overdueTasks.length} overdue
-  Open Risks: ${projRisks.map(r => `${r.title} [${r.level}]`).join(', ') || 'None logged'}
-  Team: ${projTeam.map(m => `${m.name} (${m.role}, ${m.capacity}% capacity)`).join(', ') || 'No team assigned'}`
-                  }).join('\n\n')
-                  ai('risks',
-                    'You are an expert risk manager with 20 years experience. Analyse the project data provided and: 1. Identify hidden or emerging risks not yet logged, 2. Flag any existing risks that need escalation, 3. Highlight capacity or deadline conflicts, 4. Provide specific mitigation actions. Use bullet points only — no markdown tables. Be direct and specific to the actual data, not generic advice.',
-                    `Analyse these projects for risks:\n\n${projectContext}\n\nTotal team members: ${teamMembers.length}. Provide a prioritised risk assessment.`
-                  )
-                }}>✦ AI Risk Scan</button>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <select value={riskProjectId} onChange={e => { setRiskProjectId(e.target.value); setAiText(prev => ({ ...prev, risks: '' })) }}
+                    style={{ background: 'rgba(16,36,72,0.8)', border: `1px solid rgba(201,153,58,0.35)`, borderRadius: '3px', padding: '7px 12px', fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: textBright, outline: 'none' }}>
+                    <option value="all">All Projects</option>
+                    {projects.map((p: Project) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  </select>
+                  <button style={s.btnGold} onClick={() => {
+                    const selectedProjects = riskProjectId === 'all' ? projects : projects.filter((p: Project) => p.id === riskProjectId)
+                    const todayStr = new Date().toISOString().split('T')[0]
+                    const projectContext = selectedProjects.map((p: Project) => {
+                      const projTasks = tasks.filter((t: Task) => t.project_id === p.id)
+                      const projRisks = risks.filter((r: Risk) => r.project_id === p.id && r.status !== 'closed')
+                      const projTeam = teamMembers.filter((m: TeamMember) => m.project_id === p.id)
+                      const overdueTasks = projTasks.filter((t: Task) => t.due_date && t.due_date < todayStr && t.status !== 'done')
+                      return `PROJECT: ${p.name} | Client: ${p.client_name || 'Internal'} | Health: ${p.health}% | Timeline: ${p.start_date || 'TBD'} to ${p.end_date || 'TBD'}\nTasks: ${projTasks.map((t: Task) => t.name + ' [' + t.status + ', due: ' + (t.due_date || 'none') + ', owner: ' + (t.owner || 'unassigned') + ']').join('; ') || 'None'}\nOverdue: ${overdueTasks.map((t: Task) => t.name).join(', ') || 'None'}\nOpen Risks: ${projRisks.map((r: Risk) => r.title + ' [' + r.level + ']').join(', ') || 'None'}\nTeam: ${projTeam.map((m: TeamMember) => m.name + ' (' + m.role + ', ' + m.capacity + '% capacity)').join(', ') || 'No team'}`
+                    }).join('\n\n')
+                    ai('risks',
+                      'You are an expert risk manager with 20 years PM experience. Analyse this specific project data. Be highly specific — reference actual task names, owners, and dates. Never give generic advice. Use bullet points only. Structure: 1. CRITICAL RISKS, 2. HIDDEN RISKS NOT YET LOGGED, 3. CAPACITY & DEADLINE CONFLICTS, 4. RECOMMENDED ACTIONS (with owner and deadline).',
+                      'Risk analysis for: ' + (riskProjectId === 'all' ? 'Full Portfolio' : (selectedProjects[0]?.name || 'Project')) + '\n\n' + projectContext
+                    )
+                  }}>✦ AI Risk Scan</button>
+                </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '14px' }}>
                 <div>
@@ -911,7 +917,7 @@ Proceed and set this task to active anyway?`)
                   </div>
                   <div style={s.card}>
                     <div style={s.sectionTitle}>Active Risks</div>
-                    {risks.filter(r => r.status !== 'closed').map(r => {
+                    {risks.filter((r: Risk) => r.status !== 'closed' && (riskProjectId === 'all' || r.project_id === riskProjectId)).map(r => {
                       const proj = projects.find(p => p.id === r.project_id)
                       const isOverdue = r.due_date && new Date(r.due_date) < new Date()
                       const levelColor = r.level === 'critical' ? '#E24B4A' : r.level === 'high' ? '#FF7043' : r.level === 'medium' ? '#F5A623' : '#22C990'
@@ -954,11 +960,11 @@ Proceed and set this task to active anyway?`)
                 <div>
                   <div style={s.card}>
                     <div style={s.sectionTitle}>✦ AI Risk Analysis</div>
-                    {aiLoading['risks'] && <div style={{ color: textDim, fontSize: '12px' }}>Scanning for hidden risks...</div>}
+                    {aiLoading['risks'] && <div style={{ color: textDim, fontSize: '12px' }}>Scanning {riskProjectId === 'all' ? 'all projects' : (projects.find((p: Project) => p.id === riskProjectId)?.name || 'project')} for risks...</div>}
                     {aiText['risks'] && <div style={s.aiResponse} dangerouslySetInnerHTML={{ __html: formatAI(aiText['risks']) }}/>}
                     {!aiLoading['risks'] && !aiText['risks'] && (
                       <div style={{ fontSize: '11px', color: textDim, lineHeight: 1.7 }}>
-                        Click <strong style={{ color: gold }}>AI Risk Scan</strong> to identify hidden risks across your projects.
+                        Select a project then click <strong style={{ color: gold }}>AI Risk Scan</strong> for a project-specific analysis, or leave on All Projects for portfolio-wide scan.
                       </div>
                     )}
                   </div>
