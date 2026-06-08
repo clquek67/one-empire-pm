@@ -35,7 +35,7 @@ export async function POST(request: Request) {
 
         if (userId && stripeSubscriptionId) {
           // Fetch the full subscription from Stripe to get price info
-          const stripeSub = await stripe.subscriptions.retrieve(stripeSubscriptionId)
+          const stripeSub = await stripe.subscriptions.retrieve(stripeSubscriptionId) as any
           const priceId = stripeSub.items?.data?.[0]?.price?.id
           const planData = priceId ? getPlanFromPriceId(priceId) : null
           const periodEnd = stripeSub.current_period_end || Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60
@@ -66,7 +66,7 @@ export async function POST(request: Request) {
               .single()
 
             if (profile && stripeSubscriptionId) {
-              const stripeSub = await stripe.subscriptions.retrieve(stripeSubscriptionId)
+              const stripeSub = await stripe.subscriptions.retrieve(stripeSubscriptionId) as any
               const priceId = stripeSub.items?.data?.[0]?.price?.id
               const planData = priceId ? getPlanFromPriceId(priceId) : null
               const periodEnd = stripeSub.current_period_end || Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60
