@@ -89,6 +89,7 @@ export default function Dashboard() {
     return () => window.removeEventListener('resize', check)
   }, [])
   const [showNotifications, setShowNotifications] = useState(false)
+  const [riskProjectId, setRiskProjectId] = useState<string>('all')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editFields, setEditFields] = useState<Record<string, any>>({})
 
