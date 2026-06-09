@@ -49,7 +49,6 @@ export default function TeamDashboard() {
 
     const projectIds = tmRecords?.map((tm: any) => tm.project_id) || []
     const memberName = prof?.full_name || u.email
-    // Get all possible name variants for matching tasks
     const nameVariants = [memberName, u.email, 
       ...(tmRecords?.map((tm: any) => tm.name) || [])
     ].filter(Boolean).map((n: string) => n.toLowerCase())
@@ -62,7 +61,6 @@ export default function TeamDashboard() {
         supabase.from('risks').select('*').in('project_id', projectIds).neq('status', 'closed'),
       ])
       setMyProjects(pRes.data || [])
-      // Match tasks by any name variant (full name, email, or team member record name)
       setMyTasks((tRes.data || []).filter((t: Task) => 
         t.owner && nameVariants.includes(t.owner.toLowerCase())
       ))
