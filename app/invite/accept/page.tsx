@@ -31,12 +31,15 @@ function AcceptInviteContent() {
     setStatus('processing')
     try {
       // Update profile role
+      // Always force-set the role from the invite URL
       await supabase.from('profiles').upsert({
         id: user.id,
         email: user.email,
         full_name: user.user_metadata?.full_name || user.email,
         role: role,
-      })
+      }, { onConflict: 'id' })
+      // Double-update to ensure role is set correctly
+      await supabase.from('profiles').update({ role: role }).eq('id', user.id)
 
       // Link team_member record to this user
       if (token) {
@@ -65,7 +68,7 @@ function AcceptInviteContent() {
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/api/auth/callback?next=/invite/accept?token=${token}&project=${projectId}&role=${role}`,
+        redirectTo: `${window.location.origin}/api/auth/callback?next=${encodeURIComponent('/invite/accept?token=' + token + '&project=' + projectId + '&role=' + role)}`,
         queryParams: {
           prompt: 'select_account',
           access_type: 'offline',
