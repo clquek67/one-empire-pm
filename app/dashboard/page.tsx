@@ -1687,8 +1687,8 @@ Phase breakdown with dates.
 KPIS:
 Success metrics.
 
-Rules: Use bullet points only. No markdown tables. Be specific, not generic. Assign tasks to named team members if provided.`,
-      `New Project: ${name || 'New Project'}\nTimeline: ${timeline}\nTeam Size: ${team}\n\nBrief:\n${brief}${existingContext}`
+Rules: Use bullet points only. No markdown tables. Be specific, not generic. Assign tasks to named team members if provided. IMPORTANT: Today is ${new Date().toISOString().split('T')[0]} — ALL dates must be AFTER today. Never use past dates.`,
+      `New Project: ${name || 'New Project'}\nProject Start Date: ${new Date().toISOString().split('T')[0]}\nTimeline: ${timeline}\nTeam Size: ${team}\n\nBrief:\n${brief}${existingContext}`
     )
     setPopulateResult(null)
   }
