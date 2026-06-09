@@ -49,19 +49,24 @@ export async function middleware(request: NextRequest) {
 
   const role = profile?.role || 'owner'
 
-  // Role-based routing
-  if (pathname.startsWith('/dashboard')) {
-    // Team members → redirect to their dashboard
-    if (role === 'team_member') {
+  // Team members → always route to team dashboard, no subscription check needed
+  if (role === 'team_member') {
+    if (!pathname.startsWith('/team-dashboard') && !pathname.startsWith('/api')) {
       return NextResponse.redirect(new URL('/team-dashboard', request.url))
     }
+    return supabaseResponse
+  }
 
-    // Clients → redirect to client view
-    if (role === 'client') {
+  // Clients → always route to client dashboard, no subscription check needed
+  if (role === 'client') {
+    if (!pathname.startsWith('/client-dashboard') && !pathname.startsWith('/api')) {
       return NextResponse.redirect(new URL('/client-dashboard', request.url))
     }
+    return supabaseResponse
+  }
 
-    // Owners → check subscription
+  // Owners → check subscription for dashboard access
+  if (pathname.startsWith('/dashboard')) {
     const { data: subscription } = await supabase
       .from('subscriptions')
       .select('status')
@@ -73,13 +78,8 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Team dashboard access
-  if (pathname.startsWith('/team-dashboard') && role !== 'team_member') {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
-  }
-
-  // Client dashboard access
-  if (pathname.startsWith('/client-dashboard') && role !== 'client') {
+  // Prevent owners from accessing team/client dashboards
+  if (pathname.startsWith('/team-dashboard') || pathname.startsWith('/client-dashboard')) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
