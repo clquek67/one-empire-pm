@@ -212,8 +212,12 @@ Proceed and set this task to active anyway?`)
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, name, role: role || 'team_member', projectId, teamMemberId: memberId })
       })
-      if (res.ok) { alert(`✓ Invitation sent to ${email}`) }
-      else { alert('Failed to send invitation. Please try again.') }
+      if (res.ok) { 
+        alert(`✓ Invitation sent to ${email}`) 
+      } else { 
+        const errData = await res.json()
+        alert(`Failed to send invitation.\n\nError: ${errData.details || errData.error}\nResend Key: ${errData.resendKey || 'unknown'}`)
+      }
     } catch (err) {
       alert('Error sending invitation.')
     }
