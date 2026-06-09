@@ -1189,19 +1189,19 @@ Proceed and set this task to active anyway?`)
                     return (
                     <div key={l.id} style={{ padding: '9px 0', borderBottom: `1px solid rgba(201,153,58,0.1)` }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px', fontSize: '11px' }}>
-                        <span style={{ flex: 1, color: textMid }}>{l.description}</span>
-                        <span style={{ fontFamily: 'Rajdhani, sans-serif', color: whiteFaint, width: '35px', textAlign: 'right' }}>{l.hours}h</span>
-                        <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '14px', color: gold, width: '70px', textAlign: 'right' }}>${(l.hours * l.rate).toLocaleString()}</span>
+                        <span style={{ flex: 1, color: textBright, fontWeight: 500 }}>{l.description}</span>
+                        <span style={{ fontFamily: 'Rajdhani, sans-serif', color: textMid, width: '40px', textAlign: 'right', fontSize: '12px' }}>{l.hours}h</span>
+                        <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '15px', color: gold, width: '75px', textAlign: 'right' }}>${(l.hours * l.rate).toLocaleString()}</span>
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(201,168,80,0.75)' }}>{proj?.name || '—'}</span>
-                        {l.log_date && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(200,220,255,0.55)' }}>{fmtDate(l.log_date)}</span>}
+                        <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: 'rgba(201,168,80,0.85)' }}>{proj?.name || '—'}</span>
+                        {l.log_date && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: '#C8D8F0' }}>{fmtDate(l.log_date)}</span>}
                       </div>
                     </div>
                   )})}
                   <div style={{ borderTop: `1px solid ${borderMd}`, marginTop: '10px', paddingTop: '10px', display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', fontWeight: 600, color: goldDim }}>TOTAL UNBILLED</span>
-                    <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '20px', color: gold }}>${unbilledTotal.toLocaleString()}</span>
+                    <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', fontWeight: 700, letterSpacing: '0.15em', color: gold }}>TOTAL UNBILLED</span>
+                    <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '22px', color: gold }}>${unbilledTotal.toLocaleString()}</span>
                   </div>
                   {aiText['invoice'] && <div style={s.aiResponse} dangerouslySetInnerHTML={{ __html: formatAI(aiText['invoice']) }}/>}
                 </div>
