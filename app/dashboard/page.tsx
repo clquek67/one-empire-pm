@@ -1107,8 +1107,15 @@ Proceed and set this task to active anyway?`)
                   />
                   <button style={s.btnGold} onClick={async () => {
                     const clientEmail = (document.getElementById('invoice-client-email') as HTMLInputElement)?.value
-                    const items = timeLogs.map(l => `${l.description} (${l.hours}h @ $${l.rate}/hr)`).join(', ')
-                    await ai('invoice', 'You are a professional billing assistant. Generate a professional invoice covering email with itemised billing and payment instructions.', `Unbilled items: ${items}. Total: $${unbilledTotal.toLocaleString()}. Client email: ${clientEmail || 'Not provided'}`)
+                    const itemsData = timeLogs.map(l => {
+                      const proj = projects.find((p: Project) => p.id === l.project_id)
+                      return { description: l.description, project: proj?.name || '—', hours: l.hours, rate: l.rate, amount: l.hours * l.rate, date: l.log_date || '' }
+                    })
+                    const items = itemsData.map(i => `${i.description} (${i.hours}h @ $${i.rate}/hr = $${i.amount})`).join(', ')
+                    await ai('invoice',
+                      'You are a professional billing assistant. Generate a brief professional invoice email (3-4 sentences max). Do NOT include tables or itemized lists — those are shown separately. Just write: greeting, one sentence summary of work done, total amount, payment terms (14 days). Sign off professionally.',
+                      `PM: ${user?.user_metadata?.full_name || 'Project Manager'} | Client: ${projects[0]?.client_name || 'Client'} | Project: ${projects[0]?.name || 'Project'} | Items: ${items} | Total: $${unbilledTotal.toLocaleString()} | Client email: ${clientEmail || 'Not provided'}`
+                    )
                     if (clientEmail) {
                       const project = projects[0]
                       await fetch('https://n8n.one-empire.com/webhook/empire-pm-invoice', {
@@ -1203,7 +1210,77 @@ Proceed and set this task to active anyway?`)
                     <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', fontWeight: 700, letterSpacing: '0.15em', color: gold }}>TOTAL UNBILLED</span>
                     <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '22px', color: gold }}>${unbilledTotal.toLocaleString()}</span>
                   </div>
-                  {aiText['invoice'] && <div style={s.aiResponse} dangerouslySetInnerHTML={{ __html: formatAI(aiText['invoice']) }}/>}
+                  {aiText['invoice'] && (
+                    <div style={{ marginTop: '16px', border: `1px solid rgba(201,153,58,0.25)`, borderRadius: '4px', overflow: 'hidden' }}>
+                      {/* Invoice header */}
+                      <div style={{ background: 'rgba(201,153,58,0.08)', padding: '16px 20px', borderBottom: `1px solid rgba(201,153,58,0.2)` }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                          <div>
+                            <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '20px', color: textBright, marginBottom: '2px' }}>Tax Invoice</div>
+                            <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: goldDim, letterSpacing: '0.15em' }}>EMPIRE PM · ONE EMPIRE</div>
+                          </div>
+                          <div style={{ textAlign: 'right' }}>
+                            <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: textDim, letterSpacing: '0.12em' }}>DATE</div>
+                            <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: textMid }}>{fmtDate(new Date().toISOString().split('T')[0])}</div>
+                            <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: textDim, letterSpacing: '0.12em', marginTop: '6px' }}>DUE DATE</div>
+                            <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: textMid }}>{fmtDate(new Date(Date.now() + 14*24*60*60*1000).toISOString().split('T')[0])}</div>
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '32px', marginTop: '12px' }}>
+                          <div>
+                            <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: textDim, letterSpacing: '0.12em', marginBottom: '2px' }}>FROM</div>
+                            <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', fontWeight: 600, color: textBright }}>{user?.user_metadata?.full_name || 'Project Manager'}</div>
+                            <div style={{ fontSize: '10px', color: textDim }}>{user?.email}</div>
+                          </div>
+                          <div>
+                            <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: textDim, letterSpacing: '0.12em', marginBottom: '2px' }}>TO</div>
+                            <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', fontWeight: 600, color: textBright }}>{projects[0]?.client_name || 'Client'}</div>
+                            <div style={{ fontSize: '10px', color: textDim }}>{projects[0]?.name}</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Line items table */}
+                      <div style={{ padding: '0 20px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: '0', borderBottom: `1px solid rgba(201,153,58,0.15)`, padding: '10px 0' }}>
+                          {['DESCRIPTION', 'HOURS', 'RATE', 'AMOUNT'].map(h => (
+                            <div key={h} style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '8px', fontWeight: 700, letterSpacing: '0.18em', color: goldDim }}>{h}</div>
+                          ))}
+                        </div>
+                        {timeLogs.map((l: TimeLog) => {
+                          const proj = projects.find((p: Project) => p.id === l.project_id)
+                          return (
+                            <div key={l.id} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: '0', padding: '9px 0', borderBottom: `1px solid rgba(255,255,255,0.04)` }}>
+                              <div>
+                                <div style={{ fontSize: '11px', color: textBright, fontWeight: 500 }}>{l.description}</div>
+                                <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(201,168,80,0.75)' }}>{proj?.name} · {fmtDate(l.log_date)}</div>
+                              </div>
+                              <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: textMid, paddingTop: '2px' }}>{l.hours}h</div>
+                              <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: textMid, paddingTop: '2px' }}>${l.rate}/hr</div>
+                              <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '13px', color: gold, paddingTop: '1px' }}>${(l.hours * l.rate).toLocaleString()}</div>
+                            </div>
+                          )
+                        })}
+                      </div>
+
+                      {/* Total */}
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '14px 20px', borderTop: `1px solid rgba(201,153,58,0.2)`, background: 'rgba(201,153,58,0.05)' }}>
+                        <div style={{ textAlign: 'right' }}>
+                          <div style={{ display: 'flex', gap: '32px', alignItems: 'center' }}>
+                            <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', fontWeight: 700, letterSpacing: '0.18em', color: goldDim }}>TOTAL DUE</span>
+                            <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '24px', color: gold }}>${unbilledTotal.toLocaleString()}</span>
+                          </div>
+                          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: textDim, marginTop: '4px' }}>Payment due within 14 days</div>
+                        </div>
+                      </div>
+
+                      {/* Cover email */}
+                      <div style={{ padding: '16px 20px', borderTop: `1px solid rgba(201,153,58,0.12)` }}>
+                        <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 700, letterSpacing: '0.18em', color: goldDim, marginBottom: '8px' }}>COVER EMAIL</div>
+                        <div style={{ fontSize: '12px', color: textMid, lineHeight: '1.7', whiteSpace: 'pre-wrap' }}>{aiText['invoice']}</div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
