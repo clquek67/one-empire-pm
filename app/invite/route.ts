@@ -43,7 +43,7 @@ export async function POST(request: Request) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Empire PM <noreply@pm.one-empire.com>',
+        from: process.env.RESEND_FROM_EMAIL || 'Empire PM <onboarding@resend.dev>',
         to: email,
         subject: `You've been invited to ${project.name} on Empire PM`,
         html: `
