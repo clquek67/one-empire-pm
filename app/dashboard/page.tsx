@@ -2380,65 +2380,7 @@ Paragraph 3: Confidence statement and forward outlook.`
   return (
     <div>
       <style>{`
-        @media print {
-          /* Hide everything except the report */
-          body * { visibility: hidden !important; }
-          #empire-report, #empire-report * { visibility: visible !important; }
-
-          /* Reset positioning so report flows naturally across pages */
-          html, body { height: auto !important; overflow: visible !important; }
-          #empire-report {
-            position: static !important;
-            width: 100% !important;
-            max-width: 100% !important;
-            background: white !important;
-            color: #111 !important;
-            padding: 0 !important;
-            margin: 0 !important;
-          }
-
-          /* Hide UI elements */
-          .no-print { display: none !important; }
-
-          /* Page settings */
-          @page { margin: 15mm 18mm; size: A4; }
-
-          /* Each report section starts on same page unless it needs to break */
-          #empire-report > div > div {
-            page-break-inside: avoid;
-            break-inside: avoid;
-          }
-
-          /* Force page break before major sections if needed */
-          #empire-report .report-section {
-            page-break-inside: avoid;
-            break-inside: avoid;
-            margin-bottom: 16px !important;
-          }
-
-          /* Colours and borders for print */
-          #empire-report * { 
-            color: #111 !important; 
-            border-color: #ccc !important; 
-            background: transparent !important;
-            box-shadow: none !important;
-          }
-
-          /* Keep coloured elements readable */
-          .rag-block { border: 2px solid #999 !important; }
-          .health-bar-fill { 
-            print-color-adjust: exact; 
-            -webkit-print-color-adjust: exact;
-            background: #666 !important;
-          }
-
-          /* Ensure scrollable containers expand fully */
-          main, [style*="overflow"] {
-            overflow: visible !important;
-            height: auto !important;
-            max-height: none !important;
-          }
-        }
+        @media print { .no-print { display: none !important; } }
       `}</style>
 
       {/* Toolbar — no-print */}
@@ -2456,7 +2398,15 @@ Paragraph 3: Confidence statement and forward outlook.`
             style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', fontWeight: 700, letterSpacing: '0.14em', background: 'rgba(201,153,58,0.1)', border: `1px solid ${borderMd}`, color: gold, padding: '8px 14px', borderRadius: '2px', cursor: 'pointer', opacity: loadingAI ? 0.6 : 1 }}>
             {loadingAI ? '✦ Generating...' : '✦ AI Summary'}
           </button>
-          <button onClick={() => window.print()}
+          <button onClick={() => {
+            const el = document.getElementById('empire-report')
+            if (!el) return
+            const html = el.innerHTML
+            const win = window.open('', '_blank')
+            if (!win) { alert('Please allow popups for this site to export PDF'); return }
+            win.document.write('<!DOCTYPE html><html><head><title>Empire PM Report</title><meta charset="utf-8"/><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,400&family=Rajdhani:wght@400;500;600;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet"/><style>*{box-sizing:border-box;margin:0;padding:0}@page{margin:15mm 18mm;size:A4}body{font-family:"DM Sans",sans-serif;background:white;color:#111;font-size:12px;line-height:1.5;width:100%}[style*="rgba(16,36,72"],[style*="rgba(8,20,44"]{background:#f8f9fa!important;border:1px solid #ddd!important;border-radius:4px;padding:14px 16px;margin-bottom:10px;page-break-inside:avoid}.no-print{display:none!important}[style*="Cormorant Garamond"]{font-family:"Cormorant Garamond",Georgia,serif!important}[style*="Rajdhani"]{font-family:"Rajdhani",sans-serif!important}.rag-block{border:2px solid #999!important;padding:14px;margin-bottom:10px}[style*="color: rgb(232, 184, 75)"],[style*="color: #E8B84B"],[style*="color:#E8B84B"]{color:#9a7000!important}[style*="color: rgb(34, 201, 144)"],[style*="color: #22C990"]{color:#1a7a50!important}[style*="color: rgb(226, 75, 74)"],[style*="color: #FF9090"],[style*="color: #E24B4A"]{color:#c0392b!important}[style*="background: linear-gradient"]{-webkit-print-color-adjust:exact;print-color-adjust:exact}div{max-width:100%}</style></head><body id="empire-report">' + html + '<script>window.onload=function(){setTimeout(function(){window.print()},800)}<\/script></body></html>')
+            win.document.close()
+          }}
             style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', fontWeight: 700, letterSpacing: '0.14em', background: `linear-gradient(135deg, ${goldDim}, ${gold})`, color: navy, border: 'none', padding: '8px 16px', borderRadius: '2px', cursor: 'pointer' }}>
             ⬇ Export PDF
           </button>
