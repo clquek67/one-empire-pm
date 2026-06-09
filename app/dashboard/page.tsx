@@ -2381,14 +2381,63 @@ Paragraph 3: Confidence statement and forward outlook.`
     <div>
       <style>{`
         @media print {
+          /* Hide everything except the report */
           body * { visibility: hidden !important; }
           #empire-report, #empire-report * { visibility: visible !important; }
-          #empire-report { position: absolute; left: 0; top: 0; width: 100%; background: white !important; color: #111 !important; }
+
+          /* Reset positioning so report flows naturally across pages */
+          html, body { height: auto !important; overflow: visible !important; }
+          #empire-report {
+            position: static !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            background: white !important;
+            color: #111 !important;
+            padding: 0 !important;
+            margin: 0 !important;
+          }
+
+          /* Hide UI elements */
           .no-print { display: none !important; }
-          @page { margin: 18mm 20mm; size: A4; }
-          #empire-report * { color: #111 !important; border-color: #ddd !important; background: transparent !important; }
+
+          /* Page settings */
+          @page { margin: 15mm 18mm; size: A4; }
+
+          /* Each report section starts on same page unless it needs to break */
+          #empire-report > div > div {
+            page-break-inside: avoid;
+            break-inside: avoid;
+          }
+
+          /* Force page break before major sections if needed */
+          #empire-report .report-section {
+            page-break-inside: avoid;
+            break-inside: avoid;
+            margin-bottom: 16px !important;
+          }
+
+          /* Colours and borders for print */
+          #empire-report * { 
+            color: #111 !important; 
+            border-color: #ccc !important; 
+            background: transparent !important;
+            box-shadow: none !important;
+          }
+
+          /* Keep coloured elements readable */
           .rag-block { border: 2px solid #999 !important; }
-          .health-bar-fill { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+          .health-bar-fill { 
+            print-color-adjust: exact; 
+            -webkit-print-color-adjust: exact;
+            background: #666 !important;
+          }
+
+          /* Ensure scrollable containers expand fully */
+          main, [style*="overflow"] {
+            overflow: visible !important;
+            height: auto !important;
+            max-height: none !important;
+          }
         }
       `}</style>
 
