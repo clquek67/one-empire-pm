@@ -24,13 +24,12 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   const { pathname } = request.nextUrl
 
-  // Public routes
+  // Public routes — no auth required
   if (
     pathname === '/login' ||
     pathname === '/pricing' ||
     pathname.startsWith('/api') ||
-    pathname.startsWith('/invite') ||
-    pathname.startsWith('/client')
+    pathname.startsWith('/invite')
   ) {
     return supabaseResponse
   }
