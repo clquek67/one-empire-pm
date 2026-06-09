@@ -1099,13 +1099,16 @@ Proceed and set this task to active anyway?`)
                   <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: whiteFaint, marginTop: '5px' }}>${unbilledTotal.toLocaleString()} unbilled · ready to invoice</div>
                 </div>
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                  <input
-                    id="invoice-client-email"
-                    style={{ ...s.input, width: '220px', fontSize: '11px', padding: '7px 10px' }}
-                    placeholder="Client email to send invoice..."
-                    type="email"
-                  />
-                  <button style={s.btnGold} onClick={async () => {
+                  <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '3px' }}>
+                    <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600, letterSpacing: '0.15em', color: goldDim }}>SEND INVOICE TO (CLIENT EMAIL)</div>
+                    <input
+                      id="invoice-client-email"
+                      style={{ ...s.input, width: '260px', fontSize: '11px', padding: '7px 10px' }}
+                      placeholder="e.g. client@acmacorp.com"
+                      type="email"
+                    />
+                  </div>
+                  <button style={{ ...s.btnGold, alignSelf: 'flex-end' }} onClick={async () => {
                     const clientEmail = (document.getElementById('invoice-client-email') as HTMLInputElement)?.value
                     const itemsData = timeLogs.map(l => {
                       const proj = projects.find((p: Project) => p.id === l.project_id)
@@ -1138,7 +1141,7 @@ Proceed and set this task to active anyway?`)
                           dueDate: dueDateForEmail,
                           lineItems,
                           total: `$${unbilledTotal.toLocaleString()}`,
-                          coverEmail: aiText['invoice'] || ''
+                          coverEmail: (aiText['invoice'] || '').replace(/^Subject:.*\n?/i, '').replace(/^Subject:.*$/im, '').trim()
                         })
                       }).catch(() => {})
                     }
