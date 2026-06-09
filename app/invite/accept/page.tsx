@@ -30,31 +30,27 @@ function AcceptInviteContent() {
   const processInvite = async (user: any) => {
     setStatus('processing')
     try {
-      // Update profile role
-      // Always force-set the role from the invite URL
-      await supabase.from('profiles').upsert({
-        id: user.id,
-        email: user.email,
-        full_name: user.user_metadata?.full_name || user.email,
-        role: role,
-      }, { onConflict: 'id' })
-      // Double-update to ensure role is set correctly
-      await supabase.from('profiles').update({ role: role }).eq('id', user.id)
+      // Call server-side API that uses service role key to bypass RLS
+      const res = await fetch('/api/invite/accept', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          userEmail: user.email,
+          teamMemberId: token,
+          role: role
+        })
+      })
 
-      // Link team_member record to this user
-      if (token) {
-        await supabase
-          .from('team_members')
-          .update({
-            linked_user_id: user.id,
-            invite_status: 'accepted',
-            invited_email: user.email
-          })
-          .eq('id', token)
+      if (!res.ok) {
+        const err = await res.json()
+        console.error('Accept invite error:', err)
+        setStatus('error')
+        setMessage('Something went wrong. Please try again.')
+        return
       }
 
       setStatus('done')
-      // Redirect based on role
       setTimeout(() => {
         window.location.href = role === 'client' ? '/client-dashboard' : '/team-dashboard'
       }, 2000)
