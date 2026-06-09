@@ -1112,12 +1112,19 @@ Proceed and set this task to active anyway?`)
                       return { description: l.description, project: proj?.name || '—', hours: l.hours, rate: l.rate, amount: l.hours * l.rate, date: l.log_date || '' }
                     })
                     const items = itemsData.map(i => `${i.description} (${i.hours}h @ $${i.rate}/hr = $${i.amount})`).join(', ')
+                    const pmName = user?.user_metadata?.full_name || user?.email || 'Project Manager'
                     await ai('invoice',
-                      'You are a professional billing assistant. Generate a brief professional invoice email (3-4 sentences max). Do NOT include tables or itemized lists — those are shown separately. Just write: greeting, one sentence summary of work done, total amount, payment terms (14 days). Sign off professionally.',
-                      `PM: ${user?.user_metadata?.full_name || 'Project Manager'} | Client: ${projects[0]?.client_name || 'Client'} | Project: ${projects[0]?.name || 'Project'} | Items: ${items} | Total: $${unbilledTotal.toLocaleString()} | Client email: ${clientEmail || 'Not provided'}`
+                      `You are ${pmName}, a professional project manager. Write a brief professional invoice cover email (4-5 sentences). Do NOT use any placeholder text like [Your Name] or [Invoice Number] — use the actual data provided. Do not include tables or itemized lists. Structure: greeting to client, one sentence summary of work completed, state the total amount due, state 14-day payment terms, professional sign-off with the PM name provided.`,
+                      `PM Name: ${pmName} | PM Email: ${user?.email} | Client: ${projects[0]?.client_name || 'Client'} | Project: ${projects[0]?.name || 'Project'} | Work completed: ${items} | Total Due: $${unbilledTotal.toLocaleString()} | Due Date: ${fmtDate(new Date(Date.now() + 14*24*60*60*1000).toISOString().split('T')[0])}`
                     )
                     if (clientEmail) {
                       const project = projects[0]
+                      const pmNameForEmail = user?.user_metadata?.full_name || user?.email || 'Project Manager'
+                      const dueDateForEmail = fmtDate(new Date(Date.now() + 14*24*60*60*1000).toISOString().split('T')[0])
+                      const lineItems = timeLogs.map((l: TimeLog) => {
+                        const proj = projects.find((p: Project) => p.id === l.project_id)
+                        return `${l.description} | ${l.hours}h | $${l.rate}/hr | $${(l.hours * l.rate).toLocaleString()}`
+                      }).join('\n')
                       await fetch('https://n8n.one-empire.com/webhook/empire-pm-invoice', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -1125,11 +1132,13 @@ Proceed and set this task to active anyway?`)
                           client: project?.client_name || 'Client',
                           project: project?.name || 'Project',
                           clientEmail,
-                          items,
+                          senderName: pmNameForEmail,
+                          senderEmail: user?.email,
+                          invoiceDate: fmtDate(new Date().toISOString().split('T')[0]),
+                          dueDate: dueDateForEmail,
+                          lineItems,
                           total: `$${unbilledTotal.toLocaleString()}`,
-                          dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toLocaleDateString(),
-                          senderName: user?.user_metadata?.full_name,
-                          senderEmail: user?.email
+                          coverEmail: aiText['invoice'] || ''
                         })
                       }).catch(() => {})
                     }
@@ -1221,9 +1230,9 @@ Proceed and set this task to active anyway?`)
                           </div>
                           <div style={{ textAlign: 'right' }}>
                             <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: textDim, letterSpacing: '0.12em' }}>DATE</div>
-                            <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: textMid }}>{fmtDate(new Date().toISOString().split('T')[0])}</div>
+                            <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: textMid }}>{new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
                             <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: textDim, letterSpacing: '0.12em', marginTop: '6px' }}>DUE DATE</div>
-                            <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: textMid }}>{fmtDate(new Date(Date.now() + 14*24*60*60*1000).toISOString().split('T')[0])}</div>
+                            <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: textMid }}>{new Date(Date.now() + 14*24*60*60*1000).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
                           </div>
                         </div>
                         <div style={{ display: 'flex', gap: '32px', marginTop: '12px' }}>
