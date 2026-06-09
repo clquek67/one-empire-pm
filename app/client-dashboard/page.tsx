@@ -8,8 +8,8 @@ type Milestone = { id: string; title: string; due_date?: string; status: string;
 type Risk = { id: string; title: string; level: string; description: string; project_id: string }
 
 const gold = '#E8B84B'; const goldDim = '#C9993A'; const navy = '#050D1A'
-const textBright = '#E8F0FF'; const textMid = '#D8E4F4'; const textDim = 'rgba(192,208,232,0.75)'
-const border = 'rgba(201,153,58,0.2)'
+const textBright = '#F0F6FF'; const textMid = '#E0ECFF'; const textDim = 'rgba(220,232,255,0.9)'
+const border = 'rgba(201,153,58,0.3)'
 
 function fmtDate(d?: string | null) {
   if (!d) return '—'
@@ -107,7 +107,7 @@ export default function ClientDashboard() {
             {/* Project header */}
             <div style={{ marginBottom: '24px' }}>
               <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '28px', color: textBright, marginBottom: '4px' }}>{proj.name}</div>
-              <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: textDim, letterSpacing: '0.1em' }}>
+              <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: '#C8D8F0', letterSpacing: '0.1em' }}>
                 {proj.client_name} · {proj.start_date ? fmtDate(proj.start_date) : '—'} → {proj.end_date ? fmtDate(proj.end_date) : '—'}
               </div>
             </div>
@@ -133,15 +133,15 @@ export default function ClientDashboard() {
                 ].map((s, i) => (
                   <div key={i} style={{ textAlign: 'center' }}>
                     <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '20px', color: textBright }}>{s.val}</div>
-                    <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '8px', color: textDim, letterSpacing: '0.12em' }}>{s.sub.toUpperCase()}</div>
+                    <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '8px', color: '#C8D8F0', letterSpacing: '0.12em' }}>{s.sub.toUpperCase()}</div>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Milestones */}
-            <div style={{ background: 'rgba(16,36,72,0.7)', border: `1px solid ${border}`, borderRadius: '6px', padding: '20px 22px', marginBottom: '16px' }}>
-              <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 700, letterSpacing: '0.2em', color: goldDim, marginBottom: '14px' }}>MILESTONES</div>
+            <div style={{ background: 'rgba(20,44,88,0.85)', border: `1px solid ${border}`, borderRadius: '6px', padding: '20px 22px', marginBottom: '16px' }}>
+              <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 700, letterSpacing: '0.2em', color: gold, marginBottom: '14px' }}>MILESTONES</div>
               {projMilestones.length === 0 ? (
                 <div style={{ fontSize: '12px', color: textDim }}>No milestones set yet.</div>
               ) : (
@@ -156,8 +156,8 @@ export default function ClientDashboard() {
                           {isCompleted && <span style={{ fontSize: '8px', color: c }}>✓</span>}
                         </div>
                         <div>
-                          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', fontWeight: 600, color: isCompleted ? '#22C990' : isOverdue ? '#FF9090' : textMid }}>{m.title}</div>
-                          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: textDim }}>{fmtDate(m.due_date)}</div>
+                          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', fontWeight: 600, color: isCompleted ? '#22C990' : isOverdue ? '#FF9090' : '#E8F0FF' }}>{m.title}</div>
+                          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(220,232,255,0.85)' }}>{fmtDate(m.due_date)}</div>
                         </div>
                       </div>
                     )
@@ -166,7 +166,7 @@ export default function ClientDashboard() {
               )}
               {projMilestones.length > 0 && (
                 <div style={{ marginTop: '14px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: textDim }}>PROGRESS</span>
+                  <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(220,232,255,0.85)' }}>PROGRESS</span>
                   <div style={{ flex: 1, height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '2px', overflow: 'hidden' }}>
                     <div style={{ height: '4px', width: `${projMilestones.length > 0 ? (completedMs / projMilestones.length) * 100 : 0}%`, background: 'linear-gradient(90deg,#1AABCC,#22C990)', borderRadius: '2px' }}/>
                   </div>
@@ -176,19 +176,19 @@ export default function ClientDashboard() {
             </div>
 
             {/* Task summary — no individual task names for privacy */}
-            <div style={{ background: 'rgba(16,36,72,0.7)', border: `1px solid ${border}`, borderRadius: '6px', padding: '20px 22px', marginBottom: '16px' }}>
-              <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 700, letterSpacing: '0.2em', color: goldDim, marginBottom: '14px' }}>DELIVERY PROGRESS</div>
+            <div style={{ background: 'rgba(20,44,88,0.85)', border: `1px solid ${border}`, borderRadius: '6px', padding: '20px 22px', marginBottom: '16px' }}>
+              <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 700, letterSpacing: '0.2em', color: gold, marginBottom: '14px' }}>DELIVERY PROGRESS</div>
               <div style={{ marginBottom: '10px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                  <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: textDim, letterSpacing: '0.1em' }}>TASK COMPLETION</span>
+                  <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: '#C8D8F0', letterSpacing: '0.1em' }}>TASK COMPLETION</span>
                   <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '18px', color: completionRate >= 70 ? '#22C990' : completionRate >= 40 ? '#FFD080' : '#FF9090' }}>{completionRate}%</span>
                 </div>
                 <div style={{ height: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', overflow: 'hidden' }}>
                   <div style={{ height: '8px', width: `${completionRate}%`, background: completionRate >= 70 ? 'linear-gradient(90deg,#1AABCC,#22C990)' : 'linear-gradient(90deg,#C9993A,#E8B84B)', borderRadius: '4px' }}/>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px' }}>
-                  <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: textDim }}>{doneTasks} COMPLETED</span>
-                  <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: textDim }}>{projTasks.length - doneTasks} REMAINING</span>
+                  <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(220,232,255,0.85)' }}>{doneTasks} COMPLETED</span>
+                  <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(220,232,255,0.85)' }}>{projTasks.length - doneTasks} REMAINING</span>
                 </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '8px', marginTop: '14px' }}>
@@ -199,14 +199,14 @@ export default function ClientDashboard() {
                 ].map((s, i) => (
                   <div key={i} style={{ background: 'rgba(8,20,44,0.5)', border: `1px solid rgba(201,153,58,0.1)`, borderRadius: '4px', padding: '10px', textAlign: 'center' }}>
                     <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '22px', color: s.color }}>{s.val}</div>
-                    <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '8px', color: textDim, letterSpacing: '0.12em' }}>{s.sub.toUpperCase()}</div>
+                    <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '8px', color: '#C8D8F0', letterSpacing: '0.12em' }}>{s.sub.toUpperCase()}</div>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Footer */}
-            <div style={{ textAlign: 'center', padding: '16px', fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(201,168,80,0.4)', letterSpacing: '0.2em' }}>
+            <div style={{ textAlign: 'center', padding: '16px', fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(201,168,80,0.7)', letterSpacing: '0.2em' }}>
               POWERED BY EMPIRE PM · pm.one-empire.com
             </div>
           </>
