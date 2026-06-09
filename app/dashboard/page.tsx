@@ -77,6 +77,9 @@ export default function Dashboard() {
   const [timerSeconds, setTimerSeconds] = useState(0)
   const [timerRunning, setTimerRunning] = useState(false)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const [timerProjectId, setTimerProjectId] = useState('')
+  const [timerDesc, setTimerDesc] = useState('')
+  const [timerRate, setTimerRate] = useState('250')
   const [showWizard, setShowWizard] = useState(false)
   const [wizardStep, setWizardStep] = useState(0)
   const [isMobile, setIsMobile] = useState(false)
@@ -1130,11 +1133,49 @@ Proceed and set this task to active anyway?`)
                 <div>
                   <div style={s.card}>
                     <div style={s.sectionTitle}>Live Timer</div>
-                    <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '48px', fontWeight: 400, color: gold, textAlign: 'center', padding: '20px 0' }}>{formatTime(timerSeconds)}</div>
+                    {/* Timer display */}
+                    <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '48px', fontWeight: 400, color: timerRunning ? gold : textDim, textAlign: 'center', padding: '16px 0 10px', transition: 'color 0.3s' }}>{formatTime(timerSeconds)}</div>
+                    {timerSeconds > 0 && (
+                      <div style={{ textAlign: 'center', fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: textDim, marginBottom: '10px', letterSpacing: '0.1em' }}>
+                        = {(Math.round(timerSeconds / 900) * 0.25).toFixed(2)}h (rounded to 15 min)
+                      </div>
+                    )}
                     <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginBottom: '16px' }}>
                       <button style={s.btnGold} onClick={toggleTimer}>{timerRunning ? '⏸ Pause' : '▶ Start'}</button>
                       <button style={s.btnGhost} onClick={resetTimer}>↺ Reset</button>
                     </div>
+                    {/* Timer log fields */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '8px' }}>
+                      <div><div style={s.label}>Project</div>
+                        <select style={s.input} value={timerProjectId} onChange={e => setTimerProjectId(e.target.value)}>
+                          <option value="">Select project...</option>
+                          {projects.map((p: Project) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                        </select>
+                      </div>
+                      <div><div style={s.label}>Description</div>
+                        <input style={s.input} value={timerDesc} onChange={e => setTimerDesc(e.target.value)} placeholder="What did you work on?"/>
+                      </div>
+                      <div><div style={s.label}>Rate ($/hr)</div>
+                        <input style={s.input} value={timerRate} onChange={e => setTimerRate(e.target.value)} type="number" placeholder="250"/>
+                      </div>
+                    </div>
+                    <button style={{ ...s.btnGold, width: '100%', marginTop: '12px', opacity: (timerSeconds === 0 || !timerProjectId || !timerDesc) ? 0.5 : 1 }}
+                      disabled={timerSeconds === 0 || !timerProjectId || !timerDesc}
+                      onClick={async () => {
+                        if (!user || !timerProjectId || !timerDesc || timerSeconds === 0) return
+                        // Round to nearest 15 minutes
+                        const roundedHours = Math.max(0.25, Math.round(timerSeconds / 900) * 0.25)
+                        await supabase.from('time_logs').insert({
+                          user_id: user.id, project_id: timerProjectId,
+                          description: timerDesc, hours: roundedHours,
+                          rate: parseFloat(timerRate) || 250,
+                          billed: false, log_date: new Date().toISOString().split('T')[0]
+                        })
+                        resetTimer(); setTimerDesc(''); setTimerProjectId('')
+                        if (user) loadData(user.id)
+                      }}>
+                      ◷ Log {timerSeconds > 0 ? `${(Math.max(0.25, Math.round(timerSeconds / 900) * 0.25)).toFixed(2)}h` : 'Time'} →
+                    </button>
                   </div>
                   <div style={s.card}>
                     <div style={s.sectionTitle}>Log Time</div>
