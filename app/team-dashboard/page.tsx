@@ -28,7 +28,7 @@ export default function TeamDashboard() {
   const [loading, setLoading] = useState(true)
 
   // Time log form
-  const [logDesc, setLogDesc] = useState(''); const [logHours, setLogHours] = useState(''); const [logProjectId, setLogProjectId] = useState(''); const [logDate, setLogDate] = useState(new Date().toISOString().split('T')[0])
+  const [logDesc, setLogDesc] = useState(''); const [logHours, setLogHours] = useState(''); const [logProjectId, setLogProjectId] = useState(''); const [logDate, setLogDate] = useState(new Date().toISOString().split('T')[0]); const [logDescCustom, setLogDescCustom] = useState('')
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -49,6 +49,7 @@ export default function TeamDashboard() {
 
     const projectIds = tmRecords?.map((tm: any) => tm.project_id) || []
     const memberName = prof?.full_name || u.email
+    // Get all possible name variants for matching tasks
     const nameVariants = [memberName, u.email, 
       ...(tmRecords?.map((tm: any) => tm.name) || [])
     ].filter(Boolean).map((n: string) => n.toLowerCase())
@@ -61,6 +62,7 @@ export default function TeamDashboard() {
         supabase.from('risks').select('*').in('project_id', projectIds).neq('status', 'closed'),
       ])
       setMyProjects(pRes.data || [])
+      // Match tasks by any name variant (full name, email, or team member record name)
       setMyTasks((tRes.data || []).filter((t: Task) => 
         t.owner && nameVariants.includes(t.owner.toLowerCase())
       ))
@@ -76,14 +78,16 @@ export default function TeamDashboard() {
   }
 
   const logTime = async () => {
-    if (!logDesc || !logHours || !logProjectId) return
+    const finalDesc = logDesc === '__other__' ? logDescCustom : logDesc
+    if (!finalDesc || !logHours || !logProjectId) return
     await supabase.from('time_logs').insert({
       user_id: user.id, project_id: logProjectId,
-      description: logDesc, hours: parseFloat(logHours),
+      description: finalDesc, hours: parseFloat(logHours),
       rate: 0, billed: false, log_date: logDate
     })
-    setLogDesc(''); setLogHours(''); loadData(user)
+    setLogDesc(''); setLogHours(''); setLogDescCustom(''); loadData(user)
   }
+  const projectTaskOptions = myTasks.filter((t: Task) => t.project_id === logProjectId && t.status !== 'done')
 
   const signOut = async () => { await supabase.auth.signOut(); window.location.href = '/login' }
 
@@ -300,9 +304,26 @@ export default function TeamDashboard() {
                     {myProjects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                   </select>
                 </div>
-                <div style={{ marginBottom: '10px' }}><label style={s.label}>Description</label>
-                  <input style={s.input} value={logDesc} onChange={e => setLogDesc(e.target.value)} placeholder="What did you work on?"/>
+                <div style={{ marginBottom: '10px' }}><label style={s.label}>Task</label>
+                  <select style={s.input} value={logDesc} onChange={e => { setLogDesc(e.target.value); setLogDescCustom('') }}>
+                    <option value="">Select task...</option>
+                    {projectTaskOptions.map((t: Task) => (
+                      <option key={t.id} value={t.name}>{t.name}</option>
+                    ))}
+                    <option disabled>──────────</option>
+                    <option value="General / Admin">General / Admin</option>
+                    <option value="Client communication">Client communication</option>
+                    <option value="Review & feedback">Review & feedback</option>
+                    <option value="Planning & research">Planning & research</option>
+                    <option disabled>──────────</option>
+                    <option value="__other__">Other (specify)...</option>
+                  </select>
                 </div>
+                {logDesc === '__other__' && (
+                  <div style={{ marginBottom: '10px' }}><label style={s.label}>Describe your work</label>
+                    <input style={s.input} value={logDescCustom} onChange={e => setLogDescCustom(e.target.value)} placeholder="e.g. Fixed login bug, Updated documentation..."/>
+                  </div>
+                )}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
                   <div><label style={s.label}>Hours</label>
                     <input style={s.input} value={logHours} onChange={e => setLogHours(e.target.value)} type="number" step="0.5" placeholder="e.g. 2.5"/>
