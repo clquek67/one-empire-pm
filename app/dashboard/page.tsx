@@ -559,7 +559,7 @@ Proceed and set this task to active anyway?`)
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '22px' }}>
                 <div>
                   <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '26px', fontWeight: 400, color: '#F0F6FF' }}>
-                    Good morning, <em style={{ fontStyle: 'italic', color: gold }}>{firstName}</em> ✦
+                    {(() => { const h = new Date().getHours(); const g = h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening'; return <>{g}, <em style={{ fontStyle: 'italic', color: gold }}>{firstName}</em> ✦</> })()} 
                   </div>
                   <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: whiteFaint, marginTop: '5px', letterSpacing: '0.08em' }}>
                     {activeProjects} active projects · {openRisks} open risks · ${unbilledTotal.toLocaleString()} unbilled
