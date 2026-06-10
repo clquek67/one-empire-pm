@@ -107,7 +107,7 @@ export default function LoginPage() {
           <a href="/terms" style={{ color: gold, textDecoration: 'none' }}>Terms of Service</a>{' '}
           and{' '}
           <a href="/privacy" style={{ color: gold, textDecoration: 'none' }}>Privacy Policy</a>.<br/>
-          Don't have a subscription?{' '}
+          Don&apos;t have a subscription?{' '}
           <a href="/pricing" style={{ color: '#E8B84B', textDecoration: 'none' }}>View plans →</a>
         </div>
       </div>
