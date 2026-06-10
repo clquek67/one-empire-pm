@@ -413,7 +413,7 @@ export default function PricingPage() {
                 Replace <em style={{ color: '#E8B84B', fontStyle: 'italic' }}>5 tools</em> with one
               </h2>
               <p style={{ fontSize: '14px', color: 'rgba(192,208,232,0.75)', marginTop: '12px', maxWidth: '500px', margin: '12px auto 0' }}>
-                The average agency pays $86+/month for tools that don&apos;t talk to each other. Empire PM Pro replaces all of them for $37.
+                The average agency pays $86+/month for tools that don't talk to each other. Empire PM Pro replaces all of them for $37.
               </p>
             </div>
 
