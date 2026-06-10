@@ -4,12 +4,32 @@ export const PLANS = {
     description: 'Perfect for solo PMs and freelancers',
     projects: 3,
     teamMembers: 3,
-    features: ['3 Projects', '3 Team members/project', 'AI features', 'Time & Billing'],
-    notIncluded: ['Automations', 'White label emails', 'Priority support'],
+    features: [
+      '3 Projects',
+      '3 Team members/project',
+      'Risk Radar',
+      'Timeline',
+      'Time & Billing',
+      'Notifications',
+      'Task dependencies',
+    ],
+    notIncluded: [
+      'AI Planner',
+      'Meetings AI',
+      'Scope Control AI',
+      'Workload AI',
+      'Reports AI',
+      'Client Portal',
+      'Team member login',
+      'Invoice automation',
+      'n8n Automations',
+      'White label emails',
+      'Priority support',
+    ],
     prices: {
-      monthly: { id: 'price_1Te3lBB2X3LkDhkWjswqdbst', amount: 17 },
-      quarterly: { id: 'price_1Te3lBB2X3LkDhkWi7PLWCpf', amount: 42 },
-      yearly: { id: 'price_1Te3lBB2X3LkDhkWjmq59bTW', amount: 147 },
+      monthly: { id: 'price_1TdjWgB2X3LkDhkWCh4mHGvs', amount: 17 },
+      quarterly: { id: 'price_1TdjWgB2X3LkDhkWfRlBPSJH', amount: 42 },
+      yearly: { id: 'price_1TdjXrB2X3LkDhkWxR2V9BBo', amount: 147 },
     }
   },
   pro: {
@@ -17,25 +37,47 @@ export const PLANS = {
     description: 'For growing agencies and consultancies',
     projects: 10,
     teamMembers: 8,
-    features: ['10 Projects', '8 Team members/project', 'All AI features', 'Time & Billing', 'n8n Automations', 'Client Portal'],
-    notIncluded: ['White label emails', 'Priority support'],
+    features: [
+      '10 Projects',
+      '8 Team members/project',
+      'Full AI suite (Planner, Meetings, Scope, Workload)',
+      'AI Reports with executive summary',
+      'Time & Billing',
+      'Invoice email automation',
+      'Client Portal tab',
+      'Client dashboard login',
+      'Team member login',
+      'n8n Automations',
+      'Notifications',
+      'Task dependencies',
+    ],
+    notIncluded: [
+      'White label emails',
+      'Priority support',
+    ],
     prices: {
-      monthly: { id: 'price_1Te3lgB2X3LkDhkWGut9MGfx', amount: 37 },
-      quarterly: { id: 'price_1Te3m3B2X3LkDhkWDACyv5TO', amount: 89 },
-      yearly: { id: 'price_1Te3mLB2X3LkDhkWA8kvHPIF', amount: 297 },
+      monthly: { id: 'price_1TdjgxB2X3LkDhkWabdHxsdr', amount: 37 },
+      quarterly: { id: 'price_1TdjhcB2X3LkDhkWyLYDj2Zq', amount: 89 },
+      yearly: { id: 'price_1TdjiBB2X3LkDhkWuGKOt45V', amount: 297 },
     }
   },
   agency: {
     name: 'Agency',
-    description: 'Unlimited power for large teams',
-    projects: -1, // unlimited
-    teamMembers: -1, // unlimited
-    features: ['Unlimited Projects', 'Unlimited Team members', 'All AI features', 'Time & Billing', 'n8n Automations', 'Client Portal', 'White label emails', 'Priority support'],
+    description: 'For established agencies and large teams',
+    projects: 25,
+    teamMembers: 15,
+    features: [
+      '25 Projects',
+      '15 Team members/project',
+      'Everything in Pro',
+      'White label emails',
+      'Priority support',
+    ],
     notIncluded: [],
     prices: {
-      monthly: { id: 'price_1Te3msB2X3LkDhkW17w1ArMh', amount: 67 },
-      quarterly: { id: 'price_1Te3nNB2X3LkDhkWAgAR65yS', amount: 161 },
-      yearly: { id: 'price_1Te3naB2X3LkDhkWd5otZS57', amount: 537 },
+      monthly: { id: 'price_1TdjjLB2X3LkDhkW4Cul3QwO', amount: 67 },
+      quarterly: { id: 'price_1TdjkMB2X3LkDhkWQeYJrMZN', amount: 161 },
+      yearly: { id: 'price_1TdjkxB2X3LkDhkW1yzpYoLL', amount: 537 },
     }
   }
 }
