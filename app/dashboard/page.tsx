@@ -330,16 +330,19 @@ Proceed and set this task to active anyway?`)
     starter: {
       projects: 3,
       teamMembers: 3,
-      aiFeatures: ['risks', 'planner', 'meetings', 'scope', 'workload', 'reports', 'timeline', 'billing']
+      // Starter: basic features only, no AI (except risk logging), no collaboration
+      aiFeatures: ['risks', 'timeline', 'billing']
     },
     pro: {
       projects: 10,
       teamMembers: 8,
+      // Pro: full AI suite + collaboration
       aiFeatures: ['risks', 'planner', 'meetings', 'scope', 'clients', 'workload', 'reports', 'timeline', 'billing']
     },
     agency: {
-      projects: Infinity,
-      teamMembers: Infinity,
+      projects: 25,
+      teamMembers: 15,
+      // Agency: everything in Pro + white label
       aiFeatures: ['risks', 'planner', 'meetings', 'scope', 'clients', 'workload', 'reports', 'timeline', 'billing']
     }
   }
@@ -356,14 +359,14 @@ Proceed and set this task to active anyway?`)
     { id: 'dashboard', icon: '◈', label: 'Dashboard', section: 'Command' },
     { id: 'projects', icon: '◻', label: 'Projects', section: null, badge: activeProjects > 0 ? activeProjects : null },
     { id: 'tasks', icon: '✓', label: 'Tasks', section: null, badge: activeTasks > 0 ? activeTasks : null },
-    { id: 'planner', icon: '✦', label: 'AI Planner', section: null, gold: true, ai: true },
-    { id: 'meetings', icon: '◎', label: 'Meetings', section: 'Operations', ai: true },
+    { id: 'planner', icon: '✦', label: 'AI Planner', section: null, gold: true, ai: true, locked: !hasAIFeature('planner') },
+    { id: 'meetings', icon: '◎', label: 'Meetings', section: 'Operations', ai: true, locked: !hasAIFeature('meetings') },
     { id: 'risks', icon: '⚠', label: 'Risk Radar', section: null, badge: openRisks > 0 ? openRisks : null, ai: true },
-    { id: 'scope', icon: '⊕', label: 'Scope Control', section: null, ai: true },
+    { id: 'scope', icon: '⊕', label: 'Scope Control', section: null, ai: true, locked: !hasAIFeature('scope') },
     { id: 'clients', icon: '◈', label: 'Client Portal', section: null, ai: true, locked: !hasAIFeature('clients') },
-    { id: 'workload', icon: '⊞', label: 'Workload', section: null, ai: true },
+    { id: 'workload', icon: '⊞', label: 'Workload', section: null, ai: true, locked: !hasAIFeature('workload') },
     { id: 'timeline', icon: '▷', label: 'Timeline', section: null },
-    { id: 'reports', icon: '◈', label: 'Reports', section: null },
+    { id: 'reports', icon: '◈', label: 'Reports', section: null, locked: !hasAIFeature('reports') },
     { id: 'billing', icon: '◷', label: 'Time & Billing', section: null },
     { id: 'settings', icon: '⚙', label: 'Settings', section: 'Account' },
   ]
@@ -2055,9 +2058,9 @@ function SettingsForm({ user, supabase }: any) {
 
   const planNames: any = { starter: 'Starter', pro: 'Pro', agency: 'Agency' }
   const planLimitsDisplay: any = {
-    starter: '3 projects · 3 team members/project · All AI features · Time & Billing included',
-    pro: '10 projects · 8 team members/project · All AI features · Client Portal · n8n Automations',
-    agency: 'Unlimited projects · Unlimited team members · All features · White label emails · Priority support'
+    starter: '3 projects · 3 team members/project · Risk Radar · Timeline · Time & Billing · No AI suite · No collaboration',
+    pro: '10 projects · 8 team members/project · Full AI suite · Client Portal · Team login · Invoice automation · n8n',
+    agency: '25 projects · 15 team members/project · Everything in Pro · White label emails · Priority support'
   }
   const planPrices: any = { starter: { monthly: '$17', quarterly: '$42', yearly: '$147' }, pro: { monthly: '$37', quarterly: '$89', yearly: '$297' }, agency: { monthly: '$67', quarterly: '$161', yearly: '$537' } }
 
