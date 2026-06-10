@@ -532,7 +532,7 @@ Proceed and set this task to active anyway?`)
               <button style={{ ...s.btnGhost, fontSize: '10px', padding: '5px 12px' }} onClick={() => setTab('planner')}>✦ AI Planner</button>
               <button style={{ ...s.btnGold, fontSize: '10px', padding: '5px 14px' }} onClick={() => setTab('projects')}>+ New Project</button>
               {isMobile && (
-                <button onClick={signOut} title="Sign Out" style={{ background: 'none', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '3px', cursor: 'pointer', color: 'rgba(255,255,255,0.5)', fontSize: '14px', padding: '5px 8px' }}>⏻</button>
+                <button onClick={signOut} title="Sign Out" style={{ background: 'none', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '3px', cursor: 'pointer', color: 'rgba(255,255,255,0.6)', fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', fontWeight: 600, letterSpacing: '0.08em', padding: '5px 10px' }}>OUT</button>
               )}
             </div>
           </div>
