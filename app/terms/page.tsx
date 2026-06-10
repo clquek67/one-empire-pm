@@ -7,11 +7,11 @@ export default function TermsPage() {
   const dim = 'rgba(192,208,232,0.75)'
 
   const s = {
-    section: { marginBottom: '32px' } as React.CSSProperties,
-    h2: { fontFamily: 'Cormorant Garamond, serif', fontSize: '22px', color: gold, marginBottom: '12px', marginTop: '28px' } as React.CSSProperties,
-    h3: { fontFamily: 'Rajdhani, sans-serif', fontSize: '13px', fontWeight: 700, letterSpacing: '0.08em', color: text, marginBottom: '8px', marginTop: '16px' } as React.CSSProperties,
-    p: { fontSize: '14px', color: dim, lineHeight: '1.8', marginBottom: '12px' } as React.CSSProperties,
-    li: { fontSize: '14px', color: dim, lineHeight: '1.8', marginBottom: '6px', paddingLeft: '16px' } as React.CSSProperties,
+    section: { marginBottom: '32px' },
+    h2: { fontFamily: 'Cormorant Garamond, serif', fontSize: '22px', color: gold, marginBottom: '12px', marginTop: '28px' },
+    h3: { fontFamily: 'Rajdhani, sans-serif', fontSize: '13px', fontWeight: 700, letterSpacing: '0.08em', color: text, marginBottom: '8px', marginTop: '16px' },
+    p: { fontSize: '14px', color: dim, lineHeight: '1.8', marginBottom: '12px' },
+    li: { fontSize: '14px', color: dim, lineHeight: '1.8', marginBottom: '6px', paddingLeft: '16px' },
   }
 
   return (
@@ -148,7 +148,7 @@ export default function TermsPage() {
         </p>
 
         {/* Footer */}
-        <div style={{ borderTop: '1px solid rgba(201,153,58,0.15)', marginTop: '48px', paddingTop: '24px', display: 'flex', gap: '24px', flexWrap: 'wrap' as const }}>
+        <div style={{ borderTop: '1px solid rgba(201,153,58,0.15)', marginTop: '48px', paddingTop: '24px', display: 'flex', gap: '24px', flexWrap: 'wrap' as 'wrap' }}>
           <a href="/privacy" style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: 'rgba(201,153,58,0.7)', textDecoration: 'none' }}>Privacy Policy</a>
           <a href="/pricing" style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: 'rgba(201,153,58,0.7)', textDecoration: 'none' }}>Pricing</a>
           <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: 'rgba(192,208,232,0.3)', marginLeft: 'auto' }}>© 2026 One Empire · Empire PM</span>
