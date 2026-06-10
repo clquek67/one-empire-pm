@@ -1395,7 +1395,7 @@ Proceed and set this task to active anyway?`)
             </div>
             <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: whiteFaint }}>pm.one-empire.com</div>
             <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: whiteFaint }}>Empire PM v2.0</div>
-            <div style={{ marginLeft: 'auto', fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: whiteFaint }}>One Empire © 2025</div>
+            <div style={{ marginLeft: 'auto', fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: whiteFaint, display: 'flex', gap: '14px', alignItems: 'center' }}><a href="/terms" target="_blank" style={{ color: 'rgba(201,153,58,0.5)', textDecoration: 'none' }}>Terms</a><a href="/privacy" target="_blank" style={{ color: 'rgba(201,153,58,0.5)', textDecoration: 'none' }}>Privacy</a><span>One Empire © 2026</span></div>
           </div>
         </div>
       </div>
