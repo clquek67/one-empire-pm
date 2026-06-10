@@ -70,8 +70,8 @@ export const PLANS = {
       '25 Projects',
       '15 Team members/project',
       'Everything in Pro',
-      'White label emails',
       'Priority support',
+      'Early access to new features',
     ],
     notIncluded: [],
     prices: {
