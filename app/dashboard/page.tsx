@@ -411,7 +411,7 @@ Proceed and set this task to active anyway?`)
             </div>
           </div>)}
           {/* Nav */}
-          <nav style={{ flex: isMobile ? 'none' : 1, padding: isMobile ? '6px 8px' : '8px 10px', overflowY: isMobile ? 'hidden' : 'auto', overflowX: isMobile ? 'auto' : 'hidden', display: 'flex', flexDirection: isMobile ? 'row' : 'column', gap: isMobile ? '2px' : '1px', alignItems: isMobile ? 'flex-start' : 'stretch' }}>
+          <nav style={{ flex: isMobile ? 'none' : 1, padding: isMobile ? '8px 10px' : '8px 10px', overflowY: isMobile ? 'hidden' : 'auto', overflowX: isMobile ? 'auto' : 'hidden', display: 'flex', flexDirection: isMobile ? 'row' : 'column', gap: isMobile ? '4px' : '1px', alignItems: isMobile ? 'flex-start' : 'stretch' }}>
             {navItems.map((item, i) => (
               <div key={item.id}>
                 {item.section && !isMobile && (
@@ -424,21 +424,21 @@ Proceed and set this task to active anyway?`)
                       alert('⬆ Upgrade Required\n\nClient Portal is not available on your ' + plan.charAt(0).toUpperCase() + plan.slice(1) + ' plan.\n\nUpgrade to Pro or Agency to unlock.')
                     } else { setTab(item.id) }
                   }} style={{
-                  display: 'flex', alignItems: 'center', gap: isMobile ? '1px' : '10px',
-                  padding: isMobile ? '6px 6px' : '7px 12px', flexDirection: isMobile ? 'column' : 'row',
-                  borderRadius: '4px', fontFamily: 'Rajdhani, sans-serif', fontSize: '12px',
+                  display: 'flex', alignItems: 'center', gap: isMobile ? '3px' : '10px',
+                  padding: isMobile ? '8px 10px' : '7px 12px', flexDirection: isMobile ? 'column' : 'row',
+                  borderRadius: '6px', fontFamily: 'Rajdhani, sans-serif', fontSize: '12px',
                   fontWeight: 500, letterSpacing: '0.06em',
                   cursor: (item as any).locked ? 'not-allowed' : 'pointer', flexShrink: 0,
                   borderLeft: isMobile ? 'none' : (tab === item.id ? `2px solid ${gold}` : '2px solid transparent'),
                   borderBottom: isMobile ? (tab === item.id ? `2px solid ${gold}` : '2px solid transparent') : 'none',
                   transition: 'all 0.15s',
-                  background: tab === item.id ? 'rgba(201,153,58,0.08)' : 'transparent',
-                  color: (item as any).locked ? 'rgba(255,255,255,0.25)' : tab === item.id ? gold : (item as any).gold ? 'rgba(232,184,75,0.8)' : 'rgba(216,228,244,0.8)',
+                  background: tab === item.id ? 'rgba(201,153,58,0.12)' : 'transparent',
+                  color: (item as any).locked ? 'rgba(255,255,255,0.3)' : tab === item.id ? gold : (item as any).gold ? 'rgba(232,184,75,0.9)' : 'rgba(230,240,255,0.9)',
                   opacity: (item as any).locked ? 0.5 : 1,
-                  minWidth: isMobile ? '44px' : 'auto', textAlign: isMobile ? 'center' as const : 'left' as const,
+                  minWidth: isMobile ? '52px' : 'auto', textAlign: isMobile ? 'center' as const : 'left' as const,
                 }}>
-                  <span style={{ fontSize: '14px', flexShrink: 0, opacity: tab === item.id ? 1 : 0.85, width: isMobile ? 'auto' : '18px', textAlign: 'center' as const, display: 'inline-block' }}>{item.icon}</span>
-                  <span style={{ flex: isMobile ? 'unset' : 1, fontSize: isMobile ? '6px' : '12px', letterSpacing: isMobile ? '0.03em' : '0.06em' }}>{item.label}</span>
+                  <span style={{ fontSize: isMobile ? '18px' : '14px', flexShrink: 0, opacity: tab === item.id ? 1 : 0.9, width: isMobile ? 'auto' : '18px', textAlign: 'center' as const, display: 'inline-block' }}>{item.icon}</span>
+                  <span style={{ flex: isMobile ? 'unset' : 1, fontSize: isMobile ? '8px' : '12px', letterSpacing: isMobile ? '0.04em' : '0.06em', fontWeight: isMobile ? 600 : 500, color: (item as any).locked ? 'rgba(255,255,255,0.3)' : tab === item.id ? gold : 'rgba(230,240,255,0.9)' }}>{item.label}</span>
                   {(item as any).locked && !isMobile && <span style={{ fontSize: '9px', opacity: 0.7 }}>🔒</span>}
                   {(item as any).ai && !item.badge && (
                     <span style={{ fontSize: '8px', padding: '1px 5px', borderRadius: '8px', background: 'rgba(201,153,58,0.1)', color: 'rgba(201,168,80,0.85)', fontWeight: 600, letterSpacing: '0.3px' }}>AI</span>
