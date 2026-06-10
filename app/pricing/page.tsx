@@ -534,6 +534,18 @@ export default function PricingPage() {
         </div>
 
       </div>
+
+      {/* Footer */}
+      <footer style={{ borderTop: '1px solid rgba(201,153,58,0.1)', padding: '28px 24px', textAlign: 'center' as const }}>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '32px', flexWrap: 'wrap' as const, marginBottom: '12px' }}>
+          <a href="/terms" style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: 'rgba(201,153,58,0.7)', textDecoration: 'none', letterSpacing: '0.08em' }}>TERMS OF SERVICE</a>
+          <a href="/privacy" style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: 'rgba(201,153,58,0.7)', textDecoration: 'none', letterSpacing: '0.08em' }}>PRIVACY POLICY</a>
+          <a href="mailto:support@one-empire.com" style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: 'rgba(201,153,58,0.7)', textDecoration: 'none', letterSpacing: '0.08em' }}>SUPPORT</a>
+        </div>
+        <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: 'rgba(192,208,232,0.3)', letterSpacing: '0.1em' }}>
+          © 2026 ONE EMPIRE · EMPIRE PM · ALL RIGHTS RESERVED
+        </div>
+      </footer>
     </div>
   )
 }
