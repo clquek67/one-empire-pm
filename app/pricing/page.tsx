@@ -404,6 +404,71 @@ export default function PricingPage() {
           </div>
         </section>
 
+        {/* ═══════════════ COMPARISON TABLE ═══════════════ */}
+        <section style={{ padding: '80px 0', borderTop: '1px solid rgba(201,153,58,0.1)' }}>
+          <div style={{ maxWidth: 900, margin: '0 auto', padding: '0 24px' }}>
+            <div style={{ textAlign: 'center', marginBottom: '48px' }}>
+              <div style={{ fontSize: '12px', fontWeight: 700, color: '#E8B84B', letterSpacing: '0.14em', textTransform: 'uppercase' as const, marginBottom: 10 }}>WHY EMPIRE PM</div>
+              <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '36px', fontWeight: 300, color: '#F0F6FF' }}>
+                Replace <em style={{ color: '#E8B84B', fontStyle: 'italic' }}>5 tools</em> with one
+              </h2>
+              <p style={{ fontSize: '14px', color: 'rgba(192,208,232,0.75)', marginTop: '12px', maxWidth: '500px', margin: '12px auto 0' }}>
+                The average agency pays $86+/month for tools that don't talk to each other. Empire PM Pro replaces all of them for $37.
+              </p>
+            </div>
+
+            {/* Comparison table */}
+            <div style={{ background: 'rgba(16,36,72,0.6)', border: '1px solid rgba(201,153,58,0.2)', borderRadius: '8px', overflow: 'hidden' }}>
+              {/* Header */}
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', background: 'rgba(201,153,58,0.08)', borderBottom: '1px solid rgba(201,153,58,0.2)', padding: '14px 24px' }}>
+                <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', fontWeight: 700, letterSpacing: '0.18em', color: 'rgba(201,153,58,0.7)' }}>WHAT YOU NEED</div>
+                <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', fontWeight: 700, letterSpacing: '0.18em', color: 'rgba(192,208,232,0.5)', textAlign: 'center' as const }}>SEPARATE TOOLS</div>
+                <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', fontWeight: 700, letterSpacing: '0.18em', color: '#E8B84B', textAlign: 'center' as const }}>EMPIRE PM PRO</div>
+              </div>
+
+              {[
+                { need: 'Project & task management', tool: 'Asana Premium', cost: '$13.49/user/mo', included: true },
+                { need: 'AI meeting summaries', tool: 'Otter.ai', cost: '$16.99/mo', included: true },
+                { need: 'Time tracking & billing', tool: 'Harvest', cost: '$12/mo', included: true },
+                { need: 'Invoice automation', tool: 'FreshBooks', cost: '$17/mo', included: true },
+                { need: 'AI risk management', tool: 'No equivalent', cost: '$30-50/mo', included: true },
+                { need: 'Client reporting portal', tool: 'AgencyAnalytics', cost: '$12/mo', included: true },
+              ].map((row, i) => (
+                <div key={i} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', padding: '14px 24px', borderBottom: '1px solid rgba(255,255,255,0.04)', alignItems: 'center' }}>
+                  <div style={{ fontSize: '13px', color: '#E0ECFF' }}>{row.need}</div>
+                  <div style={{ textAlign: 'center' as const }}>
+                    <div style={{ fontSize: '11px', color: 'rgba(192,208,232,0.6)' }}>{row.tool}</div>
+                    <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: '#FF9090', marginTop: '2px' }}>{row.cost}</div>
+                  </div>
+                  <div style={{ textAlign: 'center' as const }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '22px', height: '22px', borderRadius: '50%', background: 'rgba(34,201,144,0.15)', border: '1px solid rgba(34,201,144,0.4)', color: '#22C990', fontSize: '12px', fontWeight: 700 }}>✓</span>
+                  </div>
+                </div>
+              ))}
+
+              {/* Total row */}
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', padding: '18px 24px', background: 'rgba(8,20,44,0.6)', alignItems: 'center' }}>
+                <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', fontWeight: 700, letterSpacing: '0.12em', color: 'rgba(201,153,58,0.8)' }}>TOTAL MONTHLY COST</div>
+                <div style={{ textAlign: 'center' as const }}>
+                  <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '24px', color: '#FF9090', textDecoration: 'line-through', opacity: 0.7 }}>$86+</div>
+                  <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(192,208,232,0.4)', letterSpacing: '0.1em' }}>5 SEPARATE TOOLS</div>
+                </div>
+                <div style={{ textAlign: 'center' as const }}>
+                  <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '32px', color: '#E8B84B' }}>$37</div>
+                  <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(201,153,58,0.7)', letterSpacing: '0.1em' }}>EVERYTHING INCLUDED</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Saving callout */}
+            <div style={{ textAlign: 'center', marginTop: '24px' }}>
+              <span style={{ background: 'rgba(34,201,144,0.1)', border: '1px solid rgba(34,201,144,0.25)', borderRadius: '20px', padding: '8px 20px', fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', fontWeight: 700, color: '#22C990', letterSpacing: '0.1em' }}>
+                SAVE $49+/MONTH · EVERYTHING IN ONE PLACE · NO INTEGRATIONS NEEDED
+              </span>
+            </div>
+          </div>
+        </section>
+
         {/* ═══════════════ FAQ ═══════════════ */}
         <section style={{ padding: '80px 0', borderTop: '1px solid rgba(201,153,58,0.1)' }}>
           <div style={{ textAlign: 'center', marginBottom: '48px' }}>
