@@ -103,11 +103,8 @@ export default function LoginPage() {
 
         {/* Footer */}
         <div style={{ fontSize: '11px', color: 'rgba(240,246,255,0.25)', lineHeight: '1.6' }}>
-          By signing in you agree to our{' '}
-          <a href="/terms" style={{ color: gold, textDecoration: 'none' }}>Terms of Service</a>{' '}
-          and{' '}
-          <a href="/privacy" style={{ color: gold, textDecoration: 'none' }}>Privacy Policy</a>.<br/>
-          Don&apos;t have a subscription?{' '}
+          By signing in you agree to our Terms of Service.<br/>
+          Don't have a subscription?{' '}
           <a href="/pricing" style={{ color: '#E8B84B', textDecoration: 'none' }}>View plans →</a>
         </div>
       </div>
