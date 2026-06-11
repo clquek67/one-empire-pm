@@ -223,12 +223,13 @@ Proceed and set this task to active anyway?`)
     }
   }
 
-  const ai = async (key: string, system: string, content: string) => {
+  const ai = async (key: string, system: string, content: string): Promise<string> => {
     setAiLoading(prev => ({ ...prev, [key]: true }))
     setAiText(prev => ({ ...prev, [key]: '' }))
     const text = await callAI(system, content)
     setAiText(prev => ({ ...prev, [key]: text }))
     setAiLoading(prev => ({ ...prev, [key]: false }))
+    return text
   }
 
   const signOut = async () => { await supabase.auth.signOut(); window.location.href = '/login' }
