@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase-client'
+import DOMPurify from 'isomorphic-dompurify'
 
 type User = { id: string; email: string; user_metadata: { full_name?: string; avatar_url?: string } }
 type Project = { id: string; name: string; client_name: string; status: string; health: number; budget?: number; start_date?: string; end_date?: string }
@@ -37,7 +38,7 @@ const s = {
 }
 
 function formatAI(text: string) {
-  return text
+  const html = text
     .replace(/\*\*(.*?)\*\*/g, `<strong style="color:${gold}">$1</strong>`)
     .replace(/^## (.+)$/gm, `<div style="font-family:Cormorant Garamond,serif;font-size:15px;color:${textBright};margin:16px 0 6px;border-bottom:1px solid ${border};padding-bottom:4px">$1</div>`)
     .replace(/^### (.+)$/gm, `<div style="font-family:Rajdhani,sans-serif;font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:${gold};margin:14px 0 6px">$1</div>`)
@@ -45,6 +46,7 @@ function formatAI(text: string) {
     .replace(/^\d+\. (.+)$/gm, `<div style="display:flex;gap:8px;margin:4px 0;padding-left:4px"><span style="color:${goldDim};flex-shrink:0">▸</span><span>$1</span></div>`)
     .replace(/^---+$/gm, `<hr style="border:none;border-top:1px solid ${border};margin:12px 0">`)
     .replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>')
+  return DOMPurify.sanitize(html)
 }
 
 function fmtDate(d?: string | null) {
