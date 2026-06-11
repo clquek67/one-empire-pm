@@ -7,10 +7,13 @@ export async function GET(request: Request) {
   const nextRaw = searchParams.get('next') ?? '/dashboard'
   const next = decodeURIComponent(nextRaw)
 
+  // Prevent open redirect — only allow internal paths
+  const safePath = next.startsWith('/') && !next.startsWith('//') ? next : '/dashboard'
+
   if (code) {
     const supabase = await createClient()
     const { data, error } = await supabase.auth.exchangeCodeForSession(code)
-    
+
     if (!error && data.user) {
       // Ensure profile exists on every login
       await supabase.from('profiles').upsert({
@@ -20,8 +23,9 @@ export async function GET(request: Request) {
         avatar_url: data.user.user_metadata?.avatar_url ?? null,
       }, { onConflict: 'id' })
 
-      return NextResponse.redirect(`${origin}${next}`)
+      return NextResponse.redirect(`${origin}${safePath}`)
     }
   }
+
   return NextResponse.redirect(`${origin}/login?error=auth`)
 }
