@@ -1138,7 +1138,7 @@ Proceed and set this task to active anyway?`)
                     })
                     const items = itemsData.map(i => `${i.description} (${i.hours}h @ $${i.rate}/hr = $${i.amount})`).join(', ')
                     const pmName = user?.user_metadata?.full_name || user?.email || 'Project Manager'
-                    await ai('invoice',
+                    const coverEmailText = await ai('invoice',
                       `You are ${pmName}, a professional project manager. Write a brief professional invoice cover email (4-5 sentences). Do NOT use any placeholder text like [Your Name] or [Invoice Number] — use the actual data provided. Do not include tables or itemized lists. Structure: greeting to client, one sentence summary of work completed, state the total amount due, state 14-day payment terms, professional sign-off with the PM name provided.`,
                       `PM Name: ${pmName} | PM Email: ${user?.email} | Client: ${projects[0]?.client_name || 'Client'} | Project: ${projects[0]?.name || 'Project'} | Work completed: ${items} | Total Due: $${unbilledTotal.toLocaleString()} | Due Date: ${fmtDate(new Date(Date.now() + 14*24*60*60*1000).toISOString().split('T')[0])}`
                     )
@@ -1163,7 +1163,7 @@ Proceed and set this task to active anyway?`)
                           dueDate: dueDateForEmail,
                           lineItems,
                           total: `$${unbilledTotal.toLocaleString()}`,
-                          coverEmail: (aiText['invoice'] || '').replace(/^Subject:.*\n?/i, '').replace(/^Subject:.*$/im, '').trim()
+                          coverEmail: (coverEmailText || '').replace(/^Subject:.*\n?/i, '').replace(/^Subject:.*$/im, '').trim()
                         })
                       }).catch(() => {})
                     }
