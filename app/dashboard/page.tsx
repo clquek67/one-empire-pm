@@ -541,7 +541,7 @@ Proceed and set this task to active anyway?`)
                 )}
               </div>
 
-              {!isMobile && <button style={{ ...s.btnGhost, fontSize: '10px', padding: '5px 12px' }} onClick={() => setTab('planner')}>✦ AI Planner</button>}
+             {!isMobile && <button style={{ ...s.btnGhost, fontSize: '10px', padding: '5px 12px' }} onClick={() => { if (!hasAIFeature('planner')) { alert('⬆ Upgrade Required\n\nAI Planner is not available on your ' + plan.charAt(0).toUpperCase() + plan.slice(1) + ' plan.\n\nUpgrade to Pro or Agency to unlock.'); return; } setTab('planner') }}>✦ AI Planner</button>}
               <button style={{ ...s.btnGold, fontSize: '10px', padding: '5px 14px' }} onClick={() => setTab('projects')}>{isMobile ? '+ New' : '+ New Project'}</button>
               {isMobile && (
                 <button onClick={signOut} title="Sign Out" style={{ background: 'none', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '3px', cursor: 'pointer', padding: '5px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -570,7 +570,7 @@ Proceed and set this task to active anyway?`)
                 </div>
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <button style={s.btnGhost} onClick={() => setTab('tasks')}>+ New Task</button>
-                  <button style={s.btnGold} onClick={() => setTab('planner')}>✦ AI Planner</button>
+                  <button style={s.btnGold} onClick={() => { if (!hasAIFeature('planner')) { alert('⬆ Upgrade Required\n\nAI Planner is not available on your ' + plan.charAt(0).toUpperCase() + plan.slice(1) + ' plan.\n\nUpgrade to Pro or Agency to unlock.'); return; } setTab('planner') }}>✦ AI Planner</button>
                 </div>
               </div>
 
@@ -1353,7 +1353,33 @@ Proceed and set this task to active anyway?`)
               <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '26px', color: '#F0F6FF', marginBottom: '22px' }}>
                 ✦ AI <em style={{ color: gold, fontStyle: 'italic' }}>Planner</em>
               </div>
-              <AIPlannerForm ai={ai} aiLoading={aiLoading} aiText={aiText} projects={projects} tasks={tasks} risks={risks} teamMembers={teamMembers} supabase={supabase} user={user} onPopulated={() => user && loadData(user.id)} setTab={setTab} isMobile={isMobile} />
+              {!hasAIFeature('planner') ? (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '400px', textAlign: 'center', gap: '16px' }}>
+                  <div style={{ fontSize: '36px', color: gold, opacity: 0.4 }}>✦</div>
+                  <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '22px', color: '#F0F6FF' }}>AI Planner is a <em style={{ color: gold }}>Pro feature</em></div>
+                  <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: 'rgba(192,208,232,0.75)', maxWidth: '420px', lineHeight: 1.7 }}>
+                    Upgrade to Pro or Agency to access the AI Planner, AI Meetings, Scope Control, Workload AI, and the full AI suite.
+                  </div>
+                  <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
+                    <a href="/pricing" style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', fontWeight: 700, letterSpacing: '0.14em', background: `linear-gradient(135deg, ${goldDim}, ${gold})`, color: navy, border: 'none', padding: '10px 22px', borderRadius: '2px', cursor: 'pointer', textDecoration: 'none', display: 'inline-block' }}>
+                      Upgrade to Pro →
+                    </a>
+                    <button onClick={() => setTab('dashboard')} style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', fontWeight: 600, letterSpacing: '0.12em', border: `1px solid rgba(201,153,58,0.35)`, background: 'transparent', color: '#D8E4F4', padding: '10px 18px', borderRadius: '2px', cursor: 'pointer' }}>
+                      ← Back to Dashboard
+                    </button>
+                  </div>
+                  <div style={{ marginTop: '16px', padding: '14px 20px', background: 'rgba(201,153,58,0.05)', border: `1px solid rgba(201,153,58,0.2)`, borderRadius: '4px', maxWidth: '380px' }}>
+                    <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 700, letterSpacing: '0.2em', color: goldDim, marginBottom: '8px' }}>PRO PLAN — $37/MO</div>
+                    <div style={{ fontSize: '12px', color: 'rgba(192,208,232,0.75)', lineHeight: 1.7, textAlign: 'left' }}>
+                      ✦ AI Planner · AI Meetings · Scope Control AI<br/>
+                      ✦ Workload AI · AI Reports · Client Portal<br/>
+                      ✦ Team login · Invoice automation · n8n
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <AIPlannerForm ai={ai} aiLoading={aiLoading} aiText={aiText} projects={projects} tasks={tasks} risks={risks} teamMembers={teamMembers} supabase={supabase} user={user} onPopulated={() => user && loadData(user.id)} setTab={setTab} isMobile={isMobile} />
+              )}
             </div>
           )}
 
