@@ -912,7 +912,7 @@ Proceed and set this task to active anyway?`)
                     <>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap' as const }}>
                         <span style={s.badge(t.priority === 'high' ? 'rgba(226,75,74,0.08)' : t.priority === 'medium' ? 'rgba(201,153,58,0.08)' : 'rgba(26,171,204,0.08)', t.priority === 'high' ? '#FFAAAA' : t.priority === 'medium' ? gold : '#4DD8F0', t.priority === 'high' ? 'rgba(226,75,74,0.2)' : 'rgba(26,171,204,0.18)')}>{t.priority}</span>
-                        {t.owner && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: whiteFaint }}>👤 {t.owner}</span>}
+                        {t.owner && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: '#B8CCE8' }}>👤 {t.owner}</span>}
                       </div>
                       {dep && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '5px' }}>
@@ -923,9 +923,9 @@ Proceed and set this task to active anyway?`)
                         </div>
                       )}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
-                        <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(201,168,80,0.7)' }}>{proj?.name || '—'}</span>
+                        <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: '#E8C96A' }}>{proj?.name || '—'}</span>
                         {t.due_date && (
-                          <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOverdue ? '#FF9090' : t.status === 'done' ? 'rgba(200,220,255,0.3)' : daysLeft !== null && daysLeft <= 3 ? '#FFD080' : textDim }}>
+                          <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOverdue ? '#FF9090' : t.status === 'done' ? 'rgba(200,220,255,0.5)' : daysLeft !== null && daysLeft <= 3 ? '#FFD080' : '#B8CCE8' }}>
                             {isOverdue ? `⚠ Overdue · ${fmtDate(t.due_date)}` : `Due ${fmtDate(t.due_date)}${t.status !== 'done' && daysLeft !== null && daysLeft <= 7 ? ` · ${daysLeft}d` : ''}`}
                           </span>
                         )}
