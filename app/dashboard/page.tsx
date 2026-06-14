@@ -769,7 +769,7 @@ Proceed and set this task to active anyway?`)
                   {teamMembers.map(m => {
                     const proj = projects.find(p => p.id === m.project_id)
                     const inviteStatus = m.invite_status || 'not_invited'
-                    const statusColor = inviteStatus === 'accepted' ? '#22C990' : inviteStatus === 'invited' ? '#FFD080' : 'rgba(255,255,255,0.25)'
+                    const statusColor = inviteStatus === 'accepted' ? '#4DFFB4' : inviteStatus === 'invited' ? '#FFD080' : '#8FA8C8'
                     const statusLabel = inviteStatus === 'accepted' ? '● Active' : inviteStatus === 'invited' ? '◌ Invited' : '○ Not invited'
                     return (
                     <div key={m.id} style={{ padding: '10px 0', borderBottom: `1px solid rgba(201,153,58,0.1)` }}>
@@ -778,9 +778,9 @@ Proceed and set this task to active anyway?`)
                           {m.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)}
                         </div>
                         <div style={{ flex: 1 }}>
-                          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '12px', fontWeight: 600, color: textMid }}>{m.name}</div>
-                          <div style={{ fontSize: '10px', color: textDim }}>{m.email} · {m.role || 'No role'}</div>
-                          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: '#E8C96A', marginTop: '1px' }}>{proj?.name || 'No project assigned'}</div>
+                          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '14px', fontWeight: 700, color: '#F0F6FF' }}>{m.name}</div>
+                          <div style={{ fontSize: '12px', fontWeight: 500, color: '#C8DCF4', marginTop: '1px' }}>{m.email} · {m.role || 'No role'}</div>
+                          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '12px', fontWeight: 600, color: '#E8C96A', marginTop: '2px' }}>{proj?.name || 'No project assigned'}</div>
                         </div>
                         <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column' as const, alignItems: 'flex-end', gap: '4px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -790,7 +790,7 @@ Proceed and set this task to active anyway?`)
                           <div style={{ width: '80px', height: '3px', background: 'rgba(240,246,255,0.07)', borderRadius: '2px', overflow: 'hidden' }}>
                             <div style={{ height: '3px', width: `${m.capacity}%`, background: m.capacity > 80 ? 'linear-gradient(90deg,#E24B4A,#FF9090)' : `linear-gradient(90deg,#1AABCC,#4DD8F0)` }}/>
                           </div>
-                          <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '8px', color: statusColor }}>{statusLabel}</span>
+                          <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', fontWeight: 600, color: statusColor }}>{statusLabel}</span>
                         </div>
                       </div>
                       {editingId === m.id && (
@@ -967,12 +967,12 @@ Proceed and set this task to active anyway?`)
                         const isOverdue = t.due_date && t.due_date < todayStr && t.status !== 'done'
                         const daysLeft = t.due_date ? Math.ceil((new Date(t.due_date).getTime() - new Date(todayStr).getTime()) / (1000*60*60*24)) : null
                         return (
-                          <div key={t.id} style={{ padding: '10px 0', borderBottom: `1px solid rgba(201,153,58,0.1)`, fontSize: '11px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                          <div key={t.id} style={{ padding: '10px 0', borderBottom: `1px solid rgba(201,153,58,0.1)` }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '5px' }}>
                               <span style={s.badge(t.status === 'done' ? 'rgba(34,201,144,0.12)' : t.status === 'active' ? 'rgba(26,171,204,0.12)' : t.status === 'blocked' ? 'rgba(226,75,74,0.12)' : 'rgba(240,246,255,0.05)', t.status === 'done' ? '#4DFFB4' : t.status === 'active' ? '#4DD8F0' : t.status === 'blocked' ? '#FF9090' : whiteFaint, t.status === 'done' ? 'rgba(34,201,144,0.28)' : 'rgba(26,171,204,0.28)')}>{t.status}</span>
                               <span style={s.badge(t.priority === 'high' ? 'rgba(226,75,74,0.08)' : 'rgba(26,171,204,0.08)', t.priority === 'high' ? '#FFAAAA' : '#4DD8F0', 'rgba(26,171,204,0.18)')}>{t.priority}</span>
-                              <span style={{ flex: 1, color: textMid, fontWeight: 500 }}>{t.name}</span>
-                              {t.owner && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: whiteFaint, flexShrink: 0 }}>{t.owner}</span>}
+                              <span style={{ flex: 1, color: '#F0F6FF', fontWeight: 600, fontSize: '13px' }}>{t.name}</span>
+                              {t.owner && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '12px', fontWeight: 500, color: '#C8DCF4', flexShrink: 0 }}>{t.owner}</span>}
                               {editBtn(t.id, { name: t.name, status: t.status, priority: t.priority, owner: t.owner || '', due_date: t.due_date || '', depends_on: t.depends_on || '' })}
                               {deleteBtn('tasks', t.id)}
                             </div>
@@ -1008,14 +1008,14 @@ Proceed and set this task to active anyway?`)
                                         </span>
                                       </div>
                                     )}
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', paddingLeft: '4px' }}>
-                                      <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: '#E8C96A' }}>{proj?.name || '—'}</span>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', paddingLeft: '4px', marginTop: '2px' }}>
+                                      <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '12px', fontWeight: 600, color: '#E8C96A' }}>{proj?.name || '—'}</span>
                                       {t.due_date && (
-                                        <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: isOverdue ? '#FF9090' : t.status === 'done' ? 'rgba(200,220,255,0.75)' : daysLeft !== null && daysLeft <= 3 ? '#FFD080' : textMid }}>
+                                        <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '12px', fontWeight: 500, color: isOverdue ? '#FF9090' : t.status === 'done' ? 'rgba(200,220,255,0.75)' : daysLeft !== null && daysLeft <= 3 ? '#FFD080' : '#C8DCF4' }}>
                                           {isOverdue ? `Overdue · ${fmtDate(t.due_date)}` : `Due ${fmtDate(t.due_date)}${t.status !== 'done' && daysLeft !== null && daysLeft <= 7 ? ` · ${daysLeft}d` : ''}`}
                                         </span>
                                       )}
-                                      {!t.due_date && t.status !== 'done' && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: '#A8C0DC' }}>No due date</span>}
+                                      {!t.due_date && t.status !== 'done' && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '12px', color: '#8FA8C8' }}>No due date</span>}
                                     </div>
                                   </>
                                 )
