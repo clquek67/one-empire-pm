@@ -134,10 +134,20 @@ export default function Dashboard() {
     setWizardStep(0)
   }
 
-  const startEdit = (id: string, fields: Record<string, any>) => { setEditingId(id); setEditFields(fields) }
-  const cancelEdit = () => { setEditingId(null); setEditFields({}) }
+  const startEdit = (id: string, fields: Record<string, any>) => {
+    inputRefs.current = {}
+    setEditingId(id)
+    setEditFields(fields)
+  }
+  const cancelEdit = () => { setEditingId(null); setEditFields({}); inputRefs.current = {} }
   const saveEdit = async (table: string, id: string, extra?: Record<string, any>) => {
-    const raw = { ...editFields, ...extra }
+    // Collect current values from uncontrolled refs first, fall back to editFields state
+    const refVals: Record<string, any> = {}
+    Object.keys(inputRefs.current).forEach(field => {
+      const el = inputRefs.current[field]
+      if (el) refVals[field] = el.value
+    })
+    const raw = { ...editFields, ...refVals, ...extra }
     // Null-coerce empty strings for FK/date fields to prevent DB errors
     const data: Record<string, any> = {}
     for (const [k, v] of Object.entries(raw)) {
@@ -189,12 +199,25 @@ Proceed and set this task to active anyway?`)
   const ef = (field: string) => editFields[field] ?? ''
   const setEf = (field: string, val: any) => setEditFields(prev => ({ ...prev, [field]: val }))
 
+  // Uncontrolled input refs — prevents focus loss on every keystroke
+  const inputRefs = useRef<Record<string, HTMLInputElement | HTMLSelectElement | null>>({})
+  const getInputVal = (field: string) => (inputRefs.current[field] as HTMLInputElement)?.value ?? ef(field)
+
   const inlineInput = (field: string, placeholder?: string, type = 'text') => (
-    <input value={ef(field)} onChange={e => setEf(field, e.target.value)} type={type} placeholder={placeholder}
-      style={{ background: 'rgba(16,36,72,0.9)', border: `1px solid rgba(201,153,58,0.35)`, borderRadius: '3px', padding: '5px 8px', fontFamily: 'DM Sans, sans-serif', fontSize: '11px', color: '#E8F0FF', outline: 'none', width: '100%' }}/>
+    <input
+      key={`${editingId}-${field}`}
+      ref={el => { inputRefs.current[field] = el }}
+      defaultValue={ef(field)}
+      type={type}
+      placeholder={placeholder}
+      style={{ background: 'rgba(16,36,72,0.9)', border: `1px solid rgba(201,153,58,0.35)`, borderRadius: '3px', padding: '5px 8px', fontFamily: 'DM Sans, sans-serif', fontSize: '11px', color: '#E8F0FF', outline: 'none', width: '100%' }}
+    />
   )
   const inlineSelect = (field: string, options: string[]) => (
-    <select value={ef(field)} onChange={e => setEf(field, e.target.value)}
+    <select
+      key={`${editingId}-${field}`}
+      ref={el => { inputRefs.current[field] = el }}
+      defaultValue={ef(field)}
       style={{ background: 'rgba(16,36,72,0.9)', border: `1px solid rgba(201,153,58,0.35)`, borderRadius: '3px', padding: '5px 8px', fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: '#E8F0FF', outline: 'none', width: '100%' }}>
       {options.map(o => <option key={o} value={o}>{o}</option>)}
     </select>
@@ -900,7 +923,7 @@ Proceed and set this task to active anyway?`)
                       {inlineInput('due_date', '', 'date')}
                       <div style={{ gridColumn: '1/-1' }}>
                         <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: goldDim, marginBottom: '4px', letterSpacing: '0.15em' }}>DEPENDS ON</div>
-                        <select value={editFields.depends_on || ''} onChange={e => setEditFields((prev: any) => ({...prev, depends_on: e.target.value}))}
+                        <select ref={el => { inputRefs.current['depends_on'] = el }} defaultValue={editFields.depends_on || ''}
                           style={{ width: '100%', background: 'rgba(16,36,72,0.9)', border: `1px solid rgba(201,153,58,0.35)`, borderRadius: '3px', padding: '5px 8px', fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: '#E8F0FF', outline: 'none' }}>
                           <option value="">No dependency</option>
                           {tasks.filter((d: Task) => d.project_id === t.project_id && d.id !== t.id).map((d: Task) => <option key={d.id} value={d.id}>{d.name} [{d.status}]</option>)}
@@ -985,7 +1008,7 @@ Proceed and set this task to active anyway?`)
                                 {inlineInput('due_date', '', 'date')}
                                 <div style={{ gridColumn: '1/-1' }}>
                                   <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: goldDim, marginBottom: '4px', letterSpacing: '0.15em' }}>DEPENDS ON</div>
-                                  <select value={editFields.depends_on || ''} onChange={e => setEditFields((prev: any) => ({...prev, depends_on: e.target.value}))}
+                                  <select ref={el => { inputRefs.current['depends_on'] = el }} defaultValue={editFields.depends_on || ''}
                                     style={{ width: '100%', background: 'rgba(16,36,72,0.9)', border: `1px solid rgba(201,153,58,0.35)`, borderRadius: '3px', padding: '5px 8px', fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: '#E8F0FF', outline: 'none' }}>
                                     <option value="">No dependency</option>
                                     {tasks.filter((d: Task) => d.project_id === t.project_id && d.id !== t.id).map((d: Task) => <option key={d.id} value={d.id}>{d.name} [{d.status}]</option>)}
