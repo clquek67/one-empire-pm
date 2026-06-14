@@ -880,12 +880,12 @@ Proceed and set this task to active anyway?`)
                 <div
                   draggable
                   onDragStart={e => handleDragStart(e, t.id)}
-                  style={{ background: 'rgba(16,36,72,0.85)', border: `1px solid ${border}`, borderRadius: '4px', padding: '10px 12px', marginBottom: '8px', cursor: 'grab', fontSize: '11px', transition: 'border-color 0.15s', userSelect: 'none' as const }}
-                  onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(201,153,58,0.4)')}
+                  style={{ background: 'rgba(16,36,72,0.85)', border: `1px solid ${border}`, borderRadius: '4px', padding: '10px 12px', marginBottom: '8px', cursor: 'grab', transition: 'border-color 0.15s', userSelect: 'none' as const }}
+                  onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(201,153,58,0.5)')}
                   onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(201,153,58,0.2)')}
                 >
-                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '6px', marginBottom: '6px' }}>
-                    <span style={{ color: textBright, fontWeight: 500, lineHeight: 1.4, flex: 1 }}>{t.name}</span>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '6px', marginBottom: '7px' }}>
+                    <span style={{ color: '#FFFFFF', fontWeight: 600, fontSize: '13px', lineHeight: 1.4, flex: 1 }}>{t.name}</span>
                     <div style={{ display: 'flex', gap: '2px', flexShrink: 0 }}>
                       {editBtn(t.id, { name: t.name, status: t.status, priority: t.priority, owner: t.owner || '', due_date: t.due_date || '', depends_on: t.depends_on || '' })}
                       {deleteBtn('tasks', t.id)}
@@ -910,22 +910,22 @@ Proceed and set this task to active anyway?`)
                     </div>
                   ) : (
                     <>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap' as const }}>
-                        <span style={s.badge(t.priority === 'high' ? 'rgba(226,75,74,0.08)' : t.priority === 'medium' ? 'rgba(201,153,58,0.08)' : 'rgba(26,171,204,0.08)', t.priority === 'high' ? '#FFAAAA' : t.priority === 'medium' ? gold : '#4DD8F0', t.priority === 'high' ? 'rgba(226,75,74,0.2)' : 'rgba(26,171,204,0.18)')}>{t.priority}</span>
-                        {t.owner && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: '#B8CCE8' }}>👤 {t.owner}</span>}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' as const, marginBottom: '2px' }}>
+                        <span style={s.badge(t.priority === 'high' ? 'rgba(226,75,74,0.15)' : t.priority === 'medium' ? 'rgba(201,153,58,0.15)' : 'rgba(26,171,204,0.15)', t.priority === 'high' ? '#FFB0B0' : t.priority === 'medium' ? '#F0CC6A' : '#6ADAF0', t.priority === 'high' ? 'rgba(226,75,74,0.35)' : t.priority === 'medium' ? 'rgba(201,153,58,0.35)' : 'rgba(26,171,204,0.35)')}>{t.priority}</span>
+                        {t.owner && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: '#C8DCF4', fontWeight: 500 }}>👤 {t.owner}</span>}
                       </div>
                       {dep && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '5px' }}>
-                          <span style={{ fontSize: '8px', color: depOverdue ? '#FF9090' : depIncomplete ? '#FFD080' : '#22C990' }}>⊘</span>
-                          <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: depOverdue ? '#FF9090' : depIncomplete ? '#FFD080' : '#22C990' }}>
+                          <span style={{ fontSize: '9px', color: depOverdue ? '#FF9090' : depIncomplete ? '#FFD080' : '#4DFFB4' }}>⊘</span>
+                          <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', fontWeight: 500, color: depOverdue ? '#FF9090' : depIncomplete ? '#FFD080' : '#4DFFB4' }}>
                             {depOverdue ? 'Dep. OVERDUE: ' : depIncomplete ? 'Waiting on: ' : 'Dep. done: '}{dep.name}
                           </span>
                         </div>
                       )}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
-                        <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: '#E8C96A' }}>{proj?.name || '—'}</span>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px', paddingTop: '6px', borderTop: '1px solid rgba(201,153,58,0.12)' }}>
+                        <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', fontWeight: 600, color: '#F0CC6A' }}>{proj?.name || '—'}</span>
                         {t.due_date && (
-                          <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOverdue ? '#FF9090' : t.status === 'done' ? 'rgba(200,220,255,0.5)' : daysLeft !== null && daysLeft <= 3 ? '#FFD080' : '#B8CCE8' }}>
+                          <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', fontWeight: 500, color: isOverdue ? '#FF8080' : t.status === 'done' ? 'rgba(200,220,255,0.45)' : daysLeft !== null && daysLeft <= 3 ? '#FFD080' : '#C8DCF4' }}>
                             {isOverdue ? `⚠ Overdue · ${fmtDate(t.due_date)}` : `Due ${fmtDate(t.due_date)}${t.status !== 'done' && daysLeft !== null && daysLeft <= 7 ? ` · ${daysLeft}d` : ''}`}
                           </span>
                         )}
