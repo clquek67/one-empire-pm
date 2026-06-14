@@ -17,10 +17,10 @@ const navy = '#050D1A'
 const navyCard = 'rgba(16,36,72,0.7)'
 const border = 'rgba(201,153,58,0.2)'
 const borderMd = 'rgba(201,153,58,0.35)'
-const textBright = '#E8F0FF'
-const textMid = '#D8E4F4'
-const textDim = 'rgba(192,208,232,0.75)'
-const whiteFaint = 'rgba(240,246,255,0.55)'
+const textBright = '#F0F6FF'
+const textMid = '#C8DCF4'
+const textDim = '#A8C0DC'
+const whiteFaint = '#C0D4EC'
 
 const s = {
   badge: (bg: string, color: string, bdr: string) => ({
@@ -449,7 +449,7 @@ Proceed and set this task to active anyway?`)
                   <span style={{ flex: isMobile ? 'unset' : 1, fontSize: isMobile ? '8px' : '12px', letterSpacing: isMobile ? '0.04em' : '0.06em', fontWeight: isMobile ? 600 : 500, color: (item as any).locked ? 'rgba(255,255,255,0.3)' : tab === item.id ? gold : 'rgba(230,240,255,0.9)' }}>{item.label}</span>
                   {(item as any).locked && !isMobile && <span style={{ fontSize: '9px', opacity: 0.7 }}>🔒</span>}
                   {(item as any).ai && !item.badge && (
-                    <span style={{ fontSize: '8px', padding: '1px 5px', borderRadius: '8px', background: 'rgba(201,153,58,0.1)', color: 'rgba(201,168,80,0.85)', fontWeight: 600, letterSpacing: '0.3px' }}>AI</span>
+                    <span style={{ fontSize: '8px', padding: '1px 5px', borderRadius: '8px', background: 'rgba(201,153,58,0.1)', color: '#E8C96A', fontWeight: 600, letterSpacing: '0.3px' }}>AI</span>
                   )}
                   {item.badge && (
                     <span style={{ fontSize: '9px', padding: '1px 6px', borderRadius: '10px', background: 'rgba(226,75,74,0.18)', color: '#FFB0B0', fontWeight: 700 }}>
@@ -511,7 +511,7 @@ Proceed and set this task to active anyway?`)
                   <div style={{ position: 'absolute', top: '42px', right: 0, width: '360px', background: 'rgba(8,20,44,0.98)', border: `1px solid rgba(201,153,58,0.3)`, borderRadius: '4px', zIndex: 500, boxShadow: '0 8px 32px rgba(0,0,0,0.6)' }}>
                     <div style={{ padding: '12px 16px', borderBottom: 'rgba(201,153,58,0.15) solid 1px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', fontWeight: 700, letterSpacing: '0.18em', color: goldDim }}>NOTIFICATIONS</span>
-                      {notifCount > 0 && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(200,220,255,0.55)' }}>{notifCount} alert{notifCount !== 1 ? 's' : ''}</span>}
+                      {notifCount > 0 && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: '#C0D4EC' }}>{notifCount} alert{notifCount !== 1 ? 's' : ''}</span>}
                     </div>
 
                     {notifications.length === 0 && (
@@ -535,7 +535,7 @@ Proceed and set this task to active anyway?`)
                             <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', fontWeight: 600, color: n.type === 'critical' ? '#FF9090' : n.type === 'warning' ? '#FFD080' : textMid, marginBottom: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.title}</div>
                             <div style={{ fontSize: '10px', color: textDim }}>{n.detail}</div>
                           </div>
-                          <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(200,220,255,0.55)', flexShrink: 0, marginTop: '3px' }}>→</span>
+                          <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: '#C0D4EC', flexShrink: 0, marginTop: '3px' }}>→</span>
                         </div>
                       ))}
                     </div>
@@ -615,9 +615,9 @@ Proceed and set this task to active anyway?`)
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
                           <span style={s.badge(t.status === 'done' ? 'rgba(34,201,144,0.12)' : t.status === 'active' ? 'rgba(26,171,204,0.12)' : t.status === 'blocked' ? 'rgba(226,75,74,0.12)' : 'rgba(240,246,255,0.05)', t.status === 'done' ? '#4DFFB4' : t.status === 'active' ? '#4DD8F0' : t.status === 'blocked' ? '#FF9090' : whiteFaint, t.status === 'done' ? 'rgba(34,201,144,0.28)' : t.status === 'active' ? 'rgba(26,171,204,0.28)' : t.status === 'blocked' ? 'rgba(226,75,74,0.28)' : 'rgba(240,246,255,0.1)')}>{t.status}</span>
                           <span style={{ flex: 1, color: textMid }}>{t.name}</span>
-                          {t.owner && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: whiteFaint }}>{t.owner}</span>}
+                          {t.owner && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: whiteFaint }}>{t.owner}</span>}
                         </div>
-                        {t.due_date && <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOverdue ? '#FF9090' : textMid, paddingLeft: '2px' }}>{isOverdue ? '⚠ Overdue · ' : 'Due '}{fmtDate(t.due_date)}</div>}
+                        {t.due_date && <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: isOverdue ? '#FF9090' : textMid, paddingLeft: '2px' }}>{isOverdue ? '⚠ Overdue · ' : 'Due '}{fmtDate(t.due_date)}</div>}
                       </div>
                     )})}
                     {tasks.length === 0 && (
@@ -640,7 +640,7 @@ Proceed and set this task to active anyway?`)
                             {p.health}% {isOverdue ? '· Overdue' : daysLeft !== null ? `· ${daysLeft > 0 ? daysLeft+'d left' : 'due today'}` : ''}
                           </span>
                         </div>
-                        {p.end_date && <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOverdue ? '#FF9090' : '#C8D8F0', marginBottom: '4px' }}>{`Due ${fmtDate(p.end_date)}`}</div>}
+                        {p.end_date && <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: isOverdue ? '#FF9090' : '#C8D8F0', marginBottom: '4px' }}>{`Due ${fmtDate(p.end_date)}`}</div>}
                         <div style={{ height: '3px', background: 'rgba(240,246,255,0.07)', borderRadius: '2px', overflow: 'hidden' }}>
                           <div style={{ height: '3px', width: `${p.health}%`, background: isOverdue ? 'linear-gradient(90deg,#E24B4A,#FF9090)' : `linear-gradient(90deg, ${goldDim}, ${gold})`, borderRadius: '2px' }}/>
                         </div>
@@ -663,7 +663,7 @@ Proceed and set this task to active anyway?`)
                       <div key={r.id} style={{ borderLeft: `3px solid ${r.level === 'critical' || r.level === 'high' ? '#E24B4A' : r.level === 'medium' ? '#F5A623' : '#22C990'}`, padding: '10px 12px', marginBottom: '8px', background: 'rgba(16,36,72,0.5)', borderRadius: '0 3px 3px 0' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
                           <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '12px', fontWeight: 600, color: textBright }}>{r.title}</div>
-                          <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(201,168,80,0.75)' }}>{proj?.name || '—'}</span>
+                          <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', fontWeight: 500, color: '#E8C96A' }}>{proj?.name || '—'}</span>
                         </div>
                         <div style={{ fontSize: '11px', color: textDim }}>{r.description}</div>
                       </div>
@@ -742,7 +742,7 @@ Proceed and set this task to active anyway?`)
                               <div style={{ flex: 1, height: '2px', background: 'rgba(240,246,255,0.07)', borderRadius: '1px', overflow: 'hidden' }}>
                                 <div style={{ height: '2px', width: `${p.health}%`, background: `linear-gradient(90deg, ${goldDim}, ${gold})` }}/>
                               </div>
-                              <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: whiteFaint, flexShrink: 0 }}>{p.health}%</span>
+                              <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: whiteFaint, flexShrink: 0 }}>{p.health}%</span>
                             </div>
                           </>
                         )}
@@ -780,7 +780,7 @@ Proceed and set this task to active anyway?`)
                         <div style={{ flex: 1 }}>
                           <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '12px', fontWeight: 600, color: textMid }}>{m.name}</div>
                           <div style={{ fontSize: '10px', color: textDim }}>{m.email} · {m.role || 'No role'}</div>
-                          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(201,168,80,0.75)', marginTop: '1px' }}>{proj?.name || 'No project assigned'}</div>
+                          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: '#E8C96A', marginTop: '1px' }}>{proj?.name || 'No project assigned'}</div>
                         </div>
                         <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column' as const, alignItems: 'flex-end', gap: '4px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -972,7 +972,7 @@ Proceed and set this task to active anyway?`)
                               <span style={s.badge(t.status === 'done' ? 'rgba(34,201,144,0.12)' : t.status === 'active' ? 'rgba(26,171,204,0.12)' : t.status === 'blocked' ? 'rgba(226,75,74,0.12)' : 'rgba(240,246,255,0.05)', t.status === 'done' ? '#4DFFB4' : t.status === 'active' ? '#4DD8F0' : t.status === 'blocked' ? '#FF9090' : whiteFaint, t.status === 'done' ? 'rgba(34,201,144,0.28)' : 'rgba(26,171,204,0.28)')}>{t.status}</span>
                               <span style={s.badge(t.priority === 'high' ? 'rgba(226,75,74,0.08)' : 'rgba(26,171,204,0.08)', t.priority === 'high' ? '#FFAAAA' : '#4DD8F0', 'rgba(26,171,204,0.18)')}>{t.priority}</span>
                               <span style={{ flex: 1, color: textMid, fontWeight: 500 }}>{t.name}</span>
-                              {t.owner && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: whiteFaint, flexShrink: 0 }}>{t.owner}</span>}
+                              {t.owner && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: whiteFaint, flexShrink: 0 }}>{t.owner}</span>}
                               {editBtn(t.id, { name: t.name, status: t.status, priority: t.priority, owner: t.owner || '', due_date: t.due_date || '', depends_on: t.depends_on || '' })}
                               {deleteBtn('tasks', t.id)}
                             </div>
@@ -1009,13 +1009,13 @@ Proceed and set this task to active anyway?`)
                                       </div>
                                     )}
                                     <div style={{ display: 'flex', justifyContent: 'space-between', paddingLeft: '4px' }}>
-                                      <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(201,168,80,0.75)' }}>{proj?.name || '—'}</span>
+                                      <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: '#E8C96A' }}>{proj?.name || '—'}</span>
                                       {t.due_date && (
-                                        <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOverdue ? '#FF9090' : t.status === 'done' ? 'rgba(200,220,255,0.35)' : daysLeft !== null && daysLeft <= 3 ? '#FFD080' : textMid }}>
+                                        <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOverdue ? '#FF9090' : t.status === 'done' ? 'rgba(200,220,255,0.6)' : daysLeft !== null && daysLeft <= 3 ? '#FFD080' : textMid }}>
                                           {isOverdue ? `Overdue · ${fmtDate(t.due_date)}` : `Due ${fmtDate(t.due_date)}${t.status !== 'done' && daysLeft !== null && daysLeft <= 7 ? ` · ${daysLeft}d` : ''}`}
                                         </span>
                                       )}
-                                      {!t.due_date && t.status !== 'done' && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(200,220,255,0.35)' }}>No due date</span>}
+                                      {!t.due_date && t.status !== 'done' && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: '#A8C0DC' }}>No due date</span>}
                                     </div>
                                   </>
                                 )
@@ -1147,8 +1147,8 @@ Proceed and set this task to active anyway?`)
                           <>
                             <div style={{ fontSize: '11px', color: textDim, marginBottom: '5px' }}>{r.description}</div>
                             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                              <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(201,168,80,0.75)' }}>{proj?.name || '—'}</span>
-                              {r.due_date && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOverdue ? '#FF9090' : textMid }}>{isOverdue ? '⚠ Overdue · ' : 'Resolve by '}{fmtDate(r.due_date)}</span>}
+                              <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: '#E8C96A' }}>{proj?.name || '—'}</span>
+                              {r.due_date && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: isOverdue ? '#FF9090' : textMid }}>{isOverdue ? '⚠ Overdue · ' : 'Resolve by '}{fmtDate(r.due_date)}</span>}
                             </div>
                           </>
                         )}
@@ -1247,13 +1247,13 @@ Proceed and set this task to active anyway?`)
                         </div>
                         <div style={{ flex: 1 }}>
                           <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '12px', fontWeight: 600, color: textMid }}>{m.name}</div>
-                          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(201,168,80,0.75)' }}>{m.role || 'No role'} · {proj?.name || 'No project'} · {memberTasks.length} active task{memberTasks.length !== 1 ? 's' : ''}</div>
+                          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: '#E8C96A' }}>{m.role || 'No role'} · {proj?.name || 'No project'} · {memberTasks.length} active task{memberTasks.length !== 1 ? 's' : ''}</div>
                         </div>
                         <div style={{ textAlign: 'right' }}>
                           <div style={{ width: '100px', height: '4px', background: 'rgba(240,246,255,0.07)', borderRadius: '2px', overflow: 'hidden', marginBottom: '3px' }}>
                             <div style={{ height: '4px', width: `${m.capacity}%`, background: m.capacity > 80 ? 'linear-gradient(90deg,#E24B4A,#FF9090)' : 'linear-gradient(90deg,#1AABCC,#4DD8F0)', borderRadius: '2px' }}/>
                           </div>
-                          <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: m.capacity > 80 ? '#FF9090' : whiteFaint }}>{m.capacity}% · {m.capacity > 80 ? 'Busy' : 'Available'}</span>
+                          <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: m.capacity > 80 ? '#FF9090' : whiteFaint }}>{m.capacity}% · {m.capacity > 80 ? 'Busy' : 'Available'}</span>
                         </div>
                       </div>
                     </div>
@@ -1402,7 +1402,7 @@ Proceed and set this task to active anyway?`)
                         <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '15px', color: gold, width: '75px', textAlign: 'right' }}>${(l.hours * l.rate).toLocaleString()}</span>
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: 'rgba(201,168,80,0.85)' }}>{proj?.name || '—'}</span>
+                        <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: '#E8C96A' }}>{proj?.name || '—'}</span>
                         {l.log_date && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: '#C8D8F0' }}>{fmtDate(l.log_date)}</span>}
                       </div>
                     </div>
@@ -1454,7 +1454,7 @@ Proceed and set this task to active anyway?`)
                             <div key={l.id} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: '0', padding: '9px 0', borderBottom: `1px solid rgba(255,255,255,0.04)` }}>
                               <div>
                                 <div style={{ fontSize: '11px', color: textBright, fontWeight: 500 }}>{l.description}</div>
-                                <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(201,168,80,0.75)' }}>{proj?.name} · {fmtDate(l.log_date)}</div>
+                                <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: '#E8C96A' }}>{proj?.name} · {fmtDate(l.log_date)}</div>
                               </div>
                               <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: textMid, paddingTop: '2px' }}>{l.hours}h</div>
                               <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: textMid, paddingTop: '2px' }}>${l.rate}/hr</div>
@@ -1521,7 +1521,7 @@ Proceed and set this task to active anyway?`)
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '400px', textAlign: 'center', gap: '16px' }}>
                   <div style={{ fontSize: '36px', color: gold, opacity: 0.4 }}>✦</div>
                   <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '22px', color: '#F0F6FF' }}>AI Planner is a <em style={{ color: gold }}>Pro feature</em></div>
-                  <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: 'rgba(192,208,232,0.75)', maxWidth: '420px', lineHeight: 1.7 }}>
+                  <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: '#A8C0DC', maxWidth: '420px', lineHeight: 1.7 }}>
                     Upgrade to Pro or Agency to access the AI Planner, AI Meetings, Scope Control, Workload AI, and the full AI suite.
                   </div>
                   <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
@@ -1534,7 +1534,7 @@ Proceed and set this task to active anyway?`)
                   </div>
                   <div style={{ marginTop: '16px', padding: '14px 20px', background: 'rgba(201,153,58,0.05)', border: `1px solid rgba(201,153,58,0.2)`, borderRadius: '4px', maxWidth: '380px' }}>
                     <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 700, letterSpacing: '0.2em', color: goldDim, marginBottom: '8px' }}>PRO PLAN — $37/MO</div>
-                    <div style={{ fontSize: '12px', color: 'rgba(192,208,232,0.75)', lineHeight: 1.7, textAlign: 'left' }}>
+                    <div style={{ fontSize: '12px', color: '#A8C0DC', lineHeight: 1.7, textAlign: 'left' }}>
                       ✦ AI Planner · AI Meetings · Scope Control AI<br/>
                       ✦ Workload AI · AI Reports · Client Portal<br/>
                       ✦ Team login · Invoice automation · n8n
@@ -1725,7 +1725,7 @@ function ProjectForm({ user, onCreated, supabase, isMobile, canAddProject, limit
       {canAddProject === false ? (
         <div style={{ padding: '12px', background: 'rgba(226,75,74,0.08)', border: '1px solid rgba(226,75,74,0.25)', borderRadius: '4px', textAlign: 'center' }}>
           <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: '#FF9090', marginBottom: '4px', fontWeight: 600 }}>⬆ Project limit reached ({limits?.projects} on {(plan||'starter').charAt(0).toUpperCase()+(plan||'starter').slice(1)} plan)</div>
-          <div style={{ fontSize: '11px', color: 'rgba(192,208,232,0.75)' }}>Upgrade your plan to add more projects.</div>
+          <div style={{ fontSize: '11px', color: '#A8C0DC' }}>Upgrade your plan to add more projects.</div>
         </div>
       ) : (
         <button style={{ ...s.btnGold, width: '100%' }} onClick={submit}>Create Project →</button>
@@ -1761,7 +1761,7 @@ function TeamMemberForm({ user, projects, onCreated, supabase, isMobile, canAddT
       {projectId && canAddTeamMember && !canAddTeamMember(projectId) ? (
         <div style={{ padding: '12px', background: 'rgba(226,75,74,0.08)', border: '1px solid rgba(226,75,74,0.25)', borderRadius: '4px', textAlign: 'center' }}>
           <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: '#FF9090', marginBottom: '4px', fontWeight: 600 }}>⬆ Team limit reached ({limits?.teamMembers}/project on {(plan||'starter').charAt(0).toUpperCase()+(plan||'starter').slice(1)} plan)</div>
-          <div style={{ fontSize: '11px', color: 'rgba(192,208,232,0.75)' }}>Upgrade to add more team members.</div>
+          <div style={{ fontSize: '11px', color: '#A8C0DC' }}>Upgrade to add more team members.</div>
         </div>
       ) : (
         <button style={{ ...s.btnGold, width: '100%' }} onClick={submit}>Add Team Member →</button>
@@ -2124,7 +2124,7 @@ Rules: Use bullet points only. No markdown tables. Be specific, not generic. Ass
         {aiText['planner'] && !aiLoading['planner'] && (
           <div style={{ marginTop: '14px', padding: '14px', background: 'rgba(201,153,58,0.05)', border: `1px solid rgba(201,153,58,0.25)`, borderRadius: '4px' }}>
             <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 700, letterSpacing: '0.2em', color: goldDim, marginBottom: '10px' }}>⚡ AUTO-POPULATE PROJECT</div>
-            <div style={{ fontSize: '11px', color: 'rgba(192,208,232,0.75)', marginBottom: '10px', lineHeight: 1.6 }}>
+            <div style={{ fontSize: '11px', color: '#A8C0DC', marginBottom: '10px', lineHeight: 1.6 }}>
               Select a project and click Populate — tasks, risks and milestones from this plan will be created automatically.
             </div>
             <div style={{ marginBottom: '10px' }}>
@@ -2137,7 +2137,7 @@ Rules: Use bullet points only. No markdown tables. Be specific, not generic. Ass
             {populateResult && (
               <div style={{ marginBottom: '10px', padding: '10px 12px', background: 'rgba(34,201,144,0.08)', border: '1px solid rgba(34,201,144,0.25)', borderRadius: '3px' }}>
                 <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: '#22C990', marginBottom: '4px', fontWeight: 700 }}>✓ Successfully populated!</div>
-                <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: 'rgba(192,208,232,0.75)' }}>
+                <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: '#A8C0DC' }}>
                   {populateResult.tasks} tasks · {populateResult.risks} risks · {populateResult.milestones} milestones created
                 </div>
                 <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
@@ -2321,8 +2321,8 @@ function TimelineView({ projects, tasks, milestones, user, supabase, onSaved, ed
   const gold = '#E8B84B'; const goldDim = '#C9993A'; const navy = '#050D1A'
   const navyCard = 'rgba(16,36,72,0.7)'; const border = 'rgba(201,153,58,0.2)'
   const borderMd = 'rgba(201,153,58,0.35)'; const textBright = '#E8F0FF'
-  const textMid = '#D8E4F4'; const textDim = 'rgba(192,208,232,0.75)'
-  const whiteFaint = 'rgba(240,246,255,0.55)'
+  const textMid = '#C8DCF4'; const textDim = '#A8C0DC'
+  const whiteFaint = '#C0D4EC'
 
   const project = projects.find((p: Project) => p.id === selectedProjectId) || projects[0]
   const pid = project?.id
@@ -2623,7 +2623,7 @@ function ReportsView({ projects, tasks, risks, timeLogs, milestones, teamMembers
   const gold = '#E8B84B'; const goldDim = '#C9993A'; const navy = '#050D1A'
   const navyCard = 'rgba(16,36,72,0.7)'; const border = 'rgba(201,153,58,0.2)'
   const borderMd = 'rgba(201,153,58,0.35)'; const textBright = '#E8F0FF'
-  const textMid = '#D8E4F4'; const textDim = 'rgba(192,208,232,0.75)'
+  const textMid = '#C8DCF4'; const textDim = '#A8C0DC'
 
   const [selectedProjectId, setSelectedProjectId] = useState<string>('all')
   const [execSummary, setExecSummary] = useState('')
