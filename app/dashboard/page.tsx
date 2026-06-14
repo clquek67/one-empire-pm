@@ -174,7 +174,7 @@ Proceed and set this task to active anyway?`)
 
   const editBtn = (id: string, fields: Record<string, any>) => (
     <button onClick={e => { e.stopPropagation(); editingId === id ? cancelEdit() : startEdit(id, fields) }}
-      style={{ background: 'none', border: 'none', cursor: 'pointer', color: editingId === id ? gold : 'rgba(200,220,255,0.6)', fontSize: '13px', padding: '2px 5px', flexShrink: 0, transition: 'color 0.15s' }}
+      style={{ background: 'none', border: 'none', cursor: 'pointer', color: editingId === id ? gold : 'rgba(200,220,255,0.75)', fontSize: '13px', padding: '2px 5px', flexShrink: 0, transition: 'color 0.15s' }}
       title={editingId === id ? 'Cancel' : 'Edit'}>
       {editingId === id ? '✕' : '✎'}
     </button>
@@ -415,7 +415,7 @@ Proceed and set this task to active anyway?`)
 </div>
             <div>
               <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '12px', fontWeight: 700, letterSpacing: '1.5px', color: gold, textTransform: 'uppercase' as const }}>Empire PM</div>
-              <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(255,255,255,0.25)', letterSpacing: '0.5px' }}>One Empire</div>
+              <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: '#7090B0' }}>One Empire</div>
             </div>
           </div>)}
           {/* Nav */}
@@ -423,7 +423,7 @@ Proceed and set this task to active anyway?`)
             {navItems.map((item, i) => (
               <div key={item.id}>
                 {item.section && !isMobile && (
-                  <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '8px', fontWeight: 600, letterSpacing: '0.22em', textTransform: 'uppercase' as const, color: 'rgba(201,153,58,0.4)', padding: '12px 8px 3px', marginTop: i > 0 ? '4px' : 0 }}>
+                  <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '8px', fontWeight: 600, letterSpacing: '0.22em', textTransform: 'uppercase' as const, color: 'rgba(201,153,58,0.75)', padding: '12px 8px 3px', marginTop: i > 0 ? '4px' : 0 }}>
                     {item.section}
                   </div>
                 )}
@@ -470,8 +470,8 @@ Proceed and set this task to active anyway?`)
               </div>
             )}
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: 'rgba(255,255,255,0.8)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>{user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User'}</div>
-              <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(201,153,58,0.5)' }}>One Empire</div>
+              <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: '#E8F0FF', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>{user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User'}</div>
+              <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: '#C9993A' }}>One Empire</div>
             </div>
             <button onClick={signOut} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px', flexShrink: 0, display: 'flex', alignItems: 'center' }} title="Sign Out">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -489,7 +489,7 @@ Proceed and set this task to active anyway?`)
           <div className="empire-topbar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', height: '52px', background: 'rgba(8,20,40,0.95)', borderBottom: `1px solid rgba(201,153,58,0.12)`, flexShrink: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center' }}>
               <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '14px', fontWeight: 600, color: '#F0F6FF', letterSpacing: '0.04em' }}>{pageLabels[tab] || tab}</span>
-              <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: 'rgba(255,255,255,0.25)', marginLeft: '8px' }}>{pageCrumbs[tab] || ''}</span>
+              <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: '#8FA8C8', marginLeft: '8px' }}>{pageCrumbs[tab] || ''}</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               {!isMobile && <div style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'rgba(34,201,144,0.07)', border: '1px solid rgba(34,201,144,0.2)', borderRadius: '20px', padding: '3px 10px', fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600, color: '#4DFFB4' }}>
@@ -500,7 +500,7 @@ Proceed and set this task to active anyway?`)
               {/* Bell icon */}
               <div style={{ position: 'relative' }}>
                 <button onClick={e => { e.stopPropagation(); setShowNotifications(v => !v) }} style={{ background: notifCount > 0 ? 'rgba(226,75,74,0.08)' : 'transparent', border: `1px solid ${notifCount > 0 ? 'rgba(226,75,74,0.3)' : 'rgba(201,153,58,0.2)'}`, borderRadius: '3px', padding: '5px 9px', cursor: 'pointer', position: 'relative', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                  <span style={{ fontSize: '14px', color: notifCount > 0 ? '#FF9090' : 'rgba(200,220,255,0.65)' }}>🔔</span>
+                  <span style={{ fontSize: '14px', color: notifCount > 0 ? '#FF9090' : 'rgba(200,220,255,0.75)' }}>🔔</span>
                   {notifCount > 0 && (
                     <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', fontWeight: 700, color: criticalCount > 0 ? '#FF9090' : '#FFD080', minWidth: '14px' }}>{notifCount}</span>
                   )}
@@ -816,7 +816,7 @@ Proceed and set this task to active anyway?`)
                       )}
                       {inviteStatus === 'accepted' && editingId !== m.id && (
                         <div style={{ paddingLeft: '42px', marginTop: '4px' }}>
-                          <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(34,201,144,0.6)' }}>✓ Active user — can access team dashboard</span>
+                          <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: '#4DFFB4' }}>✓ Active user — can access team dashboard</span>
                         </div>
                       )}
                     </div>
@@ -923,9 +923,9 @@ Proceed and set this task to active anyway?`)
                         </div>
                       )}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px', paddingTop: '6px', borderTop: '1px solid rgba(201,153,58,0.12)' }}>
-                        <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', fontWeight: 600, color: '#F0CC6A' }}>{proj?.name || '—'}</span>
+                        <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', fontWeight: 600, color: '#E8C96A' }}>{proj?.name || '—'}</span>
                         {t.due_date && (
-                          <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', fontWeight: 500, color: isOverdue ? '#FF8080' : t.status === 'done' ? 'rgba(200,220,255,0.45)' : daysLeft !== null && daysLeft <= 3 ? '#FFD080' : '#C8DCF4' }}>
+                          <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', fontWeight: 500, color: isOverdue ? '#FF8080' : t.status === 'done' ? 'rgba(200,220,255,0.7)' : daysLeft !== null && daysLeft <= 3 ? '#FFD080' : '#C8DCF4' }}>
                             {isOverdue ? `⚠ Overdue · ${fmtDate(t.due_date)}` : `Due ${fmtDate(t.due_date)}${t.status !== 'done' && daysLeft !== null && daysLeft <= 7 ? ` · ${daysLeft}d` : ''}`}
                           </span>
                         )}
@@ -1002,7 +1002,7 @@ Proceed and set this task to active anyway?`)
                                     {dep && (
                                       <div style={{ display: 'flex', alignItems: 'center', gap: '5px', paddingLeft: '4px', marginBottom: '3px' }}>
                                         <span style={{ fontSize: '8px', color: depOverdue ? '#FF9090' : depIncomplete ? '#FFD080' : '#22C990' }}>⊘</span>
-                                        <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: depOverdue ? '#FF9090' : depIncomplete ? '#FFD080' : '#22C990' }}>
+                                        <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: depOverdue ? '#FF9090' : depIncomplete ? '#FFD080' : '#22C990' }}>
                                           {depOverdue ? 'Dep. OVERDUE: ' : depIncomplete ? 'Waiting on: ' : 'Dep. done: '}
                                           {dep.name}
                                         </span>
@@ -1011,7 +1011,7 @@ Proceed and set this task to active anyway?`)
                                     <div style={{ display: 'flex', justifyContent: 'space-between', paddingLeft: '4px' }}>
                                       <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: '#E8C96A' }}>{proj?.name || '—'}</span>
                                       {t.due_date && (
-                                        <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOverdue ? '#FF9090' : t.status === 'done' ? 'rgba(200,220,255,0.6)' : daysLeft !== null && daysLeft <= 3 ? '#FFD080' : textMid }}>
+                                        <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: isOverdue ? '#FF9090' : t.status === 'done' ? 'rgba(200,220,255,0.75)' : daysLeft !== null && daysLeft <= 3 ? '#FFD080' : textMid }}>
                                           {isOverdue ? `Overdue · ${fmtDate(t.due_date)}` : `Due ${fmtDate(t.due_date)}${t.status !== 'done' && daysLeft !== null && daysLeft <= 7 ? ` · ${daysLeft}d` : ''}`}
                                         </span>
                                       )}
@@ -1068,7 +1068,7 @@ Proceed and set this task to active anyway?`)
                             {/* Drop hint when empty */}
                             {colTasks.length === 0 && (
                               <div style={{ border: `1px dashed ${isOver ? col.border : 'rgba(240,246,255,0.08)'}`, borderRadius: '4px', padding: '20px 12px', textAlign: 'center' as const, transition: 'border-color 0.15s' }}>
-                                <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOver ? col.color : 'rgba(240,246,255,0.2)', letterSpacing: '0.1em' }}>{isOver ? 'Drop here' : 'No tasks'}</div>
+                                <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOver ? col.color : '#8FA8C8', letterSpacing: '0.1em' }}>{isOver ? 'Drop here' : 'No tasks'}</div>
                               </div>
                             )}
                           </div>
@@ -1207,7 +1207,7 @@ Proceed and set this task to active anyway?`)
                         <span style={s.badge(isOverdue ? 'rgba(226,75,74,0.12)' : 'rgba(201,153,58,0.08)', isOverdue ? '#FF9090' : gold, isOverdue ? 'rgba(226,75,74,0.28)' : border)}>{isOverdue ? 'OVERDUE' : p.status}</span>
                       </div>
                       <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: whiteFaint, marginBottom: '6px' }}>{p.name} · {p.health}% complete · {doneTasks}/{projTasks.length} tasks done</div>
-                      {p.end_date && <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOverdue ? '#FF9090' : textMid }}>{`Due ${fmtDate(p.end_date)}`}</div>}
+                      {p.end_date && <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: isOverdue ? '#FF9090' : textMid }}>{`Due ${fmtDate(p.end_date)}`}</div>}
                     </div>
                   )})}
                 </div>
@@ -1396,14 +1396,14 @@ Proceed and set this task to active anyway?`)
                     const proj = projects.find(p => p.id === l.project_id)
                     return (
                     <div key={l.id} style={{ padding: '9px 0', borderBottom: `1px solid rgba(201,153,58,0.1)` }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px', fontSize: '11px' }}>
-                        <span style={{ flex: 1, color: textBright, fontWeight: 500 }}>{l.description}</span>
-                        <span style={{ fontFamily: 'Rajdhani, sans-serif', color: textMid, width: '40px', textAlign: 'right', fontSize: '12px' }}>{l.hours}h</span>
-                        <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '15px', color: gold, width: '75px', textAlign: 'right' }}>${(l.hours * l.rate).toLocaleString()}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', fontSize: '13px' }}>
+                        <span style={{ flex: 1, color: '#FFFFFF', fontWeight: 600 }}>{l.description}</span>
+                        <span style={{ fontFamily: 'Rajdhani, sans-serif', color: '#C8DCF4', width: '40px', textAlign: 'right', fontSize: '13px', fontWeight: 500 }}>{l.hours}h</span>
+                        <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '16px', color: gold, width: '75px', textAlign: 'right' }}>${(l.hours * l.rate).toLocaleString()}</span>
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: '#E8C96A' }}>{proj?.name || '—'}</span>
-                        {l.log_date && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: '#C8D8F0' }}>{fmtDate(l.log_date)}</span>}
+                        <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '12px', fontWeight: 500, color: '#E8C96A' }}>{proj?.name || '—'}</span>
+                        {l.log_date && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '12px', fontWeight: 500, color: '#C8DCF4' }}>{fmtDate(l.log_date)}</span>}
                       </div>
                     </div>
                   )})}
@@ -1471,7 +1471,7 @@ Proceed and set this task to active anyway?`)
                             <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', fontWeight: 700, letterSpacing: '0.18em', color: goldDim }}>TOTAL DUE</span>
                             <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '24px', color: gold }}>${unbilledTotal.toLocaleString()}</span>
                           </div>
-                          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: textDim, marginTop: '4px' }}>Payment due within 14 days</div>
+                          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: textDim, marginTop: '4px' }}>Payment due within 14 days</div>
                         </div>
                       </div>
 
@@ -1528,7 +1528,7 @@ Proceed and set this task to active anyway?`)
                     <a href="/pricing" style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', fontWeight: 700, letterSpacing: '0.14em', background: `linear-gradient(135deg, ${goldDim}, ${gold})`, color: navy, border: 'none', padding: '10px 22px', borderRadius: '2px', cursor: 'pointer', textDecoration: 'none', display: 'inline-block' }}>
                       Upgrade to Pro →
                     </a>
-                    <button onClick={() => setTab('dashboard')} style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', fontWeight: 600, letterSpacing: '0.12em', border: `1px solid rgba(201,153,58,0.35)`, background: 'transparent', color: '#D8E4F4', padding: '10px 18px', borderRadius: '2px', cursor: 'pointer' }}>
+                    <button onClick={() => setTab('dashboard')} style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', fontWeight: 600, letterSpacing: '0.12em', border: `1px solid rgba(201,153,58,0.35)`, background: 'transparent', color: '#C8DCF4', padding: '10px 18px', borderRadius: '2px', cursor: 'pointer' }}>
                       ← Back to Dashboard
                     </button>
                   </div>
@@ -1588,7 +1588,7 @@ Proceed and set this task to active anyway?`)
             </div>
             <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: whiteFaint }}>pm.one-empire.com</div>
             <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: whiteFaint }}>Empire PM v2.0</div>
-            <div style={{ marginLeft: 'auto', fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: whiteFaint, display: 'flex', gap: '14px', alignItems: 'center' }}><a href="/terms" target="_blank" style={{ color: 'rgba(201,153,58,0.5)', textDecoration: 'none' }}>Terms</a><a href="/privacy" target="_blank" style={{ color: 'rgba(201,153,58,0.5)', textDecoration: 'none' }}>Privacy</a><span>One Empire © 2026</span></div>
+            <div style={{ marginLeft: 'auto', fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: whiteFaint, display: 'flex', gap: '14px', alignItems: 'center' }}><a href="/terms" target="_blank" style={{ color: '#C9993A', textDecoration: 'none' }}>Terms</a><a href="/privacy" target="_blank" style={{ color: '#C9993A', textDecoration: 'none' }}>Privacy</a><span>One Empire © 2026</span></div>
           </div>
         </div>
       </div>
@@ -1626,7 +1626,7 @@ Proceed and set this task to active anyway?`)
           <div style={{ background: 'rgba(10,24,52,0.98)', border: `1px solid ${borderMd}`, borderRadius: '8px', width: '100%', maxWidth: '560px', padding: '36px 40px', animation: 'wizardIn 0.25s ease', position: 'relative' }}>
 
             {/* Skip */}
-            <button onClick={completeOnboarding} style={{ position: 'absolute', top: '16px', right: '20px', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: 'rgba(255,255,255,0.25)', letterSpacing: '0.1em' }}>SKIP SETUP</button>
+            <button onClick={completeOnboarding} style={{ position: 'absolute', top: '16px', right: '20px', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: '#7090B0', letterSpacing: '0.1em' }}>SKIP SETUP</button>
 
             {/* Step dots */}
             <div style={{ display: 'flex', gap: '6px', marginBottom: '28px' }}>
@@ -2164,7 +2164,7 @@ Rules: Use bullet points only. No markdown tables. Be specific, not generic. Ass
               <span style={{ color: gold }}>▸</span> Risk register with levels and descriptions<br/>
               <span style={{ color: gold }}>▸</span> Milestones on your Timeline<br/>
               <span style={{ color: gold }}>▸</span> Phase breakdown and KPIs<br/><br/>
-              <span style={{ color: 'rgba(192,208,232,0.5)', fontSize: '11px' }}>No manual entry. Plan → Populate → Execute.</span>
+              <span style={{ color: '#A8C0DC', fontSize: '11px' }}>No manual entry. Plan → Populate → Execute.</span>
             </div>
           </div>
         )}
@@ -2441,7 +2441,7 @@ function TimelineView({ projects, tasks, milestones, user, supabase, onSaved, ed
       <div style={{ background: navyCard, border: `1px solid ${border}`, borderRadius: '4px 4px 0 0', padding: '8px 16px 8px 220px', display: 'flex', justifyContent: 'space-between' }}>
         {[0, 25, 50, 75, 100].map(pct => {
           const d = new Date(minDate + (pct / 100) * span)
-          return <span key={pct} style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', fontWeight: 600, color: '#C8D8F0', letterSpacing: '0.06em' }}>{fmtDate(d.toISOString().split('T')[0])}</span>
+          return <span key={pct} style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', fontWeight: 600, color: '#C8DCF4', letterSpacing: '0.06em' }}>{fmtDate(d.toISOString().split('T')[0])}</span>
         })}
       </div>
 
@@ -2692,7 +2692,7 @@ Paragraph 3: Confidence statement and forward outlook.`
         <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', fontWeight: 700, letterSpacing: '0.2em', color: textBright }}>{title}</div>
       </div>
       {editingSection !== key && <button className="no-print" onClick={() => setEditingSection(key)}
-        style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(200,220,255,0.6)', letterSpacing: '0.1em', padding: 0 }}>
+        style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(200,220,255,0.75)', letterSpacing: '0.1em', padding: 0 }}>
         ✎ ADD NOTE
       </button>}
     </div>
@@ -2862,7 +2862,7 @@ Paragraph 3: Confidence statement and forward outlook.`
                         return <div style={{ height: '2px', width: `${elapsed}%`, background: isOverdue ? '#E24B4A' : gold, borderRadius: '1px' }}/>
                       })()}
                     </div>
-                    <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOverdue ? '#FF9090' : textDim, flexShrink: 0 }}>{fmtDate(p.start_date)} → {fmtDate(p.end_date)}</span>
+                    <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: isOverdue ? '#FF9090' : textDim, flexShrink: 0 }}>{fmtDate(p.start_date)} → {fmtDate(p.end_date)}</span>
                   </div>
                 )}
               </div>
@@ -2892,8 +2892,8 @@ Paragraph 3: Confidence statement and forward outlook.`
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', fontWeight: 600, color: isCompleted ? '#22C990' : isOverdue ? '#FF9090' : textMid, marginBottom: '3px' }}>{m.title}</div>
-                        <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: textDim }}>{fmtDate(m.due_date)}</div>
-                        {proj && selectedProjectId === 'all' && <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '8px', color: 'rgba(201,168,80,0.7)', marginTop: '2px' }}>{proj.name}</div>}
+                        <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: textDim }}>{fmtDate(m.due_date)}</div>
+                        {proj && selectedProjectId === 'all' && <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '8px', color: '#E8C96A', marginTop: '2px' }}>{proj.name}</div>}
                       </div>
                       <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '8px', padding: '2px 6px', borderRadius: '10px', background: `${msColor}15`, color: msColor, border: `1px solid ${msColor}40`, flexShrink: 0 }}>
                         {m.status?.toUpperCase()}
@@ -2930,7 +2930,7 @@ Paragraph 3: Confidence statement and forward outlook.`
               <div style={{ height: '10px', width: `${completionRate}%`, background: completionRate >= 70 ? 'linear-gradient(90deg,#1AABCC,#22C990)' : completionRate >= 40 ? 'linear-gradient(90deg,#C9993A,#E8B84B)' : 'linear-gradient(90deg,#E24B4A,#FF9090)', borderRadius: '5px', transition: 'width 0.5s' }}/>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px' }}>
-              <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: textDim }}>{doneTasks} DONE</span>
+              <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: textDim }}>{doneTasks} DONE</span>
               <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: textDim }}>{ft.length - doneTasks} REMAINING</span>
             </div>
           </div>
@@ -3009,8 +3009,8 @@ Paragraph 3: Confidence statement and forward outlook.`
                       {r.description && <div style={{ fontSize: '11px', color: textDim, lineHeight: '1.5' }}>{r.description}</div>}
                     </div>
                     <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                      {proj && selectedProjectId === 'all' && <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(201,168,80,0.7)' }}>{proj.name}</div>}
-                      {r.due_date && <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: textDim, marginTop: '3px' }}>By {fmtDate(r.due_date)}</div>}
+                      {proj && selectedProjectId === 'all' && <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: '#E8C96A' }}>{proj.name}</div>}
+                      {r.due_date && <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: textDim, marginTop: '3px' }}>By {fmtDate(r.due_date)}</div>}
                     </div>
                   </div>
                 )
@@ -3068,7 +3068,7 @@ Paragraph 3: Confidence statement and forward outlook.`
               <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', fontWeight: 700, letterSpacing: '0.2em', color: textBright }}>EXECUTIVE SUMMARY</div>
             </div>
             <div className="no-print" style={{ display: 'flex', gap: '8px' }}>
-              {execSummary && <button onClick={() => setEditingSummary(v => !v)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: editingSummary ? gold : 'rgba(200,220,255,0.6)', letterSpacing: '0.1em' }}>{editingSummary ? 'DONE' : '✎ EDIT'}</button>}
+              {execSummary && <button onClick={() => setEditingSummary(v => !v)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: editingSummary ? gold : 'rgba(200,220,255,0.75)', letterSpacing: '0.1em' }}>{editingSummary ? 'DONE' : '✎ EDIT'}</button>}
             </div>
           </div>
           {!execSummary && !loadingAI && (
@@ -3102,7 +3102,7 @@ Paragraph 3: Confidence statement and forward outlook.`
               <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', fontWeight: 700, letterSpacing: '0.2em', color: textBright }}>NEXT STEPS & ACTIONS</div>
             </div>
             {!editingNextSteps && <button className="no-print" onClick={() => setEditingNextSteps(true)}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(200,220,255,0.6)', letterSpacing: '0.1em' }}>
+              style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(200,220,255,0.75)', letterSpacing: '0.1em' }}>
               ✎ EDIT
             </button>}
           </div>
@@ -3129,7 +3129,7 @@ Paragraph 3: Confidence statement and forward outlook.`
 
         {/* Report footer */}
         <div style={{ textAlign: 'center', padding: '16px', borderTop: `1px solid ${border}`, marginTop: '8px' }}>
-          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(201,168,80,0.5)', letterSpacing: '0.2em' }}>GENERATED BY EMPIRE PM · pm.one-empire.com · {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase()}</div>
+          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: '#C9993A', letterSpacing: '0.2em' }}>GENERATED BY EMPIRE PM · pm.one-empire.com · {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase()}</div>
         </div>
 
       </div>
