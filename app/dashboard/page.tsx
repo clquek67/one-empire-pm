@@ -95,6 +95,8 @@ export default function Dashboard() {
   }, [])
   const [showNotifications, setShowNotifications] = useState(false)
   const [riskProjectId, setRiskProjectId] = useState<string>('all')
+  const [taskView, setTaskView] = useState<'list' | 'kanban'>('list')
+  const [dragOverCol, setDragOverCol] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editFields, setEditFields] = useState<Record<string, any>>({})
 
@@ -832,90 +834,252 @@ Proceed and set this task to active anyway?`)
           )}
 
           {/* ═══ TASKS ═══ */}
-          {tab === 'tasks' && (
-            <div>
-              <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '26px', color: '#F0F6FF', marginBottom: '22px' }}>
-                Task <em style={{ color: gold, fontStyle: 'italic' }}>Manager</em>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '14px' }}>
-                <div style={s.card}>
-                  <div style={s.sectionTitle}>Add New Task</div>
-                  <TaskForm user={user} projects={projects} teamMembers={teamMembers} tasks={tasks} onCreated={() => user && loadData(user.id)} supabase={supabase} isMobile={isMobile} />
-                </div>
-                <div style={s.card}>
-                  <div style={s.sectionTitle}>All Tasks</div>
-                  {tasks.map(t => {
-                    const proj = projects.find((p: Project) => p.id === t.project_id)
-                    const todayStr = new Date().toISOString().split('T')[0]
-                    const isOverdue = t.due_date && t.due_date < todayStr && t.status !== 'done'
-                    const daysLeft = t.due_date ? Math.ceil((new Date(t.due_date).getTime() - new Date(todayStr).getTime()) / (1000*60*60*24)) : null
-                    return (
-                    <div key={t.id} style={{ padding: '10px 0', borderBottom: `1px solid rgba(201,153,58,0.1)`, fontSize: '11px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                        <span style={s.badge(t.status === 'done' ? 'rgba(34,201,144,0.12)' : t.status === 'active' ? 'rgba(26,171,204,0.12)' : t.status === 'blocked' ? 'rgba(226,75,74,0.12)' : 'rgba(240,246,255,0.05)', t.status === 'done' ? '#4DFFB4' : t.status === 'active' ? '#4DD8F0' : t.status === 'blocked' ? '#FF9090' : whiteFaint, t.status === 'done' ? 'rgba(34,201,144,0.28)' : 'rgba(26,171,204,0.28)')}>{t.status}</span>
-                        <span style={s.badge(t.priority === 'high' ? 'rgba(226,75,74,0.08)' : 'rgba(26,171,204,0.08)', t.priority === 'high' ? '#FFAAAA' : '#4DD8F0', 'rgba(26,171,204,0.18)')}>{t.priority}</span>
-                        <span style={{ flex: 1, color: textMid, fontWeight: 500 }}>{t.name}</span>
-                        {t.owner && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: whiteFaint, flexShrink: 0 }}>{t.owner}</span>}
-                        {editBtn(t.id, { name: t.name, status: t.status, priority: t.priority, owner: t.owner || '', due_date: t.due_date || '', depends_on: t.depends_on || '' })}
-                        {deleteBtn('tasks', t.id)}
+          {tab === 'tasks' && (() => {
+            const kanbanCols: { id: string; label: string; color: string; bg: string; border: string }[] = [
+              { id: 'todo',    label: 'To Do',       color: whiteFaint,  bg: 'rgba(240,246,255,0.04)', border: 'rgba(240,246,255,0.1)' },
+              { id: 'active',  label: 'In Progress', color: '#4DD8F0',   bg: 'rgba(26,171,204,0.06)',  border: 'rgba(26,171,204,0.25)' },
+              { id: 'blocked', label: 'Blocked',     color: '#FF9090',   bg: 'rgba(226,75,74,0.06)',   border: 'rgba(226,75,74,0.25)'  },
+              { id: 'done',    label: 'Done',        color: '#4DFFB4',   bg: 'rgba(34,201,144,0.06)',  border: 'rgba(34,201,144,0.25)' },
+            ]
+            const todayStr = new Date().toISOString().split('T')[0]
+
+            const handleDragStart = (e: React.DragEvent, taskId: string) => {
+              e.dataTransfer.setData('taskId', taskId)
+              e.dataTransfer.effectAllowed = 'move'
+            }
+            const handleDragOver = (e: React.DragEvent, colId: string) => {
+              e.preventDefault()
+              e.dataTransfer.dropEffect = 'move'
+              setDragOverCol(colId)
+            }
+            const handleDrop = async (e: React.DragEvent, colId: string) => {
+              e.preventDefault()
+              setDragOverCol(null)
+              const taskId = e.dataTransfer.getData('taskId')
+              if (!taskId) return
+              const task = tasks.find((t: Task) => t.id === taskId)
+              if (!task || task.status === colId) return
+              if (colId === 'active' && task.depends_on) {
+                const dep = tasks.find((d: Task) => d.id === task.depends_on)
+                if (dep && dep.status !== 'done') {
+                  if (!window.confirm(`"${dep.name}" is not yet complete.\nProceed and set this task to active anyway?`)) return
+                }
+              }
+              setTasks((prev: Task[]) => prev.map((t: Task) => t.id === taskId ? { ...t, status: colId } : t))
+              await supabase.from('tasks').update({ status: colId }).eq('id', taskId)
+            }
+
+            const TaskCard = ({ t }: { t: Task }) => {
+              const proj = projects.find((p: Project) => p.id === t.project_id)
+              const isOverdue = t.due_date && t.due_date < todayStr && t.status !== 'done'
+              const daysLeft = t.due_date ? Math.ceil((new Date(t.due_date).getTime() - new Date(todayStr).getTime()) / (1000*60*60*24)) : null
+              const dep = t.depends_on ? tasks.find((d: Task) => d.id === t.depends_on) : null
+              const depIncomplete = dep && dep.status !== 'done'
+              const depOverdue = dep && dep.status !== 'done' && dep.due_date && new Date(dep.due_date) < new Date()
+              return (
+                <div
+                  draggable
+                  onDragStart={e => handleDragStart(e, t.id)}
+                  style={{ background: 'rgba(16,36,72,0.85)', border: `1px solid ${border}`, borderRadius: '4px', padding: '10px 12px', marginBottom: '8px', cursor: 'grab', fontSize: '11px', transition: 'border-color 0.15s', userSelect: 'none' as const }}
+                  onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(201,153,58,0.4)')}
+                  onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(201,153,58,0.2)')}
+                >
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '6px', marginBottom: '6px' }}>
+                    <span style={{ color: textBright, fontWeight: 500, lineHeight: 1.4, flex: 1 }}>{t.name}</span>
+                    <div style={{ display: 'flex', gap: '2px', flexShrink: 0 }}>
+                      {editBtn(t.id, { name: t.name, status: t.status, priority: t.priority, owner: t.owner || '', due_date: t.due_date || '', depends_on: t.depends_on || '' })}
+                      {deleteBtn('tasks', t.id)}
+                    </div>
+                  </div>
+                  {editingId === t.id ? (
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginTop: '6px' }}>
+                      <div style={{ gridColumn: '1/-1' }}>{inlineInput('name', 'Task name')}</div>
+                      {inlineSelect('status', ['todo','active','blocked','done'])}
+                      {inlineSelect('priority', ['high','medium','low'])}
+                      {inlineInput('owner', 'Owner')}
+                      {inlineInput('due_date', '', 'date')}
+                      <div style={{ gridColumn: '1/-1' }}>
+                        <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: goldDim, marginBottom: '4px', letterSpacing: '0.15em' }}>DEPENDS ON</div>
+                        <select value={editFields.depends_on || ''} onChange={e => setEditFields((prev: any) => ({...prev, depends_on: e.target.value}))}
+                          style={{ width: '100%', background: 'rgba(16,36,72,0.9)', border: `1px solid rgba(201,153,58,0.35)`, borderRadius: '3px', padding: '5px 8px', fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: '#E8F0FF', outline: 'none' }}>
+                          <option value="">No dependency</option>
+                          {tasks.filter((d: Task) => d.project_id === t.project_id && d.id !== t.id).map((d: Task) => <option key={d.id} value={d.id}>{d.name} [{d.status}]</option>)}
+                        </select>
                       </div>
-                      {editingId === t.id ? (
-                        <div style={{ marginTop: '8px', display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '6px' }}>
-                          <div style={{ gridColumn: '1/-1' }}>{inlineInput('name', 'Task name')}</div>
-                          {inlineSelect('status', ['todo','active','blocked','done'])}
-                          {inlineSelect('priority', ['high','medium','low'])}
-                          {inlineInput('owner', 'Owner')}
-                          {inlineInput('due_date', '', 'date')}
-                          <div style={{ gridColumn: '1/-1' }}>
-                            <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: goldDim, marginBottom: '4px', letterSpacing: '0.15em' }}>DEPENDS ON</div>
-                            <select value={editFields.depends_on || ''} onChange={e => setEditFields((prev: any) => ({...prev, depends_on: e.target.value}))}
-                              style={{ width: '100%', background: 'rgba(16,36,72,0.9)', border: `1px solid rgba(201,153,58,0.35)`, borderRadius: '3px', padding: '5px 8px', fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: '#E8F0FF', outline: 'none' }}>
-                              <option value="">No dependency</option>
-                              {tasks.filter((d: Task) => d.project_id === t.project_id && d.id !== t.id).map((d: Task) => <option key={d.id} value={d.id}>{d.name} [{d.status}]</option>)}
-                            </select>
-                          </div>
-                          <div style={{ gridColumn: '1/-1', display: 'flex', justifyContent: 'flex-end', marginTop: '2px' }}>{saveBtnInline('tasks', t.id)}</div>
+                      <div style={{ gridColumn: '1/-1', display: 'flex', justifyContent: 'flex-end' }}>{saveBtnInline('tasks', t.id)}</div>
+                    </div>
+                  ) : (
+                    <>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap' as const }}>
+                        <span style={s.badge(t.priority === 'high' ? 'rgba(226,75,74,0.08)' : t.priority === 'medium' ? 'rgba(201,153,58,0.08)' : 'rgba(26,171,204,0.08)', t.priority === 'high' ? '#FFAAAA' : t.priority === 'medium' ? gold : '#4DD8F0', t.priority === 'high' ? 'rgba(226,75,74,0.2)' : 'rgba(26,171,204,0.18)')}>{t.priority}</span>
+                        {t.owner && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: whiteFaint }}>👤 {t.owner}</span>}
+                      </div>
+                      {dep && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '5px' }}>
+                          <span style={{ fontSize: '8px', color: depOverdue ? '#FF9090' : depIncomplete ? '#FFD080' : '#22C990' }}>⊘</span>
+                          <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: depOverdue ? '#FF9090' : depIncomplete ? '#FFD080' : '#22C990' }}>
+                            {depOverdue ? 'Dep. OVERDUE: ' : depIncomplete ? 'Waiting on: ' : 'Dep. done: '}{dep.name}
+                          </span>
                         </div>
-                      ) : (() => {
-                          const dep = t.depends_on ? tasks.find((d: Task) => d.id === t.depends_on) : null
-                          const depIncomplete = dep && dep.status !== 'done'
-                          const depOverdue = dep && dep.status !== 'done' && dep.due_date && new Date(dep.due_date) < new Date()
-                          return (
-                            <>
-                              {dep && (
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', paddingLeft: '4px', marginBottom: '3px' }}>
-                                  <span style={{ fontSize: '8px', color: depOverdue ? '#FF9090' : depIncomplete ? '#FFD080' : '#22C990' }}>⊘</span>
-                                  <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: depOverdue ? '#FF9090' : depIncomplete ? '#FFD080' : '#22C990' }}>
-                                    {depOverdue ? 'Dep. OVERDUE: ' : depIncomplete ? 'Waiting on: ' : 'Dep. done: '}
-                                    {dep.name}
-                                  </span>
-                                </div>
-                              )}
-                              <div style={{ display: 'flex', justifyContent: 'space-between', paddingLeft: '4px' }}>
-                                <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(201,168,80,0.75)' }}>{proj?.name || '—'}</span>
-                                {t.due_date && (
-                                  <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOverdue ? '#FF9090' : t.status === 'done' ? 'rgba(200,220,255,0.35)' : daysLeft !== null && daysLeft <= 3 ? '#FFD080' : textMid }}>
-                                    {isOverdue ? `Overdue · ${fmtDate(t.due_date)}` : `Due ${fmtDate(t.due_date)}${t.status !== 'done' && daysLeft !== null && daysLeft <= 7 ? ` · ${daysLeft}d` : ''}`}
-                                  </span>
-                                )}
-                                {!t.due_date && t.status !== 'done' && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(200,220,255,0.35)' }}>No due date</span>}
-                              </div>
-                            </>
-                          )
-                        })()}
-                    </div>
-                  )})}
-                  {tasks.length === 0 && (
-                    <div style={{ textAlign: 'center', padding: '28px 16px' }}>
-                      <div style={{ fontSize: '22px', marginBottom: '8px', opacity: 0.3 }}>✓</div>
-                      <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '12px', fontWeight: 600, color: textMid, marginBottom: '4px' }}>No tasks yet</div>
-                      <div style={{ fontSize: '11px', color: textDim, marginBottom: '14px' }}>Tasks keep your project moving. Add your first one to the left.</div>
-                    </div>
+                      )}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
+                        <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(201,168,80,0.7)' }}>{proj?.name || '—'}</span>
+                        {t.due_date && (
+                          <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOverdue ? '#FF9090' : t.status === 'done' ? 'rgba(200,220,255,0.3)' : daysLeft !== null && daysLeft <= 3 ? '#FFD080' : textDim }}>
+                            {isOverdue ? `⚠ Overdue · ${fmtDate(t.due_date)}` : `Due ${fmtDate(t.due_date)}${t.status !== 'done' && daysLeft !== null && daysLeft <= 7 ? ` · ${daysLeft}d` : ''}`}
+                          </span>
+                        )}
+                      </div>
+                    </>
                   )}
                 </div>
+              )
+            }
+
+            return (
+              <div>
+                {/* Header row */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '22px', flexWrap: 'wrap' as const, gap: '10px' }}>
+                  <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '26px', color: '#F0F6FF' }}>
+                    Task <em style={{ color: gold, fontStyle: 'italic' }}>Manager</em>
+                  </div>
+                  {/* View toggle */}
+                  <div style={{ display: 'flex', background: 'rgba(16,36,72,0.8)', border: `1px solid ${border}`, borderRadius: '3px', overflow: 'hidden' }}>
+                    {(['list', 'kanban'] as const).map(v => (
+                      <button key={v} onClick={() => setTaskView(v)} style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', fontWeight: 700, letterSpacing: '0.14em', padding: '6px 14px', border: 'none', cursor: 'pointer', background: taskView === v ? `linear-gradient(135deg, ${goldDim}, ${gold})` : 'transparent', color: taskView === v ? navy : textDim, transition: 'all 0.15s', textTransform: 'uppercase' as const }}>
+                        {v === 'list' ? '☰ List' : '⊞ Kanban'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* LIST VIEW */}
+                {taskView === 'list' && (
+                  <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '14px' }}>
+                    <div style={s.card}>
+                      <div style={s.sectionTitle}>Add New Task</div>
+                      <TaskForm user={user} projects={projects} teamMembers={teamMembers} tasks={tasks} onCreated={() => user && loadData(user.id)} supabase={supabase} isMobile={isMobile} />
+                    </div>
+                    <div style={s.card}>
+                      <div style={s.sectionTitle}>All Tasks</div>
+                      {tasks.map(t => {
+                        const proj = projects.find((p: Project) => p.id === t.project_id)
+                        const isOverdue = t.due_date && t.due_date < todayStr && t.status !== 'done'
+                        const daysLeft = t.due_date ? Math.ceil((new Date(t.due_date).getTime() - new Date(todayStr).getTime()) / (1000*60*60*24)) : null
+                        return (
+                          <div key={t.id} style={{ padding: '10px 0', borderBottom: `1px solid rgba(201,153,58,0.1)`, fontSize: '11px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                              <span style={s.badge(t.status === 'done' ? 'rgba(34,201,144,0.12)' : t.status === 'active' ? 'rgba(26,171,204,0.12)' : t.status === 'blocked' ? 'rgba(226,75,74,0.12)' : 'rgba(240,246,255,0.05)', t.status === 'done' ? '#4DFFB4' : t.status === 'active' ? '#4DD8F0' : t.status === 'blocked' ? '#FF9090' : whiteFaint, t.status === 'done' ? 'rgba(34,201,144,0.28)' : 'rgba(26,171,204,0.28)')}>{t.status}</span>
+                              <span style={s.badge(t.priority === 'high' ? 'rgba(226,75,74,0.08)' : 'rgba(26,171,204,0.08)', t.priority === 'high' ? '#FFAAAA' : '#4DD8F0', 'rgba(26,171,204,0.18)')}>{t.priority}</span>
+                              <span style={{ flex: 1, color: textMid, fontWeight: 500 }}>{t.name}</span>
+                              {t.owner && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: whiteFaint, flexShrink: 0 }}>{t.owner}</span>}
+                              {editBtn(t.id, { name: t.name, status: t.status, priority: t.priority, owner: t.owner || '', due_date: t.due_date || '', depends_on: t.depends_on || '' })}
+                              {deleteBtn('tasks', t.id)}
+                            </div>
+                            {editingId === t.id ? (
+                              <div style={{ marginTop: '8px', display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '6px' }}>
+                                <div style={{ gridColumn: '1/-1' }}>{inlineInput('name', 'Task name')}</div>
+                                {inlineSelect('status', ['todo','active','blocked','done'])}
+                                {inlineSelect('priority', ['high','medium','low'])}
+                                {inlineInput('owner', 'Owner')}
+                                {inlineInput('due_date', '', 'date')}
+                                <div style={{ gridColumn: '1/-1' }}>
+                                  <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: goldDim, marginBottom: '4px', letterSpacing: '0.15em' }}>DEPENDS ON</div>
+                                  <select value={editFields.depends_on || ''} onChange={e => setEditFields((prev: any) => ({...prev, depends_on: e.target.value}))}
+                                    style={{ width: '100%', background: 'rgba(16,36,72,0.9)', border: `1px solid rgba(201,153,58,0.35)`, borderRadius: '3px', padding: '5px 8px', fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: '#E8F0FF', outline: 'none' }}>
+                                    <option value="">No dependency</option>
+                                    {tasks.filter((d: Task) => d.project_id === t.project_id && d.id !== t.id).map((d: Task) => <option key={d.id} value={d.id}>{d.name} [{d.status}]</option>)}
+                                  </select>
+                                </div>
+                                <div style={{ gridColumn: '1/-1', display: 'flex', justifyContent: 'flex-end', marginTop: '2px' }}>{saveBtnInline('tasks', t.id)}</div>
+                              </div>
+                            ) : (() => {
+                                const dep = t.depends_on ? tasks.find((d: Task) => d.id === t.depends_on) : null
+                                const depIncomplete = dep && dep.status !== 'done'
+                                const depOverdue = dep && dep.status !== 'done' && dep.due_date && new Date(dep.due_date) < new Date()
+                                return (
+                                  <>
+                                    {dep && (
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', paddingLeft: '4px', marginBottom: '3px' }}>
+                                        <span style={{ fontSize: '8px', color: depOverdue ? '#FF9090' : depIncomplete ? '#FFD080' : '#22C990' }}>⊘</span>
+                                        <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: depOverdue ? '#FF9090' : depIncomplete ? '#FFD080' : '#22C990' }}>
+                                          {depOverdue ? 'Dep. OVERDUE: ' : depIncomplete ? 'Waiting on: ' : 'Dep. done: '}
+                                          {dep.name}
+                                        </span>
+                                      </div>
+                                    )}
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', paddingLeft: '4px' }}>
+                                      <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(201,168,80,0.75)' }}>{proj?.name || '—'}</span>
+                                      {t.due_date && (
+                                        <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOverdue ? '#FF9090' : t.status === 'done' ? 'rgba(200,220,255,0.35)' : daysLeft !== null && daysLeft <= 3 ? '#FFD080' : textMid }}>
+                                          {isOverdue ? `Overdue · ${fmtDate(t.due_date)}` : `Due ${fmtDate(t.due_date)}${t.status !== 'done' && daysLeft !== null && daysLeft <= 7 ? ` · ${daysLeft}d` : ''}`}
+                                        </span>
+                                      )}
+                                      {!t.due_date && t.status !== 'done' && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(200,220,255,0.35)' }}>No due date</span>}
+                                    </div>
+                                  </>
+                                )
+                              })()}
+                          </div>
+                        )
+                      })}
+                      {tasks.length === 0 && (
+                        <div style={{ textAlign: 'center', padding: '28px 16px' }}>
+                          <div style={{ fontSize: '22px', marginBottom: '8px', opacity: 0.3 }}>✓</div>
+                          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '12px', fontWeight: 600, color: textMid, marginBottom: '4px' }}>No tasks yet</div>
+                          <div style={{ fontSize: '11px', color: textDim, marginBottom: '14px' }}>Tasks keep your project moving. Add your first one to the left.</div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* KANBAN VIEW */}
+                {taskView === 'kanban' && (
+                  <div>
+                    {/* Add task form collapsed at top */}
+                    <div style={{ ...s.card, marginBottom: '16px' }}>
+                      <div style={s.sectionTitle}>Add New Task</div>
+                      <TaskForm user={user} projects={projects} teamMembers={teamMembers} tasks={tasks} onCreated={() => user && loadData(user.id)} supabase={supabase} isMobile={isMobile} />
+                    </div>
+                    {/* Board */}
+                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', gap: '12px', alignItems: 'start' }}>
+                      {kanbanCols.map(col => {
+                        const colTasks = tasks.filter((t: Task) => t.status === col.id)
+                        const isOver = dragOverCol === col.id
+                        return (
+                          <div
+                            key={col.id}
+                            onDragOver={e => handleDragOver(e, col.id)}
+                            onDragLeave={() => setDragOverCol(null)}
+                            onDrop={e => handleDrop(e, col.id)}
+                            style={{ background: isOver ? col.bg : 'rgba(16,36,72,0.45)', border: `1px solid ${isOver ? col.border : border}`, borderRadius: '4px', padding: '12px', minHeight: '200px', transition: 'all 0.15s' }}
+                          >
+                            {/* Column header */}
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: col.color, flexShrink: 0 }} />
+                                <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase' as const, color: col.color }}>{col.label}</span>
+                              </div>
+                              <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: whiteFaint, background: 'rgba(240,246,255,0.06)', border: `1px solid rgba(240,246,255,0.1)`, borderRadius: '8px', padding: '1px 7px' }}>{colTasks.length}</span>
+                            </div>
+                            {/* Cards */}
+                            {colTasks.map((t: Task) => <TaskCard key={t.id} t={t} />)}
+                            {/* Drop hint when empty */}
+                            {colTasks.length === 0 && (
+                              <div style={{ border: `1px dashed ${isOver ? col.border : 'rgba(240,246,255,0.08)'}`, borderRadius: '4px', padding: '20px 12px', textAlign: 'center' as const, transition: 'border-color 0.15s' }}>
+                                <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: isOver ? col.color : 'rgba(240,246,255,0.2)', letterSpacing: '0.1em' }}>{isOver ? 'Drop here' : 'No tasks'}</div>
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
-          )}
+            )
+          })()}
 
           {/* ═══ RISKS ═══ */}
           {tab === 'risks' && (
