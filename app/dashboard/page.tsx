@@ -1600,29 +1600,39 @@ Proceed and set this task to active anyway?`)
                               onClick={async () => {
                                 if (!window.confirm(`Send invoice now to ${ri.client_email}?\n\n${ri.description}\nAmount: $${ri.amount.toLocaleString()}`)) return
                                 const pmName = user?.user_metadata?.full_name || user?.email || 'Project Manager'
-                                await fetch('https://n8n.one-empire.com/webhook/empire-pm-invoice', {
-                                  method: 'POST',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({
-                                    client: proj?.client_name || proj?.name || 'Client',
-                                    project: proj?.name || 'Retainer',
-                                    clientEmail: ri.client_email,
-                                    senderName: pmName,
-                                    senderEmail: user?.email,
-                                    invoiceDate: fmtDate(new Date().toISOString().split('T')[0]),
-                                    dueDate: fmtDate(new Date(Date.now() + 14*24*60*60*1000).toISOString().split('T')[0]),
-                                    lineItems: `${ri.description} | Retainer | $${ri.amount.toLocaleString()}`,
-                                    total: `$${ri.amount.toLocaleString()}`,
-                                    coverEmail: `Please find attached the ${freqLabel.toLowerCase()} retainer invoice for ${ri.description}. Total due: $${ri.amount.toLocaleString()}. Payment is due within 14 days. Thank you for your continued partnership.`
+                                try {
+                                  const res = await fetch('https://n8n.one-empire.com/webhook/empire-pm-invoice', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                      client: proj?.client_name || proj?.name || 'Client',
+                                      project: proj?.name || 'Retainer',
+                                      clientEmail: ri.client_email,
+                                      senderName: pmName,
+                                      senderEmail: user?.email,
+                                      invoiceDate: fmtDate(new Date().toISOString().split('T')[0]),
+                                      dueDate: fmtDate(new Date(Date.now() + 14*24*60*60*1000).toISOString().split('T')[0]),
+                                      lineItems: `${ri.description} | ${freqLabel} retainer | - | $${ri.amount.toLocaleString()}`,
+                                      total: `$${ri.amount.toLocaleString()}`,
+                                      coverEmail: `Please find attached the ${freqLabel.toLowerCase()} retainer invoice for ${ri.description}. Total due: $${ri.amount.toLocaleString()}. Payment is due within 14 days. Thank you for your continued partnership.`
+                                    })
                                   })
-                                }).catch(() => {})
-                                const next = new Date()
-                                if (ri.frequency === 'weekly') next.setDate(next.getDate() + 7)
-                                else if (ri.frequency === 'quarterly') next.setMonth(next.getMonth() + 3)
-                                else next.setMonth(next.getMonth() + 1)
-                                await supabase.from('recurring_invoices').update({ next_run_date: next.toISOString().split('T')[0] }).eq('id', ri.id)
-                                if (user) loadData(user.id)
-                                alert(`✓ Invoice sent to ${ri.client_email}`)
+                                  if (!res.ok) {
+                                    const errText = await res.text().catch(() => res.statusText)
+                                    alert(`✗ Webhook error ${res.status}: ${errText}`)
+                                    return
+                                  }
+                                  // Advance next_run_date only on success
+                                  const next = new Date()
+                                  if (ri.frequency === 'weekly') next.setDate(next.getDate() + 7)
+                                  else if (ri.frequency === 'quarterly') next.setMonth(next.getMonth() + 3)
+                                  else next.setMonth(next.getMonth() + 1)
+                                  await supabase.from('recurring_invoices').update({ next_run_date: next.toISOString().split('T')[0] }).eq('id', ri.id)
+                                  if (user) loadData(user.id)
+                                  alert(`✓ Invoice sent to ${ri.client_email}`)
+                                } catch (err: any) {
+                                  alert(`✗ Failed to send: ${err.message || 'Network error — check n8n is running and the webhook is active'}`)
+                                }
                               }}
                               style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 700, letterSpacing: '0.1em', background: 'rgba(201,153,58,0.1)', border: `1px solid rgba(201,153,58,0.3)`, color: gold, padding: '3px 8px', borderRadius: '2px', cursor: 'pointer' }}
                             >Send Now</button>
