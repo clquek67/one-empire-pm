@@ -1672,18 +1672,67 @@ Proceed and set this task to active anyway?`)
                               <button
                                 onClick={async () => {
                                   if (!user) return
-                                  if (!window.confirm(`Convert "${prop.title}" into a live project?\n\nThis will create a new project pre-filled with this proposal's details.`)) return
-                                  await supabase.from('projects').insert({
+                                  if (!window.confirm(`Convert "${prop.title}" into a live project?\n\nThis will:\n• Create a new active project with start & end dates\n• Extract tasks from the proposal\n• Assign all tasks to the project automatically`)) return
+
+                                  // 1 — Calculate project dates from timeline string
+                                  const startDate = new Date().toISOString().split('T')[0]
+                                  let endDate: string | null = null
+                                  if (prop.timeline) {
+                                    const tl = prop.timeline.toLowerCase()
+                                    const num = parseFloat(tl.replace(/[^0-9.]/g, '')) || 0
+                                    if (num > 0) {
+                                      const end = new Date()
+                                      if (tl.includes('day')) end.setDate(end.getDate() + Math.round(num))
+                                      else if (tl.includes('month')) end.setMonth(end.getMonth() + Math.round(num))
+                                      else end.setDate(end.getDate() + Math.round(num * 7)) // default: weeks
+                                      endDate = end.toISOString().split('T')[0]
+                                    }
+                                  }
+
+                                  // 2 — Create the project
+                                  const { data: newProject } = await supabase.from('projects').insert({
                                     user_id: user.id,
                                     name: prop.title,
                                     client_name: prop.client_name,
                                     status: 'active',
                                     health: 100,
                                     budget: prop.budget || null,
-                                  })
+                                    start_date: startDate,
+                                    end_date: endDate,
+                                  }).select().single()
+
                                   await supabase.from('proposals').update({ status: 'accepted' }).eq('id', prop.id)
-                                  loadData(user.id)
+
+                                  // 3 — Extract tasks from proposal body via AI
+                                  if (newProject && prop.ai_body) {
+                                    try {
+                                      const extractedRaw = await callAI(
+                                        'You are a project manager extracting tasks from a proposal document. Return ONLY a valid JSON array, no other text, no markdown fences. Each item: {"name": "task name", "priority": "high|medium|low"}. Extract every specific deliverable and action item. Aim for 5–12 concrete tasks.',
+                                        `Extract all tasks and deliverables from this proposal as a JSON array:\n\n${prop.ai_body}\n\nProject type: ${prop.project_type || 'General'}\nTimeline: ${prop.timeline || 'TBD'}`
+                                      )
+                                      const clean = extractedRaw.replace(/```json|```/g, '').trim()
+                                      const taskList: { name: string; priority: string }[] = JSON.parse(clean)
+                                      if (Array.isArray(taskList) && taskList.length > 0) {
+                                        const taskRows = taskList.map((t: { name: string; priority: string }) => ({
+                                          user_id: user.id,
+                                          project_id: newProject.id,
+                                          name: t.name,
+                                          status: 'todo',
+                                          priority: ['high','medium','low'].includes(t.priority) ? t.priority : 'medium',
+                                        }))
+                                        await supabase.from('tasks').insert(taskRows)
+                                        await loadData(user.id)
+                                        setTab('projects')
+                                        setTimeout(() => alert(`✓ Project created!\n\nDates: ${startDate} → ${endDate || 'No end date'}\n${taskList.length} tasks extracted and added.\n\nNext: Go to AI Planner to generate a full schedule with owners, sequencing and due dates.`), 300)
+                                        return
+                                      }
+                                    } catch {}
+                                  }
+
+                                  // Fallback — no tasks extracted
+                                  await loadData(user.id)
                                   setTab('projects')
+                                  setTimeout(() => alert(`✓ Project created!\n\nDates: ${startDate} → ${endDate || 'No end date'}\n\nNext: Go to AI Planner to generate tasks and a full schedule.`), 300)
                                 }}
                                 style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 700, letterSpacing: '0.12em', background: 'rgba(34,201,144,0.1)', border: '1px solid rgba(34,201,144,0.3)', color: '#4DFFB4', padding: '4px 10px', borderRadius: '2px', cursor: 'pointer' }}
                               >⊕ Convert to Project</button>
