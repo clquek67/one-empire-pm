@@ -1536,10 +1536,7 @@ Proceed and set this task to active anyway?`)
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '14px' }}>
                 {/* Create form */}
                 <div style={s.card}>
-                  <div style={s.sectionTitle}>
-                    ↻ New Retainer Invoice
-                    <span style={{ fontSize: '9px', color: textDim, fontWeight: 400, letterSpacing: '0.06em', textTransform: 'none' as const }}>Auto-sends via n8n</span>
-                  </div>
+                  <div style={s.sectionTitle}>◷ New Retainer Invoice</div>
                   <RecurringInvoiceForm
                     user={user}
                     projects={projects}
