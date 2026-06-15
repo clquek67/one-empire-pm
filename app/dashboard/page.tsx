@@ -10,6 +10,7 @@ type Risk = { id: string; title: string; description: string; level: string; sta
 type TeamMember = { id: string; name: string; email: string; role: string; capacity: number; project_id: string; weekly_hours?: number; invited_email?: string; invite_status?: string; linked_user_id?: string }
 type TimeLog = { id: string; description: string; hours: number; rate: number; billed: boolean; project_id: string; created_at: string; log_date?: string }
 type Milestone = { id: string; title: string; due_date?: string; status: string; project_id: string; user_id: string; created_at: string }
+type Proposal = { id: string; title: string; client_name: string; project_type: string; budget?: number; timeline?: string; status: string; scope_summary?: string; deliverables?: string; ai_body?: string; created_at: string; user_id: string }
 
 const gold = '#E8B84B'
 const goldDim = '#C9993A'
@@ -73,6 +74,7 @@ export default function Dashboard() {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
   const [timeLogs, setTimeLogs] = useState<TimeLog[]>([])
   const [milestones, setMilestones] = useState<Milestone[]>([])
+  const [proposals, setProposals] = useState<Proposal[]>([])
   const [subscription, setSubscription] = useState<any>(null)
   const [aiText, setAiText] = useState<Record<string, string>>({})
   const [aiLoading, setAiLoading] = useState<Record<string, boolean>>({})
@@ -107,7 +109,7 @@ export default function Dashboard() {
   }, [])
 
   const loadData = async (userId: string) => {
-    const [p, t, r, tm, tl, profile, ms, subData] = await Promise.all([
+    const [p, t, r, tm, tl, profile, ms, subData, pr] = await Promise.all([
       supabase.from('projects').select('*').eq('user_id', userId),
       supabase.from('tasks').select('*').eq('user_id', userId),
       supabase.from('risks').select('*').eq('user_id', userId),
@@ -116,6 +118,7 @@ export default function Dashboard() {
       supabase.from('profiles').select('onboarded').eq('id', userId).single(),
       supabase.from('milestones').select('*').eq('user_id', userId).order('due_date', { ascending: true }),
       supabase.from('subscriptions').select('plan,status').eq('user_id', userId).single(),
+      supabase.from('proposals').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
     ])
     if (p.data) setProjects(p.data)
     if (t.data) setTasks(t.data)
@@ -123,6 +126,7 @@ export default function Dashboard() {
     if (tm.data) setTeamMembers(tm.data)
     if (tl.data) setTimeLogs(tl.data)
     if (ms.data) setMilestones(ms.data)
+    if (pr.data) setProposals(pr.data)
     if (subData.data) setSubscription(subData.data)
     if (profile.data && (profile.data.onboarded === false || profile.data.onboarded === null)) setShowWizard(true)
   }
@@ -387,6 +391,7 @@ Proceed and set this task to active anyway?`)
     { id: 'dashboard', icon: '◈', label: 'Dashboard', section: 'Command' },
     { id: 'projects', icon: '◻', label: 'Projects', section: null, badge: activeProjects > 0 ? activeProjects : null },
     { id: 'tasks', icon: '✓', label: 'Tasks', section: null, badge: activeTasks > 0 ? activeTasks : null },
+    { id: 'proposals', icon: '◇', label: 'Proposals', section: null, ai: true },
     { id: 'planner', icon: '✦', label: 'AI Planner', section: null, gold: true, ai: true, locked: !hasAIFeature('planner') },
     { id: 'meetings', icon: '◎', label: 'Meetings', section: 'Operations', ai: true, locked: !hasAIFeature('meetings') },
     { id: 'risks', icon: '⚠', label: 'Risk Radar', section: null, badge: openRisks > 0 ? openRisks : null, ai: true },
@@ -399,8 +404,8 @@ Proceed and set this task to active anyway?`)
     { id: 'settings', icon: '⚙', label: 'Settings', section: 'Account' },
   ]
 
-  const pageLabels: Record<string,string> = { dashboard:'Dashboard', projects:'Projects', tasks:'Tasks', planner:'AI Planner', meetings:'Meetings', risks:'Risk Radar', scope:'Scope Control', clients:'Client Portal', workload:'Workload', timeline:'Timeline', reports:'Reports', billing:'Time & Billing', settings:'Settings' }
-  const pageCrumbs: Record<string,string> = { dashboard:'/ Overview', projects:'/ All Projects', tasks:'/ All Tasks', planner:'/ Generate Plan', meetings:'/ Process Notes', risks:'/ Risk Register', scope:'/ Change Log', clients:'/ Email Generator', workload:'/ Capacity', timeline:'/ Milestones & Gantt', reports:'/ Project Report', billing:'/ Timer & Invoices', settings:'/ Account' }
+  const pageLabels: Record<string,string> = { dashboard:'Dashboard', projects:'Projects', tasks:'Tasks', proposals:'Proposals', planner:'AI Planner', meetings:'Meetings', risks:'Risk Radar', scope:'Scope Control', clients:'Client Portal', workload:'Workload', timeline:'Timeline', reports:'Reports', billing:'Time & Billing', settings:'Settings' }
+  const pageCrumbs: Record<string,string> = { dashboard:'/ Overview', projects:'/ All Projects', tasks:'/ All Tasks', proposals:'/ Estimates & Proposals', planner:'/ Generate Plan', meetings:'/ Process Notes', risks:'/ Risk Register', scope:'/ Change Log', clients:'/ Email Generator', workload:'/ Capacity', timeline:'/ Milestones & Gantt', reports:'/ Project Report', billing:'/ Timer & Invoices', settings:'/ Account' }
 
   return (
     <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', height: '100dvh', width: '100vw', background: navy, overflow: 'hidden' }} onClick={() => setShowNotifications(false)}>
@@ -1594,6 +1599,112 @@ Proceed and set this task to active anyway?`)
           )}
 
           {/* ═══ SETTINGS ═══ */}
+          {tab === 'proposals' && (
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '22px' }}>
+                <div>
+                  <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '26px', color: '#F0F6FF' }}>
+                    Proposals &amp; <em style={{ color: gold, fontStyle: 'italic' }}>Estimates</em>
+                  </div>
+                  <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: whiteFaint, marginTop: '5px' }}>
+                    {proposals.length} proposal{proposals.length !== 1 ? 's' : ''} · {proposals.filter(p => p.status === 'accepted').length} accepted · {proposals.filter(p => p.status === 'sent').length} awaiting response
+                  </div>
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '14px' }}>
+                {/* Left: Create form */}
+                <div style={s.card}>
+                  <div style={s.sectionTitle}>New Proposal</div>
+                  <ProposalForm
+                    user={user}
+                    projects={projects}
+                    supabase={supabase}
+                    onCreated={() => user && loadData(user.id)}
+                    setTab={setTab}
+                    isMobile={isMobile}
+                  />
+                </div>
+                {/* Right: Proposals list */}
+                <div style={s.card}>
+                  <div style={s.sectionTitle}>All Proposals</div>
+                  {proposals.length === 0 && (
+                    <div style={{ textAlign: 'center', padding: '28px 16px' }}>
+                      <div style={{ fontSize: '22px', marginBottom: '8px', opacity: 0.3 }}>◇</div>
+                      <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '12px', fontWeight: 600, color: textMid, marginBottom: '4px' }}>No proposals yet</div>
+                      <div style={{ fontSize: '11px', color: textDim }}>Create your first proposal on the left — generate a full AI-written proposal in seconds.</div>
+                    </div>
+                  )}
+                  {proposals.map(prop => {
+                    const statusColor = prop.status === 'accepted' ? '#4DFFB4' : prop.status === 'sent' ? '#FFD080' : prop.status === 'declined' ? '#FF9090' : textDim
+                    const statusBg = prop.status === 'accepted' ? 'rgba(34,201,144,0.1)' : prop.status === 'sent' ? 'rgba(255,208,128,0.08)' : prop.status === 'declined' ? 'rgba(226,75,74,0.08)' : 'rgba(240,246,255,0.04)'
+                    const statusBdr = prop.status === 'accepted' ? 'rgba(34,201,144,0.3)' : prop.status === 'sent' ? 'rgba(255,208,128,0.25)' : prop.status === 'declined' ? 'rgba(226,75,74,0.25)' : 'rgba(240,246,255,0.1)'
+                    return (
+                      <div key={prop.id} style={{ padding: '12px 0', borderBottom: `1px solid rgba(201,153,58,0.1)` }}>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px', marginBottom: '6px' }}>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ color: '#F0F6FF', fontWeight: 600, fontSize: '13px', marginBottom: '2px' }}>{prop.title}</div>
+                            <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '12px', color: '#C8DCF4' }}>{prop.client_name} · {prop.project_type}</div>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                            <span style={s.badge(statusBg, statusColor, statusBdr)}>{prop.status}</span>
+                            {editBtn(prop.id, { title: prop.title, client_name: prop.client_name, project_type: prop.project_type, budget: prop.budget || '', timeline: prop.timeline || '', status: prop.status, scope_summary: prop.scope_summary || '', deliverables: prop.deliverables || '' })}
+                            {deleteBtn('proposals', prop.id)}
+                          </div>
+                        </div>
+                        {editingId === prop.id ? (
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginTop: '8px' }}>
+                            <div style={{ gridColumn: '1/-1' }}>{inlineInput('title', 'Proposal title')}</div>
+                            {inlineInput('client_name', 'Client name')}
+                            {inlineInput('project_type', 'Project type')}
+                            {inlineInput('budget', 'Budget ($)', 'number')}
+                            {inlineInput('timeline', 'Timeline')}
+                            {inlineSelect('status', ['draft','sent','accepted','declined'])}
+                            <div style={{ gridColumn: '1/-1' }}>{inlineInput('scope_summary', 'Scope summary')}</div>
+                            <div style={{ gridColumn: '1/-1', display: 'flex', justifyContent: 'flex-end' }}>{saveBtnInline('proposals', prop.id)}</div>
+                          </div>
+                        ) : (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
+                            <div style={{ display: 'flex', gap: '12px' }}>
+                              {prop.budget && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '12px', fontWeight: 600, color: '#E8C96A' }}>${Number(prop.budget).toLocaleString()}</span>}
+                              {prop.timeline && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: '#A8C0DC' }}>{prop.timeline}</span>}
+                            </div>
+                            {prop.status === 'accepted' && (
+                              <button
+                                onClick={async () => {
+                                  if (!user) return
+                                  if (!window.confirm(`Convert "${prop.title}" into a live project?\n\nThis will create a new project pre-filled with this proposal's details.`)) return
+                                  await supabase.from('projects').insert({
+                                    user_id: user.id,
+                                    name: prop.title,
+                                    client_name: prop.client_name,
+                                    status: 'active',
+                                    health: 100,
+                                    budget: prop.budget || null,
+                                  })
+                                  await supabase.from('proposals').update({ status: 'accepted' }).eq('id', prop.id)
+                                  loadData(user.id)
+                                  setTab('projects')
+                                }}
+                                style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 700, letterSpacing: '0.12em', background: 'rgba(34,201,144,0.1)', border: '1px solid rgba(34,201,144,0.3)', color: '#4DFFB4', padding: '4px 10px', borderRadius: '2px', cursor: 'pointer' }}
+                              >⊕ Convert to Project</button>
+                            )}
+                          </div>
+                        )}
+                        {/* Show AI body preview if exists */}
+                        {prop.ai_body && editingId !== prop.id && (
+                          <details style={{ marginTop: '8px' }}>
+                            <summary style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: goldDim, cursor: 'pointer', letterSpacing: '0.1em' }}>VIEW PROPOSAL →</summary>
+                            <div style={{ ...s.aiResponse, marginTop: '8px', fontSize: '11px' }} dangerouslySetInnerHTML={{ __html: formatAI(prop.ai_body) }}/>
+                          </details>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
           {tab === 'settings' && (
             <div>
               <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '26px', color: '#F0F6FF', marginBottom: '22px' }}>
@@ -2637,7 +2748,147 @@ function MilestoneForm({ user, projectId, supabase, onCreated }: any) {
   )
 }
 
-// ─── REPORTS VIEW ────────────────────────────────────────────────────────────
+// ─── PROPOSAL FORM ───────────────────────────────────────────────────────────
+
+function ProposalForm({ user, projects, supabase, onCreated, setTab, isMobile }: any) {
+  const [title, setTitle] = useState('')
+  const [clientName, setClientName] = useState('')
+  const [projectType, setProjectType] = useState('')
+  const [budget, setBudget] = useState('')
+  const [timeline, setTimeline] = useState('')
+  const [scopeSummary, setScopeSummary] = useState('')
+  const [deliverables, setDeliverables] = useState('')
+  const [generating, setGenerating] = useState(false)
+  const [generatedBody, setGeneratedBody] = useState('')
+
+  const gold = '#E8B84B'; const goldDim = '#C9993A'; const navy = '#050D1A'
+  const border = 'rgba(201,153,58,0.2)'; const textMid = '#C8DCF4'; const textDim = '#A8C0DC'
+
+  const generateAndSave = async () => {
+    if (!title || !clientName || !user) return
+    setGenerating(true)
+    setGeneratedBody('')
+
+    const pmName = user?.user_metadata?.full_name || user?.email || 'Project Manager'
+
+    const aiBody = await callAI(
+      `You are ${pmName}, a professional project manager writing a client proposal. Write in a confident, polished, client-facing tone. Use bullet points for deliverables and scope. Structure the proposal with clear sections. No markdown tables.`,
+      `Write a professional project proposal with these exact sections:
+
+PROPOSAL OVERVIEW
+A 2-sentence summary of what we are proposing to deliver.
+
+SCOPE OF WORK
+What is included in this engagement. Use bullet points.
+
+DELIVERABLES
+Specific items the client will receive. Use bullet points.
+
+TIMELINE
+How the project will be phased and delivered.
+
+INVESTMENT
+The budget and what it covers. Payment terms: 50% upfront, 50% on completion.
+
+NEXT STEPS
+How to proceed — simple 3-step CTA.
+
+---
+Project: ${title}
+Client: ${clientName}
+Type: ${projectType || 'Project'}
+Budget: ${budget ? '$' + Number(budget).toLocaleString() : 'To be confirmed'}
+Timeline: ${timeline || 'To be confirmed'}
+Scope: ${scopeSummary || 'Full project scope as discussed'}
+Deliverables: ${deliverables || 'As agreed in brief'}`
+    )
+
+    // Save to Supabase
+    await supabase.from('proposals').insert({
+      user_id: user.id,
+      title,
+      client_name: clientName,
+      project_type: projectType,
+      budget: budget ? parseFloat(budget) : null,
+      timeline: timeline || null,
+      scope_summary: scopeSummary || null,
+      deliverables: deliverables || null,
+      status: 'draft',
+      ai_body: aiBody,
+    })
+
+    setGeneratedBody(aiBody)
+    setGenerating(false)
+    setTitle(''); setClientName(''); setProjectType(''); setBudget(''); setTimeline(''); setScopeSummary(''); setDeliverables('')
+    onCreated()
+  }
+
+  return (
+    <div>
+      <div style={{ marginBottom: '10px' }}>
+        <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase' as const, color: goldDim, marginBottom: '5px' }}>Proposal Title</div>
+        <input style={{ width: '100%', background: 'rgba(16,36,72,0.8)', border: `1px solid ${border}`, borderRadius: '3px', padding: '9px 12px', fontFamily: 'DM Sans, sans-serif', fontSize: '12px', color: '#F0F6FF', outline: 'none' }}
+          value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. E-Commerce Platform Redesign"/>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+        <div>
+          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase' as const, color: goldDim, marginBottom: '5px' }}>Client Name</div>
+          <input style={{ width: '100%', background: 'rgba(16,36,72,0.8)', border: `1px solid ${border}`, borderRadius: '3px', padding: '9px 12px', fontFamily: 'DM Sans, sans-serif', fontSize: '12px', color: '#F0F6FF', outline: 'none' }}
+            value={clientName} onChange={e => setClientName(e.target.value)} placeholder="e.g. Acme Corp"/>
+        </div>
+        <div>
+          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase' as const, color: goldDim, marginBottom: '5px' }}>Project Type</div>
+          <input style={{ width: '100%', background: 'rgba(16,36,72,0.8)', border: `1px solid ${border}`, borderRadius: '3px', padding: '9px 12px', fontFamily: 'DM Sans, sans-serif', fontSize: '12px', color: '#F0F6FF', outline: 'none' }}
+            value={projectType} onChange={e => setProjectType(e.target.value)} placeholder="e.g. Web Development"/>
+        </div>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+        <div>
+          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase' as const, color: goldDim, marginBottom: '5px' }}>Budget ($)</div>
+          <input style={{ width: '100%', background: 'rgba(16,36,72,0.8)', border: `1px solid ${border}`, borderRadius: '3px', padding: '9px 12px', fontFamily: 'DM Sans, sans-serif', fontSize: '12px', color: '#F0F6FF', outline: 'none' }}
+            value={budget} onChange={e => setBudget(e.target.value)} placeholder="e.g. 15000" type="number"/>
+        </div>
+        <div>
+          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase' as const, color: goldDim, marginBottom: '5px' }}>Timeline</div>
+          <input style={{ width: '100%', background: 'rgba(16,36,72,0.8)', border: `1px solid ${border}`, borderRadius: '3px', padding: '9px 12px', fontFamily: 'DM Sans, sans-serif', fontSize: '12px', color: '#F0F6FF', outline: 'none' }}
+            value={timeline} onChange={e => setTimeline(e.target.value)} placeholder="e.g. 6 weeks"/>
+        </div>
+      </div>
+      <div style={{ marginBottom: '10px' }}>
+        <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase' as const, color: goldDim, marginBottom: '5px' }}>Scope Summary</div>
+        <textarea style={{ width: '100%', background: 'rgba(16,36,72,0.8)', border: `1px solid ${border}`, borderRadius: '3px', padding: '9px 12px', fontFamily: 'DM Sans, sans-serif', fontSize: '12px', color: '#F0F6FF', outline: 'none', resize: 'vertical' as const, minHeight: '70px' }}
+          value={scopeSummary} onChange={e => setScopeSummary(e.target.value)} placeholder="Brief description of what will be done..."/>
+      </div>
+      <div style={{ marginBottom: '14px' }}>
+        <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase' as const, color: goldDim, marginBottom: '5px' }}>Key Deliverables</div>
+        <textarea style={{ width: '100%', background: 'rgba(16,36,72,0.8)', border: `1px solid ${border}`, borderRadius: '3px', padding: '9px 12px', fontFamily: 'DM Sans, sans-serif', fontSize: '12px', color: '#F0F6FF', outline: 'none', resize: 'vertical' as const, minHeight: '60px' }}
+          value={deliverables} onChange={e => setDeliverables(e.target.value)} placeholder="e.g. 5-page website, admin dashboard, mobile responsive design..."/>
+      </div>
+
+      <button
+        style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', fontWeight: 700, letterSpacing: '0.14em', background: `linear-gradient(135deg, ${goldDim}, ${gold})`, color: navy, border: 'none', padding: '10px 16px', borderRadius: '2px', cursor: generating ? 'not-allowed' : 'pointer', width: '100%', opacity: (!title || !clientName || generating) ? 0.6 : 1 }}
+        onClick={generateAndSave}
+        disabled={!title || !clientName || generating}
+      >
+        {generating ? '✦ Generating Proposal...' : '✦ Generate AI Proposal →'}
+      </button>
+
+      {generating && (
+        <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: gold, animation: 'pulse 1.2s infinite' }}/>
+          <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: goldDim, letterSpacing: '0.1em' }}>Writing your proposal...</span>
+        </div>
+      )}
+
+      {generatedBody && (
+        <div style={{ marginTop: '14px', background: 'rgba(34,201,144,0.06)', border: '1px solid rgba(34,201,144,0.25)', borderRadius: '4px', padding: '14px 16px' }}>
+          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', fontWeight: 700, color: '#4DFFB4', marginBottom: '6px', letterSpacing: '0.15em' }}>✓ PROPOSAL SAVED</div>
+          <div style={{ fontSize: '11px', color: textMid, lineHeight: 1.6 }}>Your proposal has been saved. View it in the list on the right. When accepted, use "Convert to Project" to create a live project automatically.</div>
+        </div>
+      )}
+    </div>
+  )
+}
 
 
 // ─── REPORTS VIEW (v2 — Professional PM Report) ──────────────────────────────
