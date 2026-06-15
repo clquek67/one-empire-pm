@@ -2820,8 +2820,10 @@ function ProposalForm({ user, projects, supabase, onCreated, setTab, isMobile }:
 
     const pmName = user?.user_metadata?.full_name || user?.email || 'Project Manager'
 
+    const budgetStr = budget ? '$' + Number(budget).toLocaleString() : 'To be confirmed'
+
     const aiBody = await callAI(
-      `You are ${pmName}, a professional project manager writing a client proposal. Write in a confident, polished, client-facing tone. Use bullet points for deliverables and scope. Structure the proposal with clear sections. No markdown tables.`,
+      `You are ${pmName}, a professional project manager writing a client proposal. Write in a confident, polished, client-facing tone. Use bullet points for deliverables and scope. Structure the proposal with clear sections. No markdown tables. CRITICAL: You must use EXACTLY the budget figure provided — never change, round, or estimate a different number. The budget is a hard constraint given by the PM.`,
       `Write a professional project proposal with these exact sections:
 
 PROPOSAL OVERVIEW
@@ -2837,7 +2839,7 @@ TIMELINE
 How the project will be phased and delivered.
 
 INVESTMENT
-The budget and what it covers. Payment terms: 50% upfront, 50% on completion.
+IMPORTANT: The total investment is EXACTLY ${budgetStr}. Do not change this figure under any circumstances. State the total as ${budgetStr}, explain what it covers, then list payment terms: 50% upfront, 50% on completion.
 
 NEXT STEPS
 How to proceed — simple 3-step CTA.
@@ -2846,7 +2848,7 @@ How to proceed — simple 3-step CTA.
 Project: ${title}
 Client: ${clientName}
 Type: ${projectType || 'Project'}
-Budget: ${budget ? '$' + Number(budget).toLocaleString() : 'To be confirmed'}
+Budget (USE THIS EXACT FIGURE): ${budgetStr}
 Timeline: ${timeline || 'To be confirmed'}
 Scope: ${scopeSummary || 'Full project scope as discussed'}
 Deliverables: ${deliverables || 'As agreed in brief'}`
