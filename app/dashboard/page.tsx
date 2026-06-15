@@ -11,6 +11,7 @@ type TeamMember = { id: string; name: string; email: string; role: string; capac
 type TimeLog = { id: string; description: string; hours: number; rate: number; billed: boolean; project_id: string; created_at: string; log_date?: string }
 type Milestone = { id: string; title: string; due_date?: string; status: string; project_id: string; user_id: string; created_at: string }
 type Proposal = { id: string; title: string; client_name: string; project_type: string; budget?: number; timeline?: string; status: string; scope_summary?: string; deliverables?: string; ai_body?: string; created_at: string; user_id: string }
+type RecurringInvoice = { id: string; user_id: string; project_id: string; client_email: string; description: string; amount: number; frequency: 'monthly' | 'weekly' | 'quarterly'; next_run_date: string; active: boolean; created_at: string }
 
 const gold = '#E8B84B'
 const goldDim = '#C9993A'
@@ -75,6 +76,7 @@ export default function Dashboard() {
   const [timeLogs, setTimeLogs] = useState<TimeLog[]>([])
   const [milestones, setMilestones] = useState<Milestone[]>([])
   const [proposals, setProposals] = useState<Proposal[]>([])
+  const [recurringInvoices, setRecurringInvoices] = useState<RecurringInvoice[]>([])
   const [subscription, setSubscription] = useState<any>(null)
   const [aiText, setAiText] = useState<Record<string, string>>({})
   const [aiLoading, setAiLoading] = useState<Record<string, boolean>>({})
@@ -109,7 +111,7 @@ export default function Dashboard() {
   }, [])
 
   const loadData = async (userId: string) => {
-    const [p, t, r, tm, tl, profile, ms, subData, pr] = await Promise.all([
+    const [p, t, r, tm, tl, profile, ms, subData, pr, ri] = await Promise.all([
       supabase.from('projects').select('*').eq('user_id', userId),
       supabase.from('tasks').select('*').eq('user_id', userId),
       supabase.from('risks').select('*').eq('user_id', userId),
@@ -119,6 +121,7 @@ export default function Dashboard() {
       supabase.from('milestones').select('*').eq('user_id', userId).order('due_date', { ascending: true }),
       supabase.from('subscriptions').select('plan,status').eq('user_id', userId).single(),
       supabase.from('proposals').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
+      supabase.from('recurring_invoices').select('*').eq('user_id', userId).order('next_run_date', { ascending: true }),
     ])
     if (p.data) setProjects(p.data)
     if (t.data) setTasks(t.data)
@@ -127,6 +130,7 @@ export default function Dashboard() {
     if (tl.data) setTimeLogs(tl.data)
     if (ms.data) setMilestones(ms.data)
     if (pr.data) setProposals(pr.data)
+    if (ri.data) setRecurringInvoices(ri.data)
     if (subData.data) setSubscription(subData.data)
     if (profile.data && (profile.data.onboarded === false || profile.data.onboarded === null)) setShowWizard(true)
   }
@@ -1510,6 +1514,138 @@ Proceed and set this task to active anyway?`)
                       </div>
                     </div>
                   )}
+                </div>
+              </div>
+
+              {/* ── RETAINER INVOICES ── */}
+              <div style={{ marginTop: '14px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '14px' }}>
+                  {/* Add retainer form */}
+                  <div style={s.card}>
+                    <div style={s.sectionTitle}>
+                      ↻ New Retainer Invoice
+                      <span style={{ fontSize: '9px', color: textDim, fontWeight: 400, letterSpacing: '0.06em', textTransform: 'none' as const }}>Auto-sends via n8n</span>
+                    </div>
+                    <RecurringInvoiceForm
+                      user={user}
+                      projects={projects}
+                      supabase={supabase}
+                      onCreated={() => user && loadData(user.id)}
+                      isMobile={isMobile}
+                    />
+                  </div>
+
+                  {/* Active retainers list */}
+                  <div style={s.card}>
+                    <div style={s.sectionTitle}>
+                      Active Retainers
+                      <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: textDim, fontWeight: 400 }}>{recurringInvoices.filter(r => r.active).length} active</span>
+                    </div>
+
+                    {recurringInvoices.length === 0 && (
+                      <div style={{ textAlign: 'center', padding: '28px 16px' }}>
+                        <div style={{ fontSize: '22px', marginBottom: '8px', opacity: 0.3 }}>↻</div>
+                        <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '12px', fontWeight: 600, color: textMid, marginBottom: '4px' }}>No retainers set up</div>
+                        <div style={{ fontSize: '11px', color: textDim }}>Set up recurring invoices for monthly retainer clients — they'll send automatically via n8n.</div>
+                      </div>
+                    )}
+
+                    {recurringInvoices.map(ri => {
+                      const proj = projects.find(p => p.id === ri.project_id)
+                      const nextDate = new Date(ri.next_run_date)
+                      const daysUntil = Math.ceil((nextDate.getTime() - Date.now()) / (1000*60*60*24))
+                      const isOverdue = daysUntil < 0
+                      const isSoon = daysUntil >= 0 && daysUntil <= 3
+                      const freqLabel = ri.frequency === 'monthly' ? 'Monthly' : ri.frequency === 'weekly' ? 'Weekly' : 'Quarterly'
+                      const freqColor = ri.active ? '#4DFFB4' : '#A8C0DC'
+
+                      return (
+                        <div key={ri.id} style={{ padding: '12px 0', borderBottom: `1px solid rgba(201,153,58,0.1)` }}>
+                          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px', marginBottom: '6px' }}>
+                            <div style={{ flex: 1 }}>
+                              <div style={{ color: '#F0F6FF', fontWeight: 600, fontSize: '13px', marginBottom: '2px' }}>{ri.description}</div>
+                              <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '12px', color: '#C8DCF4' }}>{proj?.name || '—'} · {ri.client_email}</div>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                              <span style={s.badge(ri.active ? 'rgba(34,201,144,0.1)' : 'rgba(240,246,255,0.04)', freqColor, ri.active ? 'rgba(34,201,144,0.3)' : 'rgba(240,246,255,0.1)')}>{freqLabel}</span>
+                              {/* Toggle active */}
+                              <button
+                                onClick={async () => {
+                                  await supabase.from('recurring_invoices').update({ active: !ri.active }).eq('id', ri.id)
+                                  if (user) loadData(user.id)
+                                }}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px', padding: '2px 4px' }}
+                                title={ri.active ? 'Pause retainer' : 'Activate retainer'}
+                              >{ri.active ? '⏸' : '▶'}</button>
+                              {deleteBtn('recurring_invoices', ri.id)}
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
+                            <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '16px', color: gold }}>${ri.amount.toLocaleString()}</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: isOverdue ? '#FF9090' : isSoon ? '#FFD080' : '#C8DCF4' }}>
+                                {isOverdue ? `⚠ Overdue · ` : `Next: `}{fmtDate(ri.next_run_date)}
+                                {!isOverdue && daysUntil <= 7 && ` · ${daysUntil}d`}
+                              </span>
+                              {/* Manual send now */}
+                              <button
+                                onClick={async () => {
+                                  if (!window.confirm(`Send invoice now to ${ri.client_email}?\n\n${ri.description}\nAmount: $${ri.amount.toLocaleString()}`)) return
+                                  const pmName = user?.user_metadata?.full_name || user?.email || 'Project Manager'
+                                  // Fire n8n webhook
+                                  await fetch('https://n8n.one-empire.com/webhook/empire-pm-invoice', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                      client: proj?.client_name || proj?.name || 'Client',
+                                      project: proj?.name || 'Retainer',
+                                      clientEmail: ri.client_email,
+                                      senderName: pmName,
+                                      senderEmail: user?.email,
+                                      invoiceDate: fmtDate(new Date().toISOString().split('T')[0]),
+                                      dueDate: fmtDate(new Date(Date.now() + 14*24*60*60*1000).toISOString().split('T')[0]),
+                                      lineItems: `${ri.description} | Retainer | $${ri.amount.toLocaleString()}`,
+                                      total: `$${ri.amount.toLocaleString()}`,
+                                      coverEmail: `Please find attached the ${freqLabel.toLowerCase()} retainer invoice for ${ri.description}. Total due: $${ri.amount.toLocaleString()}. Payment is due within 14 days. Thank you for your continued partnership.`
+                                    })
+                                  }).catch(() => {})
+                                  // Update next_run_date
+                                  const next = new Date()
+                                  if (ri.frequency === 'weekly') next.setDate(next.getDate() + 7)
+                                  else if (ri.frequency === 'quarterly') next.setMonth(next.getMonth() + 3)
+                                  else next.setMonth(next.getMonth() + 1)
+                                  await supabase.from('recurring_invoices').update({ next_run_date: next.toISOString().split('T')[0] }).eq('id', ri.id)
+                                  if (user) loadData(user.id)
+                                  alert(`✓ Invoice sent to ${ri.client_email}`)
+                                }}
+                                style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 700, letterSpacing: '0.1em', background: 'rgba(201,153,58,0.1)', border: `1px solid rgba(201,153,58,0.3)`, color: gold, padding: '3px 8px', borderRadius: '2px', cursor: 'pointer' }}
+                              >Send Now</button>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+
+                    {/* Upcoming summary */}
+                    {recurringInvoices.filter(r => r.active).length > 0 && (
+                      <div style={{ marginTop: '12px', padding: '10px 14px', background: 'rgba(201,153,58,0.04)', border: `1px solid rgba(201,153,58,0.12)`, borderRadius: '3px' }}>
+                        <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600, letterSpacing: '0.18em', color: goldDim, marginBottom: '6px' }}>UPCOMING THIS MONTH</div>
+                        <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '22px', color: gold }}>
+                          ${recurringInvoices.filter(r => r.active && (() => {
+                            const d = new Date(r.next_run_date); const now = new Date()
+                            return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()
+                          })()).reduce((sum, r) => sum + r.amount, 0).toLocaleString()}
+                        </div>
+                        <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: textDim, marginTop: '2px' }}>
+                          {recurringInvoices.filter(r => r.active && (() => {
+                            const d = new Date(r.next_run_date); const now = new Date()
+                            return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()
+                          })()).length} retainer{recurringInvoices.filter(r => r.active).length !== 1 ? 's' : ''} due
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -2941,6 +3077,86 @@ Deliverables: ${deliverables || 'As agreed in brief'}`
   )
 }
 
+
+// ─── RECURRING INVOICE FORM ──────────────────────────────────────────────────
+
+function RecurringInvoiceForm({ user, projects, supabase, onCreated, isMobile }: any) {
+  const [projectId, setProjectId]     = useState('')
+  const [clientEmail, setClientEmail] = useState('')
+  const [description, setDescription] = useState('')
+  const [amount, setAmount]           = useState('')
+  const [frequency, setFrequency]     = useState<'monthly'|'weekly'|'quarterly'>('monthly')
+  const [startDate, setStartDate]     = useState(new Date().toISOString().split('T')[0])
+
+  const gold = '#E8B84B'; const goldDim = '#C9993A'; const navy = '#050D1A'
+  const border = 'rgba(201,153,58,0.2)'
+
+  const submit = async () => {
+    if (!description || !amount || !clientEmail || !projectId || !user) return
+    await supabase.from('recurring_invoices').insert({
+      user_id:       user.id,
+      project_id:    projectId,
+      client_email:  clientEmail,
+      description,
+      amount:        parseFloat(amount),
+      frequency,
+      next_run_date: startDate,
+      active:        true,
+    })
+    setDescription(''); setAmount(''); setClientEmail(''); setProjectId('')
+    onCreated()
+  }
+
+  return (
+    <div>
+      <div style={{ marginBottom: '10px' }}>
+        <div style={s.label}>Retainer Description</div>
+        <input style={s.input} value={description} onChange={e => setDescription(e.target.value)} placeholder="e.g. Monthly SEO Retainer"/>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+        <div>
+          <div style={s.label}>Project</div>
+          <select style={s.input} value={projectId} onChange={e => setProjectId(e.target.value)}>
+            <option value="">Select project...</option>
+            {projects.map((p: Project) => <option key={p.id} value={p.id}>{p.name}</option>)}
+          </select>
+        </div>
+        <div>
+          <div style={s.label}>Client Email</div>
+          <input style={s.input} value={clientEmail} onChange={e => setClientEmail(e.target.value)} placeholder="client@company.com" type="email"/>
+        </div>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+        <div>
+          <div style={s.label}>Amount ($)</div>
+          <input style={s.input} value={amount} onChange={e => setAmount(e.target.value)} placeholder="e.g. 3000" type="number"/>
+        </div>
+        <div>
+          <div style={s.label}>Frequency</div>
+          <select style={s.input} value={frequency} onChange={e => setFrequency(e.target.value as any)}>
+            <option value="monthly">Monthly</option>
+            <option value="quarterly">Quarterly</option>
+            <option value="weekly">Weekly</option>
+          </select>
+        </div>
+        <div>
+          <div style={s.label}>First Invoice Date</div>
+          <input style={s.input} value={startDate} onChange={e => setStartDate(e.target.value)} type="date"/>
+        </div>
+      </div>
+      <div style={{ marginBottom: '14px', padding: '10px 12px', background: 'rgba(201,153,58,0.04)', border: `1px solid rgba(201,153,58,0.12)`, borderRadius: '3px', fontSize: '11px', color: '#A8C0DC', lineHeight: 1.6 }}>
+        ↻ An n8n workflow checks daily and auto-sends this invoice on the scheduled date. Use <strong style={{ color: '#E8B84B' }}>Send Now</strong> in the list to fire it manually anytime.
+      </div>
+      <button
+        style={{ ...s.btnGold, width: '100%', opacity: (!description || !amount || !clientEmail || !projectId) ? 0.5 : 1 }}
+        onClick={submit}
+        disabled={!description || !amount || !clientEmail || !projectId}
+      >
+        ↻ Create Retainer →
+      </button>
+    </div>
+  )
+}
 
 // ─── REPORTS VIEW (v2 — Professional PM Report) ──────────────────────────────
 
