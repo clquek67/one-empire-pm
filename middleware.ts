@@ -28,6 +28,7 @@ export async function middleware(request: NextRequest) {
   if (
     pathname === '/login' ||
     pathname === '/pricing' ||
+    pathname === '/roadmap' ||
     pathname.startsWith('/api') ||
     pathname.startsWith('/invite')
   ) {
