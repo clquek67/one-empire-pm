@@ -371,22 +371,23 @@ Proceed and set this task to active anyway?`)
   const plan = subscription?.plan || 'starter'
   const planLimits: Record<string, { projects: number; teamMembers: number; aiFeatures: string[] }> = {
     starter: {
-      projects: 3,
-      teamMembers: 3,
-      // Starter: core PM tools only — no AI suite, no proposals, no retainers
+      projects: 5,
+      teamMembers: 0,
+      // Starter: core PM tools only — no AI, no team logins, no client features
       aiFeatures: ['risks', 'timeline', 'billing']
     },
     pro: {
       projects: 10,
-      teamMembers: 8,
-      // Pro: full AI suite + proposals + retainers + collaboration
-      aiFeatures: ['risks', 'planner', 'meetings', 'scope', 'clients', 'workload', 'reports', 'timeline', 'billing', 'proposals', 'retainers']
+      teamMembers: 3,
+      // Pro: AI productivity suite — planner, meetings, proposals, reports (weekly only)
+      // No client-facing features, no retainers, no workload AI
+      aiFeatures: ['risks', 'planner', 'meetings', 'scope', 'reports', 'ai-reports', 'timeline', 'billing', 'proposals']
     },
     agency: {
       projects: 25,
       teamMembers: 15,
-      // Agency: everything in Pro
-      aiFeatures: ['risks', 'planner', 'meetings', 'scope', 'clients', 'workload', 'reports', 'timeline', 'billing', 'proposals', 'retainers']
+      // Agency: everything — client portal, retainers, workload AI, full AI reports
+      aiFeatures: ['risks', 'planner', 'meetings', 'scope', 'clients', 'workload', 'reports', 'ai-reports', 'ai-reports-full', 'timeline', 'billing', 'proposals', 'retainers']
     }
   }
   const limits = planLimits[plan] || planLimits.starter
@@ -411,7 +412,7 @@ Proceed and set this task to active anyway?`)
     { id: 'workload', icon: '⊞', label: 'Workload', section: null, ai: true, locked: !hasAIFeature('workload') },
     { id: 'timeline', icon: '▷', label: 'Timeline', section: null },
     { id: 'reports', icon: '◈', label: 'Reports', section: null, locked: !hasAIFeature('reports') },
-    { id: 'ai-reports', icon: '✦', label: 'AI Reports', section: null, ai: true, locked: !hasAIFeature('reports') },
+    { id: 'ai-reports', icon: '✦', label: 'AI Reports', section: null, ai: true, locked: !hasAIFeature('ai-reports') },
     { id: 'billing', icon: '◷', label: 'Time & Billing', section: null },
     { id: 'retainers', icon: '◷', label: 'Retainers', section: null, locked: !hasAIFeature('retainers') },
     { id: 'settings', icon: '⚙', label: 'Settings', section: 'Account' },
@@ -470,18 +471,26 @@ Proceed and set this task to active anyway?`)
                 )}
                 <div onClick={() => {
                     if ((item as any).locked) {
-                      const featureNames: Record<string, string> = {
-                        proposals: 'Proposals & Estimates',
-                        retainers: 'Recurring Retainers',
-                        planner: 'AI Planner',
-                        meetings: 'AI Meetings',
-                        scope: 'Scope Control',
-                        clients: 'Client Portal',
-                        workload: 'Workload AI',
-                        reports: 'Reports & AI Reports',
+                      const isPro = plan === 'pro'
+                      const upgradeMessages: Record<string, string> = {
+                        proposals: `⬆ Upgrade to Pro\n\nProposals & Estimates requires the Pro plan ($37/mo).\n\nGenerate AI-written client proposals, set budgets and timelines, and convert accepted proposals into live projects.`,
+                        planner: `⬆ Upgrade to Pro\n\nAI Planner requires the Pro plan ($37/mo).\n\nGenerate full project plans with tasks, risks and milestones from a brief — populated in one click.`,
+                        meetings: `⬆ Upgrade to Pro\n\nMeeting Processor requires the Pro plan ($37/mo).\n\nPaste raw meeting notes and get structured summaries, action items and decisions automatically.`,
+                        scope: `⬆ Upgrade to Pro\n\nScope Control requires the Pro plan ($37/mo).\n\nLog scope changes and get instant AI analysis of time, budget and risk impact.`,
+                        reports: `⬆ Upgrade to Pro\n\nReports requires the Pro plan ($37/mo).\n\nGenerate professional project status reports with RAG indicators, milestone tracking and executive summaries.`,
+                        'ai-reports': `⬆ Upgrade to Pro\n\nAI Reports requires the Pro plan ($37/mo).\n\nGenerate Weekly Status reports from live project data in one click and send directly to clients.`,
+                        clients: isPro
+                          ? `⬆ Upgrade to Agency\n\nClient Portal requires the Agency plan ($67/mo).\n\nYou're on Pro — upgrade to Agency to unlock client logins, client-facing project views, and Client-Ready AI reports.`
+                          : `⬆ Upgrade to Agency\n\nClient Portal requires the Agency plan ($67/mo).\n\nGive clients a professional view of project progress with their own login and AI-generated status updates.`,
+                        workload: isPro
+                          ? `⬆ Upgrade to Agency\n\nWorkload AI requires the Agency plan ($67/mo).\n\nYou're on Pro — upgrade to Agency to unlock team capacity analysis, AI rebalancing suggestions, and burnout prevention tools.`
+                          : `⬆ Upgrade to Agency\n\nWorkload AI requires the Agency plan ($67/mo).\n\nSee team capacity across all projects and get AI recommendations to rebalance tasks and prevent burnout.`,
+                        retainers: isPro
+                          ? `⬆ Upgrade to Agency\n\nRecurring Retainers requires the Agency plan ($67/mo).\n\nYou're on Pro — upgrade to Agency to set up monthly, quarterly or weekly retainer invoices that auto-send via n8n.`
+                          : `⬆ Upgrade to Agency\n\nRecurring Retainers requires the Agency plan ($67/mo).\n\nSet up monthly, quarterly or weekly retainer invoices that auto-send via n8n — no manual chasing.`,
                       }
-                      const featureName = featureNames[item.id] || item.label
-                      alert(`⬆ Upgrade Required\n\n${featureName} is not available on your ${plan.charAt(0).toUpperCase() + plan.slice(1)} plan.\n\nUpgrade to Pro or Agency to unlock.`)
+                      const msg = upgradeMessages[item.id] || `⬆ Upgrade Required\n\n${item.label} is not available on your ${plan.charAt(0).toUpperCase() + plan.slice(1)} plan.\n\nUpgrade to unlock this feature.`
+                      alert(msg)
                     } else { setTab(item.id) }
                   }} style={{
                   display: 'flex', alignItems: 'center', gap: isMobile ? '3px' : '10px',
@@ -1550,6 +1559,7 @@ Proceed and set this task to active anyway?`)
               teamMembers={teamMembers}
               user={user}
               isMobile={isMobile}
+              plan={plan}
             />
           )}
 
@@ -2617,9 +2627,9 @@ function SettingsForm({ user, supabase }: any) {
 
   const planNames: any = { starter: 'Starter', pro: 'Pro', agency: 'Agency' }
   const planLimitsDisplay: any = {
-    starter: '3 projects · 3 team members/project · Tasks & Kanban · Risk Radar · Timeline · Time & Billing · No AI suite · No Proposals · No Retainers',
-    pro: '10 projects · 8 team members/project · Full AI suite · Proposals & Estimates · Recurring Retainers · Client Portal · Team login · Invoice automation',
-    agency: '25 projects · 15 team members/project · Everything in Pro · White label emails · Priority support'
+    starter: '5 projects · No team logins · Tasks, Kanban & Timeline · Risk Radar · Time & Billing · No AI suite · No Proposals',
+    pro: '10 projects · 3 team logins · AI Planner · Meetings AI · Scope Control · Proposals & Estimates · Invoice automation · Weekly AI Reports · No Retainers · No Client Portal · No Workload AI',
+    agency: '25 projects · 15 team logins · Everything in Pro · Recurring Retainers · Client Portal · Workload AI · Full AI Reports (Sprint + Client-Ready) · White label emails'
   }
   const planPrices: any = { starter: { monthly: '$17', quarterly: '$42', yearly: '$147' }, pro: { monthly: '$37', quarterly: '$89', yearly: '$297' }, agency: { monthly: '$67', quarterly: '$161', yearly: '$537' } }
 
@@ -3207,7 +3217,14 @@ function RecurringInvoiceForm({ user, projects, supabase, onCreated, isMobile }:
 
 // ─── AI REPORTS VIEW ─────────────────────────────────────────────────────────
 
-function AIReportsView({ projects, tasks, risks, timeLogs, milestones, teamMembers, user, isMobile }: any) {
+function AIReportsView({ projects, tasks, risks, timeLogs, milestones, teamMembers, user, isMobile, plan }: any) {
+  const hasAIFeature = (feature: string) => {
+    const agencyFeatures = ['clients', 'workload', 'retainers', 'ai-reports-full']
+    const proFeatures = ['planner', 'meetings', 'scope', 'reports', 'ai-reports', 'proposals']
+    if (agencyFeatures.includes(feature)) return plan === 'agency'
+    if (proFeatures.includes(feature)) return plan === 'pro' || plan === 'agency'
+    return true // starter features always available
+  }
   const [selectedProjectId, setSelectedProjectId] = useState('')
   const [reportType, setReportType] = useState<'weekly' | 'sprint' | 'client'>('weekly')
   const [dateRange, setDateRange] = useState('7')
@@ -3393,17 +3410,30 @@ Report period: Last ${dateRange} days (${cutoffStr} to ${todayStr})`
             <div style={{ marginBottom: '14px' }}>
               <div style={s.label}>Report Type</div>
               <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '6px' }}>
-                {reportTypes.map(rt => (
-                  <div key={rt.id} onClick={() => setReportType(rt.id as any)}
-                    style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', borderRadius: '3px', cursor: 'pointer', border: `1px solid ${reportType === rt.id ? 'rgba(201,153,58,0.5)' : border}`, background: reportType === rt.id ? 'rgba(201,153,58,0.08)' : 'rgba(16,36,72,0.4)', transition: 'all 0.15s' }}>
-                    <span style={{ fontSize: '16px', color: reportType === rt.id ? gold : textDim, flexShrink: 0 }}>{rt.icon}</span>
-                    <div>
-                      <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '12px', fontWeight: 600, color: reportType === rt.id ? gold : textMid }}>{rt.label}</div>
-                      <div style={{ fontSize: '10px', color: textDim, marginTop: '1px' }}>{rt.desc}</div>
+                {reportTypes.map(rt => {
+                  const isAgencyOnly = rt.id === 'sprint' || rt.id === 'client'
+                  const isLocked = isAgencyOnly && !hasAIFeature('ai-reports-full')
+                  return (
+                    <div key={rt.id} onClick={() => {
+                      if (isLocked) {
+                        alert(`⬆ Upgrade to Agency\n\n${rt.label} reports require the Agency plan ($67/mo).\n\nAgency plan includes End-of-Sprint and Client-Ready reports — perfect for teams delivering to multiple clients.`)
+                        return
+                      }
+                      setReportType(rt.id as any)
+                    }}
+                      style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', borderRadius: '3px', cursor: isLocked ? 'not-allowed' : 'pointer', border: `1px solid ${reportType === rt.id ? 'rgba(201,153,58,0.5)' : border}`, background: reportType === rt.id ? 'rgba(201,153,58,0.08)' : 'rgba(16,36,72,0.4)', transition: 'all 0.15s', opacity: isLocked ? 0.5 : 1 }}>
+                      <span style={{ fontSize: '16px', color: isLocked ? textDim : reportType === rt.id ? gold : textDim, flexShrink: 0 }}>{isLocked ? '🔒' : rt.icon}</span>
+                      <div>
+                        <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '12px', fontWeight: 600, color: isLocked ? textDim : reportType === rt.id ? gold : textMid }}>
+                          {rt.label}
+                          {isAgencyOnly && <span style={{ marginLeft: '6px', fontFamily: 'Rajdhani, sans-serif', fontSize: '8px', fontWeight: 700, letterSpacing: '0.1em', color: '#4DD8F0', background: 'rgba(77,216,240,0.1)', border: '1px solid rgba(77,216,240,0.25)', borderRadius: '2px', padding: '1px 5px' }}>AGENCY</span>}
+                        </div>
+                        <div style={{ fontSize: '10px', color: textDim, marginTop: '1px' }}>{rt.desc}</div>
+                      </div>
+                      {!isLocked && reportType === rt.id && <div style={{ marginLeft: 'auto', width: '6px', height: '6px', borderRadius: '50%', background: gold, flexShrink: 0 }}/>}
                     </div>
-                    {reportType === rt.id && <div style={{ marginLeft: 'auto', width: '6px', height: '6px', borderRadius: '50%', background: gold, flexShrink: 0 }}/>}
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
 
