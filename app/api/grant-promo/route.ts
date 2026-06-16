@@ -88,8 +88,8 @@ export async function POST(request: Request) {
 export async function GET(request: Request) {
   try {
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     if (!ADMIN_EMAILS.includes(user.email || '')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     const serviceSupabase = createServiceClient(
@@ -103,17 +103,19 @@ export async function GET(request: Request) {
       .eq('promo', true)
       .order('current_period_end', { ascending: true })
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) return NextResponse.json({ error: `DB error: ${error.message}` }, { status: 500 })
 
     // Enrich with emails
-    const { data: { users } } = await serviceSupabase.auth.admin.listUsers()
+    const { data: usersData, error: usersError } = await serviceSupabase.auth.admin.listUsers()
+    if (usersError) return NextResponse.json({ error: `Users error: ${usersError.message}` }, { status: 500 })
+
     const enriched = (promos || []).map(sub => {
-      const u = users.find(u => u.id === sub.user_id)
+      const u = usersData.users.find((u: any) => u.id === sub.user_id)
       return { ...sub, email: u?.email || 'Unknown' }
     })
 
     return NextResponse.json({ promos: enriched })
-  } catch {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  } catch (err: any) {
+    return NextResponse.json({ error: `Server error: ${err?.message || 'unknown'}` }, { status: 500 })
   }
 }
