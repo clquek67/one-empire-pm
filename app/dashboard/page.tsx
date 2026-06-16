@@ -3305,31 +3305,19 @@ Report period: Last ${dateRange} days (${cutoffStr} to ${todayStr})`
     // Convert markdown report to clean HTML for email
     const reportHtml = reportOutput
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/^## (.+)$/gm, '<h2 style="font-size:16px;color:#050D1A;margin:20px 0 8px;padding-bottom:6px;border-bottom:2px solid #C9993A;font-family:Arial,sans-serif;">$1</h2>')
-      .replace(/^### (.+)$/gm, '<h3 style="font-size:13px;color:#C9993A;margin:14px 0 6px;font-family:Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;">$1</h3>')
-      .replace(/^[-•] (.+)$/gm, '<li style="margin:4px 0;padding-left:4px;color:#333;">$1</li>')
-      .replace(/(<li[^>]*>[\s\S]*?<\/li>)/g, '<ul style="margin:8px 0;padding-left:20px;">$1</ul>')
+      .replace(/^## (.+)$/gm, '<h2 style="font-size:15px;color:#050D1A;margin:20px 0 8px;padding-bottom:6px;border-bottom:2px solid #C9993A;font-family:Arial,sans-serif;">$1</h2>')
+      .replace(/^### (.+)$/gm, '<h3 style="font-size:12px;color:#C9993A;margin:14px 0 6px;font-family:Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;">$1</h3>')
+      .replace(/^[-•] (.+)$/gm, '<li style="margin:4px 0;padding-left:4px;color:#333;font-size:13px;line-height:1.7;">$1</li>')
       .replace(/^---+$/gm, '<hr style="border:none;border-top:1px solid #eee;margin:16px 0"/>')
       .replace(/\n\n/g, '</p><p style="margin:8px 0;color:#333;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;">')
       .replace(/\n/g, '<br/>')
 
-    const fullHtml = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#333;">
-  <div style="background:#050D1A;padding:20px 24px;border-bottom:3px solid #C9993A;">
-    <div style="color:#E8B84B;font-size:11px;letter-spacing:2px;">ONE EMPIRE</div>
-    <div style="color:#F0F6FF;font-size:22px;margin-top:4px;">Empire <em>PM</em></div>
-  </div>
-  <div style="padding:28px 24px;background:#ffffff;">
-    <div style="background:#f8f9fa;border-left:4px solid #C9993A;padding:14px 18px;margin-bottom:24px;border-radius:0 4px 4px 0;">
-      <div style="font-size:11px;color:#C9993A;font-weight:700;letter-spacing:2px;margin-bottom:4px;">${reportTitle.toUpperCase()}</div>
-      <div style="font-size:18px;color:#050D1A;font-weight:600;">${project?.name || 'Project'}</div>
-      <div style="font-size:12px;color:#666;margin-top:4px;">${project?.client_name || ''} · ${new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
-    </div>
-    <p style="margin:8px 0;color:#333;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;">${reportHtml}</p>
-  </div>
-  <div style="background:#050D1A;padding:14px 24px;text-align:center;">
-    <div style="color:rgba(201,153,58,0.6);font-size:10px;letter-spacing:2px;">SENT BY EMPIRE PM · pm.one-empire.com</div>
-  </div>
-</div>`
+    const fullHtml = `<div style="background:#f8f9fa;border-left:4px solid #C9993A;padding:14px 18px;margin-bottom:24px;border-radius:0 4px 4px 0;">
+  <div style="font-size:11px;color:#C9993A;font-weight:700;letter-spacing:2px;margin-bottom:4px;">${reportTitle.toUpperCase()}</div>
+  <div style="font-size:18px;color:#050D1A;font-weight:600;font-family:Arial,sans-serif;">${project?.name || 'Project'}</div>
+  <div style="font-size:12px;color:#666;margin-top:4px;font-family:Arial,sans-serif;">${project?.client_name || ''} · ${new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
+</div>
+<p style="margin:8px 0;color:#333;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;">${reportHtml}</p>`
 
     try {
       const res = await fetch('https://n8n.one-empire.com/webhook/empire-pm-invoice', {
