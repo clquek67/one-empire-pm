@@ -83,6 +83,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
+  // Admin routes — logged in only, no subscription check
+  if (pathname.startsWith('/admin')) {
+    return supabaseResponse
+  }
+
   return supabaseResponse
 }
 
