@@ -21,8 +21,7 @@ export const PLANS = {
       'Recurring Retainer Invoices',
       'Client Portal',
       'Workload AI',
-      'Team member login',
-      'Invoice automation',
+      'Team member login',      'Invoice automation',
     ],
     prices: {
       monthly: { id: 'price_1TdjWgB2X3LkDhkWCh4mHGvs', amount: 17 },
@@ -37,7 +36,7 @@ export const PLANS = {
     teamMembers: 3,
     features: [
       '10 Projects',
-      '3 Team member logins',
+      '3 Team seats (account-wide across all projects)',
       'AI Planner — generate full project plans',
       'Meetings AI — structured summaries & actions',
       'Scope Control AI — change impact analysis',
@@ -67,7 +66,7 @@ export const PLANS = {
     teamMembers: 15,
     features: [
       '25 Projects',
-      '15 Team member logins',
+      '15 Team seats (account-wide across all projects)',
       'Everything in Pro',
       'Recurring Retainer Invoices (auto-send)',
       'Client Portal & client logins',
