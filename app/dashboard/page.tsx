@@ -3299,18 +3299,30 @@ Report period: Last ${dateRange} days (${cutoffStr} to ${todayStr})`
     if (!reportOutput) { alert('Generate a report first.'); return }
     setSending(true)
     const project = projects.find((p: Project) => p.id === selectedProjectId)
+    const reportTitle = reportType === 'client' ? 'Project Update' : reportType === 'weekly' ? 'Weekly Status Report' : 'Sprint Summary'
+    const pmName = user?.user_metadata?.full_name || 'Project Manager'
     try {
-      await fetch('https://n8n.one-empire.com/webhook/empire-pm-meeting', {
+      const res = await fetch('https://n8n.one-empire.com/webhook/empire-pm-invoice', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title: `${reportType === 'client' ? 'Project Update' : reportType === 'weekly' ? 'Weekly Status Report' : 'Sprint Summary'} — ${project?.name || 'Project'}`,
-          notes: reportOutput,
-          email: sendEmail,
-          senderName: user?.user_metadata?.full_name || 'Project Manager',
+          client: project?.client_name || project?.name || 'Client',
+          project: project?.name || 'Project',
+          clientEmail: sendEmail,
+          senderName: pmName,
           senderEmail: user?.email,
+          invoiceDate: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }),
+          dueDate: '',
+          lineItems: `${reportTitle} | ${project?.name || 'Project'} | - | -`,
+          total: '',
+          coverEmail: reportOutput,
         })
       })
+      if (!res.ok) {
+        alert(`✗ Failed to send: ${res.status}`)
+        setSending(false)
+        return
+      }
       alert(`✓ Report sent to ${sendEmail}`)
       setSendEmail('')
     } catch {
@@ -3408,7 +3420,7 @@ Report period: Last ${dateRange} days (${cutoffStr} to ${todayStr})`
                 {sending ? 'Sending...' : '✉ Send to Client →'}
               </button>
               <div style={{ marginTop: '8px', fontSize: '10px', color: textDim, lineHeight: 1.6 }}>
-                Sends via your existing n8n meeting summary email workflow.
+                Sends via your empire-pm-invoice n8n workflow.
               </div>
             </div>
           )}
