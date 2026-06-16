@@ -28,16 +28,16 @@ export default function PricingPage() {
   const features = [
     {
       title: 'AI Proposals & Estimates',
-      desc: 'Generate full client proposals in seconds. Auto-fill budget, timeline, scope and convert accepted proposals into live projects.',
+      desc: 'Generate full client proposals in seconds. Auto-fill budget, timeline, scope and convert accepted proposals into live projects instantly. Pro+',
       icon: (
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E8B84B" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
         </svg>
       )
     },
     {
       title: 'Recurring Retainer Invoices',
-      desc: 'Set up monthly, quarterly, or weekly retainers. Auto-send via n8n on schedule or fire manually — no chasing clients.',
+      desc: 'Set up monthly, quarterly, or weekly retainers that auto-send via n8n on schedule. Built for agencies billing long-term clients. Agency only.',
       icon: (
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E8B84B" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
@@ -46,7 +46,7 @@ export default function PricingPage() {
     },
     {
       title: 'AI Risk Radar',
-      desc: 'Automatically flags budget overruns, scope creep, and timeline delays before they become problems.',
+      desc: 'Automatically flags budget overruns, scope creep, and timeline delays before they become problems. Available on all plans.',
       icon: (
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E8B84B" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
@@ -55,7 +55,7 @@ export default function PricingPage() {
     },
     {
       title: 'AI Reporting Agent',
-      desc: 'Generate Weekly Status, End-of-Sprint, and Client-Ready reports from live project data. Send to clients in one click.',
+      desc: 'Weekly Status on Pro. End-of-Sprint and Client-Ready reports on Agency — generated from live data and sent to clients in one click.',
       icon: (
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E8B84B" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
           <rect x="2" y="3" width="20" height="18" rx="2"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="14" y2="13"/><line x1="8" y1="17" x2="10" y2="17"/>
@@ -63,17 +63,17 @@ export default function PricingPage() {
       )
     },
     {
-      title: 'Meeting AI',
-      desc: 'Auto-generated summaries with action items, decisions, and follow-ups after every call.',
+      title: 'Client Portal',
+      desc: 'Give clients their own login to view project progress. Generate client-ready AI status updates without exposing your internal workflow. Agency only.',
       icon: (
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E8B84B" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 2a8 8 0 0 0-8 8c0 3 1.5 5.5 4 7v3h8v-3c2.5-1.5 4-4 4-7a8 8 0 0 0-8-8z"/><line x1="10" y1="22" x2="14" y2="22"/>
+          <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
         </svg>
       )
     },
     {
       title: 'Time & Billing',
-      desc: 'Track billable hours per project and feed logged time directly into invoices — no double entry.',
+      desc: 'Track billable hours per project with a live timer. Feed logged time directly into invoices — no double entry. Available on all plans.',
       icon: (
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E8B84B" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
           <rect x="2" y="3" width="20" height="18" rx="2"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="14" y2="13"/>
@@ -136,10 +136,9 @@ export default function PricingPage() {
           </h1>
           <p style={{
             color: 'rgba(240,246,255,0.5)', fontSize: '17px', lineHeight: 1.7,
-            maxWidth: '520px', margin: '0 auto 36px'
+            maxWidth: '560px', margin: '0 auto 36px'
           }}>
-            Empire PM gives freelancers and agencies AI proposals, recurring retainers,
-            automated invoicing, risk alerts, meeting summaries — in one command centre.
+            Each plan unlocks the tools your business needs at that stage — from solo freelancer to agency running a team.
           </p>
           <div style={{ display: 'flex', gap: '14px', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '20px' }}>
             <a href="#pricing" style={{
@@ -238,7 +237,7 @@ export default function PricingPage() {
               Built for the <em style={{ color: '#E8B84B', fontStyle: 'italic' }}>one-person empire</em>
             </h2>
             <p style={{ color: 'rgba(240,246,255,0.5)', fontSize: '15px', maxWidth: 480, margin: '0 auto' }}>
-              Eight powerful tools that replace spreadsheets, WhatsApp threads, and gut feelings.
+              Eight tools across three plans — each unlocking at the stage you actually need them.
             </p>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: '16px' }}>
@@ -296,7 +295,7 @@ export default function PricingPage() {
               Choose Your <em style={{ color: '#E8B84B', fontStyle: 'italic' }}>Plan</em>
             </h2>
             <p style={{ color: 'rgba(240,246,255,0.5)', fontSize: '15px' }}>
-              Every feature included at every tier. The only difference is scale.
+              Each stage of growth unlocks the right tools. Start where you are today.
             </p>
           </div>
 
