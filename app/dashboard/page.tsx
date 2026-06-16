@@ -373,20 +373,20 @@ Proceed and set this task to active anyway?`)
     starter: {
       projects: 3,
       teamMembers: 3,
-      // Starter: basic features only, no AI (except risk logging), no collaboration
+      // Starter: core PM tools only — no AI suite, no proposals, no retainers
       aiFeatures: ['risks', 'timeline', 'billing']
     },
     pro: {
       projects: 10,
       teamMembers: 8,
-      // Pro: full AI suite + collaboration
-      aiFeatures: ['risks', 'planner', 'meetings', 'scope', 'clients', 'workload', 'reports', 'timeline', 'billing']
+      // Pro: full AI suite + proposals + retainers + collaboration
+      aiFeatures: ['risks', 'planner', 'meetings', 'scope', 'clients', 'workload', 'reports', 'timeline', 'billing', 'proposals', 'retainers']
     },
     agency: {
       projects: 25,
       teamMembers: 15,
-      // Agency: everything in Pro + white label
-      aiFeatures: ['risks', 'planner', 'meetings', 'scope', 'clients', 'workload', 'reports', 'timeline', 'billing']
+      // Agency: everything in Pro
+      aiFeatures: ['risks', 'planner', 'meetings', 'scope', 'clients', 'workload', 'reports', 'timeline', 'billing', 'proposals', 'retainers']
     }
   }
   const limits = planLimits[plan] || planLimits.starter
@@ -402,7 +402,7 @@ Proceed and set this task to active anyway?`)
     { id: 'dashboard', icon: '◈', label: 'Dashboard', section: 'Command' },
     { id: 'projects', icon: '◻', label: 'Projects', section: null, badge: activeProjects > 0 ? activeProjects : null },
     { id: 'tasks', icon: '✓', label: 'Tasks', section: null, badge: activeTasks > 0 ? activeTasks : null },
-    { id: 'proposals', icon: '◇', label: 'Proposals', section: null, ai: true },
+    { id: 'proposals', icon: '◇', label: 'Proposals', section: null, ai: true, locked: !hasAIFeature('proposals') },
     { id: 'planner', icon: '✦', label: 'AI Planner', section: null, gold: true, ai: true, locked: !hasAIFeature('planner') },
     { id: 'meetings', icon: '◎', label: 'Meetings', section: 'Operations', ai: true, locked: !hasAIFeature('meetings') },
     { id: 'risks', icon: '⚠', label: 'Risk Radar', section: null, badge: openRisks > 0 ? openRisks : null, ai: true },
@@ -413,7 +413,7 @@ Proceed and set this task to active anyway?`)
     { id: 'reports', icon: '◈', label: 'Reports', section: null, locked: !hasAIFeature('reports') },
     { id: 'ai-reports', icon: '✦', label: 'AI Reports', section: null, ai: true, locked: !hasAIFeature('reports') },
     { id: 'billing', icon: '◷', label: 'Time & Billing', section: null },
-    { id: 'retainers', icon: '◷', label: 'Retainers', section: null },
+    { id: 'retainers', icon: '◷', label: 'Retainers', section: null, locked: !hasAIFeature('retainers') },
     { id: 'settings', icon: '⚙', label: 'Settings', section: 'Account' },
   ]
 
@@ -470,7 +470,18 @@ Proceed and set this task to active anyway?`)
                 )}
                 <div onClick={() => {
                     if ((item as any).locked) {
-                      alert('⬆ Upgrade Required\n\nClient Portal is not available on your ' + plan.charAt(0).toUpperCase() + plan.slice(1) + ' plan.\n\nUpgrade to Pro or Agency to unlock.')
+                      const featureNames: Record<string, string> = {
+                        proposals: 'Proposals & Estimates',
+                        retainers: 'Recurring Retainers',
+                        planner: 'AI Planner',
+                        meetings: 'AI Meetings',
+                        scope: 'Scope Control',
+                        clients: 'Client Portal',
+                        workload: 'Workload AI',
+                        reports: 'Reports & AI Reports',
+                      }
+                      const featureName = featureNames[item.id] || item.label
+                      alert(`⬆ Upgrade Required\n\n${featureName} is not available on your ${plan.charAt(0).toUpperCase() + plan.slice(1)} plan.\n\nUpgrade to Pro or Agency to unlock.`)
                     } else { setTab(item.id) }
                   }} style={{
                   display: 'flex', alignItems: 'center', gap: isMobile ? '3px' : '10px',
@@ -2606,8 +2617,8 @@ function SettingsForm({ user, supabase }: any) {
 
   const planNames: any = { starter: 'Starter', pro: 'Pro', agency: 'Agency' }
   const planLimitsDisplay: any = {
-    starter: '3 projects · 3 team members/project · Risk Radar · Timeline · Time & Billing · No AI suite · No collaboration',
-    pro: '10 projects · 8 team members/project · Full AI suite · Client Portal · Team login · Invoice automation · n8n',
+    starter: '3 projects · 3 team members/project · Tasks & Kanban · Risk Radar · Timeline · Time & Billing · No AI suite · No Proposals · No Retainers',
+    pro: '10 projects · 8 team members/project · Full AI suite · Proposals & Estimates · Recurring Retainers · Client Portal · Team login · Invoice automation',
     agency: '25 projects · 15 team members/project · Everything in Pro · White label emails · Priority support'
   }
   const planPrices: any = { starter: { monthly: '$17', quarterly: '$42', yearly: '$147' }, pro: { monthly: '$37', quarterly: '$89', yearly: '$297' }, agency: { monthly: '$67', quarterly: '$161', yearly: '$537' } }
