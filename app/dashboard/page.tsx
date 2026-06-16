@@ -393,9 +393,10 @@ Proceed and set this task to active anyway?`)
   const limits = planLimits[plan] || planLimits.starter
   const activeProjectCount = projects.filter((p: Project) => p.status !== 'completed').length
   const canAddProject = activeProjectCount < limits.projects
-  const canAddTeamMember = (projectId: string) => {
-    const count = teamMembers.filter((m: TeamMember) => m.project_id === projectId).length
-    return count < limits.teamMembers
+  const uniqueTeamSeats = new Set(teamMembers.map((m: TeamMember) => m.email.toLowerCase())).size
+  const canAddTeamMember = () => {
+    if (limits.teamMembers === 0) return false
+    return uniqueTeamSeats < limits.teamMembers
   }
   const hasAIFeature = (feature: string) => limits.aiFeatures.includes(feature)
 
@@ -823,7 +824,7 @@ Proceed and set this task to active anyway?`)
               <div style={{ marginTop: '14px', display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '14px' }}>
                 <div style={s.card}>
                   <div style={s.sectionTitle}>Add Team Member</div>
-                  <TeamMemberForm user={user} projects={projects} onCreated={() => user && loadData(user.id)} supabase={supabase} isMobile={isMobile} canAddTeamMember={canAddTeamMember} limits={limits} plan={plan} />
+                  <TeamMemberForm user={user} projects={projects} onCreated={() => user && loadData(user.id)} supabase={supabase} isMobile={isMobile} canAddTeamMember={canAddTeamMember} limits={limits} plan={plan} uniqueTeamSeats={uniqueTeamSeats} />
                 </div>
                 <div style={s.card}>
                   <div style={s.sectionTitle}>Team Members</div>
@@ -2053,7 +2054,7 @@ Proceed and set this task to active anyway?`)
                 {projects.length === 0 ? (
                   <div style={{ fontSize: '12px', color: textDim, padding: '16px', textAlign: 'center' }}>Create a project first to assign team members to it.</div>
                 ) : (
-                  <TeamMemberForm user={user} projects={projects} onCreated={() => { if (user) loadData(user.id); setWizardStep(3) }} supabase={supabase} isMobile={isMobile} canAddTeamMember={canAddTeamMember} limits={limits} plan={plan} />
+                  <TeamMemberForm user={user} projects={projects} onCreated={() => { if (user) loadData(user.id); setWizardStep(3) }} supabase={supabase} isMobile={isMobile} canAddTeamMember={canAddTeamMember} limits={limits} plan={plan} uniqueTeamSeats={uniqueTeamSeats} />
                 )}
                 <button style={{ ...s.btnGhost, width: '100%', marginTop: '10px', padding: '9px' }} onClick={() => setWizardStep(3)}>Skip this step →</button>
               </div>
@@ -2110,13 +2111,28 @@ function ProjectForm({ user, onCreated, supabase, isMobile, canAddProject, limit
   )
 }
 
-function TeamMemberForm({ user, projects, onCreated, supabase, isMobile, canAddTeamMember, limits, plan }: any) {
+function TeamMemberForm({ user, projects, onCreated, supabase, isMobile, canAddTeamMember, limits, plan, uniqueTeamSeats }: any) {
   const [name, setName] = useState(''); const [email, setEmail] = useState(''); const [role, setRole] = useState(''); const [projectId, setProjectId] = useState(''); const [capacity, setCapacity] = useState('100')
   const submit = async () => {
     if (!name || !email || !projectId || !user) return
     await supabase.from('team_members').insert({ user_id: user.id, project_id: projectId, name, email, role, capacity: parseInt(capacity) })
     setName(''); setEmail(''); setRole(''); onCreated()
   }
+
+  const planName = (plan || 'starter').charAt(0).toUpperCase() + (plan || 'starter').slice(1)
+
+  // Starter — no team logins at all
+  if (limits?.teamMembers === 0) {
+    return (
+      <div style={{ padding: '16px', background: 'rgba(201,153,58,0.04)', border: '1px solid rgba(201,153,58,0.15)', borderRadius: '4px', textAlign: 'center' }}>
+        <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: '#E8B84B', marginBottom: '4px', fontWeight: 700 }}>⬆ Upgrade to Pro</div>
+        <div style={{ fontSize: '11px', color: '#A8C0DC', lineHeight: 1.6 }}>Team member logins require the Pro plan ($37/mo).<br/>Pro includes 3 team seats across all your projects.</div>
+      </div>
+    )
+  }
+
+  const seatLimitReached = canAddTeamMember && !canAddTeamMember()
+
   return (
     <div>
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
@@ -2134,10 +2150,14 @@ function TeamMemberForm({ user, projects, onCreated, supabase, isMobile, canAddT
           {projects.map((p: Project) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
       </div>
-      {projectId && canAddTeamMember && !canAddTeamMember(projectId) ? (
+      {/* Seat usage indicator */}
+      <div style={{ marginBottom: '10px', fontSize: '11px', color: '#A8C0DC' }}>
+        {uniqueTeamSeats} of {limits?.teamMembers} seats used · {planName} plan
+      </div>
+      {seatLimitReached ? (
         <div style={{ padding: '12px', background: 'rgba(226,75,74,0.08)', border: '1px solid rgba(226,75,74,0.25)', borderRadius: '4px', textAlign: 'center' }}>
-          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: '#FF9090', marginBottom: '4px', fontWeight: 600 }}>⬆ Team limit reached ({limits?.teamMembers}/project on {(plan||'starter').charAt(0).toUpperCase()+(plan||'starter').slice(1)} plan)</div>
-          <div style={{ fontSize: '11px', color: '#A8C0DC' }}>Upgrade to add more team members.</div>
+          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: '#FF9090', marginBottom: '4px', fontWeight: 600 }}>⬆ Seat limit reached ({limits?.teamMembers} seats on {planName} plan)</div>
+          <div style={{ fontSize: '11px', color: '#A8C0DC' }}>Upgrade to Agency for 15 seats, or remove an existing team member to free up a seat.</div>
         </div>
       ) : (
         <button style={{ ...s.btnGold, width: '100%' }} onClick={submit}>Add Team Member →</button>
