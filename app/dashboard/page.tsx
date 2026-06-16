@@ -56,10 +56,10 @@ function fmtDate(d?: string | null) {
   return new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
-async function callAI(system: string, content: string): Promise<string> {
+async function callAI(system: string, content: string, maxTokens = 1000): Promise<string> {
   const res = await fetch('/api/chat', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, system, messages: [{ role: 'user', content }] })
+    body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: maxTokens, system, messages: [{ role: 'user', content }] })
   })
   const data = await res.json()
   return data.content?.[0]?.text || 'Unable to generate response.'
@@ -3273,7 +3273,7 @@ Report period: Last ${dateRange} days (${cutoffStr} to ${todayStr})`
     }
 
     try {
-      const text = await callAI(systemPrompts[reportType], `Generate a ${reportType === 'weekly' ? 'weekly status' : reportType === 'sprint' ? 'end-of-sprint' : 'client-ready'} report using this live project data:\n${dataContext}`)
+      const text = await callAI(systemPrompts[reportType], `Generate a ${reportType === 'weekly' ? 'weekly status' : reportType === 'sprint' ? 'end-of-sprint' : 'client-ready'} report using this live project data:\n${dataContext}`, 2000)
       setReportOutput(text)
     } catch {
       setReportOutput('Failed to generate report. Please try again.')
