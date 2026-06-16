@@ -27,6 +27,24 @@ export default function PricingPage() {
 
   const features = [
     {
+      title: 'AI Proposals & Estimates',
+      desc: 'Generate full client proposals in seconds. Auto-fill budget, timeline, scope and convert accepted proposals into live projects.',
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E8B84B" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+        </svg>
+      )
+    },
+    {
+      title: 'Recurring Retainer Invoices',
+      desc: 'Set up monthly, quarterly, or weekly retainers. Auto-send via n8n on schedule or fire manually — no chasing clients.',
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E8B84B" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+        </svg>
+      )
+    },
+    {
       title: 'AI Risk Radar',
       desc: 'Automatically flags budget overruns, scope creep, and timeline delays before they become problems.',
       icon: (
@@ -36,8 +54,8 @@ export default function PricingPage() {
       )
     },
     {
-      title: 'Smart Invoicing',
-      desc: 'Generate professional invoices in one click from any project. Pull logged time automatically.',
+      title: 'AI Reporting Agent',
+      desc: 'Generate Weekly Status, End-of-Sprint, and Client-Ready reports from live project data. Send to clients in one click.',
       icon: (
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E8B84B" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
           <rect x="2" y="3" width="20" height="18" rx="2"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="14" y2="13"/><line x1="8" y1="17" x2="10" y2="17"/>
@@ -54,32 +72,14 @@ export default function PricingPage() {
       )
     },
     {
-      title: 'Team Workload',
-      desc: 'See who\'s overloaded and rebalance tasks across your team to prevent burnout.',
-      icon: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E8B84B" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-        </svg>
-      )
-    },
-    {
-      title: 'Client Portal',
-      desc: 'Give clients a professional window into project progress without exposing your internal workflow.',
-      icon: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E8B84B" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
-        </svg>
-      )
-    },
-    {
       title: 'Time & Billing',
       desc: 'Track billable hours per project and feed logged time directly into invoices — no double entry.',
       icon: (
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E8B84B" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+          <rect x="2" y="3" width="20" height="18" rx="2"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="14" y2="13"/>
         </svg>
       )
-    }
+    },
   ]
 
   const faqs = [
@@ -138,8 +138,8 @@ export default function PricingPage() {
             color: 'rgba(240,246,255,0.5)', fontSize: '17px', lineHeight: 1.7,
             maxWidth: '520px', margin: '0 auto 36px'
           }}>
-            Empire PM gives freelancers and small teams real-time visibility, AI risk alerts,
-            automated invoicing, and meeting summaries — in one command centre.
+            Empire PM gives freelancers and agencies AI proposals, recurring retainers,
+            automated invoicing, risk alerts, meeting summaries — in one command centre.
           </p>
           <div style={{ display: 'flex', gap: '14px', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '20px' }}>
             <a href="#pricing" style={{
@@ -238,7 +238,7 @@ export default function PricingPage() {
               Built for the <em style={{ color: '#E8B84B', fontStyle: 'italic' }}>one-person empire</em>
             </h2>
             <p style={{ color: 'rgba(240,246,255,0.5)', fontSize: '15px', maxWidth: 480, margin: '0 auto' }}>
-              Six powerful tools that replace spreadsheets, WhatsApp threads, and gut feelings.
+              Eight powerful tools that replace spreadsheets, WhatsApp threads, and gut feelings.
             </p>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: '16px' }}>
@@ -413,7 +413,7 @@ export default function PricingPage() {
                 Replace <em style={{ color: '#E8B84B', fontStyle: 'italic' }}>5 tools</em> with one
               </h2>
               <p style={{ fontSize: '14px', color: 'rgba(192,208,232,0.75)', marginTop: '12px', maxWidth: '500px', margin: '12px auto 0' }}>
-                The average agency pays $86+/month for tools that don&apos;t talk to each other. Empire PM Pro replaces all of them for $37.
+                The average agency pays $150+/month for tools that don&apos;t talk to each other. Empire PM Pro replaces all of them for $37.
               </p>
             </div>
 
@@ -428,9 +428,10 @@ export default function PricingPage() {
 
               {[
                 { need: 'Project & task management', tool: 'Asana Premium', cost: '$13.49/user/mo', included: true },
+                { need: 'AI proposals & estimates', tool: 'Proposify', cost: '$49/mo', included: true },
+                { need: 'Recurring retainer invoices', tool: 'FreshBooks', cost: '$17/mo', included: true },
                 { need: 'AI meeting summaries', tool: 'Otter.ai', cost: '$16.99/mo', included: true },
                 { need: 'Time tracking & billing', tool: 'Harvest', cost: '$12/mo', included: true },
-                { need: 'Invoice automation', tool: 'FreshBooks', cost: '$17/mo', included: true },
                 { need: 'AI risk management', tool: 'No equivalent', cost: '$30-50/mo', included: true },
                 { need: 'Client reporting portal', tool: 'AgencyAnalytics', cost: '$12/mo', included: true },
               ].map((row, i) => (
@@ -450,8 +451,8 @@ export default function PricingPage() {
               <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', padding: '18px 24px', background: 'rgba(8,20,44,0.6)', alignItems: 'center' }}>
                 <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', fontWeight: 700, letterSpacing: '0.12em', color: 'rgba(201,153,58,0.8)' }}>TOTAL MONTHLY COST</div>
                 <div style={{ textAlign: 'center' as const }}>
-                  <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '24px', color: '#FF9090', textDecoration: 'line-through', opacity: 0.7 }}>$86+</div>
-                  <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(192,208,232,0.4)', letterSpacing: '0.1em' }}>5 SEPARATE TOOLS</div>
+                  <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '24px', color: '#FF9090', textDecoration: 'line-through', opacity: 0.7 }}>$150+</div>
+                  <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(192,208,232,0.4)', letterSpacing: '0.1em' }}>7 SEPARATE TOOLS</div>
                 </div>
                 <div style={{ textAlign: 'center' as const }}>
                   <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '32px', color: '#E8B84B' }}>$37</div>
@@ -463,7 +464,7 @@ export default function PricingPage() {
             {/* Saving callout */}
             <div style={{ textAlign: 'center', marginTop: '24px' }}>
               <span style={{ background: 'rgba(34,201,144,0.1)', border: '1px solid rgba(34,201,144,0.25)', borderRadius: '20px', padding: '8px 20px', fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', fontWeight: 700, color: '#22C990', letterSpacing: '0.1em' }}>
-                SAVE $49+/MONTH · EVERYTHING IN ONE PLACE · NO INTEGRATIONS NEEDED
+                SAVE $113+/MONTH · EVERYTHING IN ONE PLACE · NO INTEGRATIONS NEEDED
               </span>
             </div>
           </div>
