@@ -2648,8 +2648,8 @@ function SettingsForm({ user, supabase }: any) {
   const planNames: any = { starter: 'Starter', pro: 'Pro', agency: 'Agency' }
   const planLimitsDisplay: any = {
     starter: '5 projects · No team logins · Tasks, Kanban & Timeline · Risk Radar · Time & Billing · No AI suite · No Proposals',
-    pro: '10 projects · 3 team logins · AI Planner · Meetings AI · Scope Control · Proposals & Estimates · Invoice automation · Weekly AI Reports · No Retainers · No Client Portal · No Workload AI',
-    agency: '25 projects · 15 team logins · Everything in Pro · Recurring Retainers · Client Portal · Workload AI · Full AI Reports (Sprint + Client-Ready) · White label emails'
+    pro: '10 projects · 3 team seats (account-wide) · AI Planner · Meetings AI · Scope Control · Proposals & Estimates · Invoice automation · Weekly AI Reports',
+    agency: '25 projects · 15 team seats (account-wide) · Everything in Pro · Recurring Retainers · Client Portal · Workload AI · Full AI Reports · White label emails'
   }
   const planPrices: any = { starter: { monthly: '$17', quarterly: '$42', yearly: '$147' }, pro: { monthly: '$37', quarterly: '$89', yearly: '$297' }, agency: { monthly: '$67', quarterly: '$161', yearly: '$537' } }
 
