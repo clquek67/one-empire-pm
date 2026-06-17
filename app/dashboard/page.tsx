@@ -2616,11 +2616,16 @@ Active tasks: ${projTasks.filter((t: Task) => t.status === 'active').length}, Bl
 function SettingsForm({ user, supabase }: any) {
   const [company, setCompany] = useState(''); const [phone, setPhone] = useState(''); const [saved, setSaved] = useState(false)
   const [sub, setSub] = useState<any>(null); const [portalLoading, setPortalLoading] = useState(false)
+  const [telegramChatId, setTelegramChatId] = useState(''); const [timezone, setTimezone] = useState('Asia/Singapore')
+  const [telegramSaved, setTelegramSaved] = useState(false); const [telegramTesting, setTelegramTesting] = useState(false); const [telegramTestMsg, setTelegramTestMsg] = useState('')
 
   useEffect(() => {
     if (user) {
-      supabase.from('profiles').select('company_name, phone').eq('id', user.id).single().then(({ data }: any) => {
-        if (data) { setCompany(data.company_name || ''); setPhone(data.phone || '') }
+      supabase.from('profiles').select('company_name, phone, telegram_chat_id, timezone').eq('id', user.id).single().then(({ data }: any) => {
+        if (data) {
+          setCompany(data.company_name || ''); setPhone(data.phone || '')
+          setTelegramChatId(data.telegram_chat_id || ''); setTimezone(data.timezone || 'Asia/Singapore')
+        }
       })
       supabase.from('subscriptions').select('*').eq('user_id', user.id).single().then(({ data }: any) => {
         if (data) setSub(data)
@@ -2632,6 +2637,40 @@ function SettingsForm({ user, supabase }: any) {
     if (!user) return
     await supabase.from('profiles').update({ company_name: company, phone }).eq('id', user.id)
     setSaved(true); setTimeout(() => setSaved(false), 3000)
+  }
+
+  const saveTelegram = async () => {
+    if (!user) return
+    await supabase.from('profiles').update({ telegram_chat_id: telegramChatId, timezone }).eq('id', user.id)
+    setTelegramSaved(true); setTimeout(() => setTelegramSaved(false), 3000)
+  }
+
+  const testTelegram = async () => {
+    if (!telegramChatId) { setTelegramTestMsg('Please enter your Chat ID first'); return }
+    setTelegramTesting(true); setTelegramTestMsg('')
+    try {
+      const name = user?.user_metadata?.full_name || 'there'
+      const res = await fetch(`https://api.telegram.org/bot8863990215:AAH2E5qkJbPePHEg5L7FSz5kz5Y36bUuzt0/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: telegramChatId,
+          text: `🏛 Empire PM\n\n✅ Connection successful, ${name}!\n\nYou will receive your daily project briefing at 9am (${timezone}).\n\npm.one-empire.com`,
+          parse_mode: 'HTML'
+        })
+      })
+      const data = await res.json()
+      if (data.ok) { setTelegramTestMsg('✓ Test message sent! Check your Telegram.') }
+      else { setTelegramTestMsg(`✗ Failed: ${data.description || 'Unknown error'}`) }
+    } catch { setTelegramTestMsg('✗ Network error — please try again') }
+    setTelegramTesting(false)
+  }
+
+  const disconnectTelegram = async () => {
+    if (!user) return
+    if (!window.confirm('Disconnect Telegram? You will stop receiving daily briefings.')) return
+    await supabase.from('profiles').update({ telegram_chat_id: null }).eq('id', user.id)
+    setTelegramChatId(''); setTelegramTestMsg('Telegram disconnected.')
   }
 
   const manageSubscription = async () => {
@@ -2653,6 +2692,25 @@ function SettingsForm({ user, supabase }: any) {
   }
   const planPrices: any = { starter: { monthly: '$17', quarterly: '$42', yearly: '$147' }, pro: { monthly: '$37', quarterly: '$89', yearly: '$297' }, agency: { monthly: '$67', quarterly: '$161', yearly: '$537' } }
 
+  const timezones = [
+    { value: 'Asia/Singapore', label: 'Singapore (SGT, UTC+8)' },
+    { value: 'Asia/Kuala_Lumpur', label: 'Kuala Lumpur (MYT, UTC+8)' },
+    { value: 'Asia/Jakarta', label: 'Jakarta (WIB, UTC+7)' },
+    { value: 'Asia/Bangkok', label: 'Bangkok (ICT, UTC+7)' },
+    { value: 'Asia/Manila', label: 'Manila (PST, UTC+8)' },
+    { value: 'Asia/Hong_Kong', label: 'Hong Kong (HKT, UTC+8)' },
+    { value: 'Asia/Tokyo', label: 'Tokyo (JST, UTC+9)' },
+    { value: 'Asia/Seoul', label: 'Seoul (KST, UTC+9)' },
+    { value: 'Asia/Kolkata', label: 'India (IST, UTC+5:30)' },
+    { value: 'Asia/Dubai', label: 'Dubai (GST, UTC+4)' },
+    { value: 'Europe/London', label: 'London (GMT/BST)' },
+    { value: 'Europe/Paris', label: 'Paris (CET, UTC+1)' },
+    { value: 'America/New_York', label: 'New York (EST, UTC-5)' },
+    { value: 'America/Chicago', label: 'Chicago (CST, UTC-6)' },
+    { value: 'America/Los_Angeles', label: 'Los Angeles (PST, UTC-8)' },
+    { value: 'Australia/Sydney', label: 'Sydney (AEDT, UTC+11)' },
+  ]
+
   return (
     <div style={{ maxWidth: '600px' }}>
       <div style={s.card}>
@@ -2663,6 +2721,66 @@ function SettingsForm({ user, supabase }: any) {
         <div style={{ marginBottom: '14px' }}><div style={s.label}>Phone</div><input style={s.input} value={phone} onChange={e => setPhone(e.target.value)} placeholder="+65 9123 4567"/></div>
         <button style={{ ...s.btnGold, width: '100%' }} onClick={save}>{saved ? '✓ Saved!' : 'Save Changes →'}</button>
       </div>
+
+      {/* ── Telegram ── */}
+      <div style={{ ...s.card, marginTop: '14px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+          <div style={s.sectionTitle}>Telegram Alerts</div>
+          {telegramChatId && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 700, padding: '2px 8px', borderRadius: '2px', background: 'rgba(34,201,144,0.12)', color: '#4DFFB4', border: '1px solid rgba(34,201,144,0.3)' }}>CONNECTED</span>}
+        </div>
+        <div style={{ fontSize: '11px', color: textDim, marginBottom: '16px', lineHeight: 1.6 }}>
+          Receive a daily 9am briefing in Telegram — overdue tasks, risks, upcoming milestones and unbilled hours.
+        </div>
+
+        {/* How to connect instructions */}
+        <div style={{ marginBottom: '16px', padding: '12px 14px', background: 'rgba(8,20,44,0.5)', border: '1px solid rgba(201,153,58,0.15)', borderRadius: '4px' }}>
+          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600, letterSpacing: '0.16em', color: goldDim, marginBottom: '8px' }}>HOW TO CONNECT</div>
+          {[
+            'Open Telegram and search for @EmpirePMBot',
+            'Send /start to the bot',
+            'The bot replies with your Chat ID (a number like 123456789)',
+            'Paste that number below and click Save',
+          ].map((step, i) => (
+            <div key={i} style={{ display: 'flex', gap: '8px', marginBottom: '6px', fontSize: '11px', color: textMid }}>
+              <span style={{ fontFamily: 'Rajdhani, sans-serif', fontWeight: 700, color: goldDim, flexShrink: 0 }}>{i + 1}.</span>
+              <span>{step}</span>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ marginBottom: '10px' }}>
+          <div style={s.label}>Your Telegram Chat ID</div>
+          <input style={s.input} value={telegramChatId} onChange={e => setTelegramChatId(e.target.value)}
+            placeholder="e.g. 123456789" type="text"/>
+        </div>
+        <div style={{ marginBottom: '14px' }}>
+          <div style={s.label}>Your Timezone</div>
+          <select style={s.input} value={timezone} onChange={e => setTimezone(e.target.value)}>
+            {timezones.map(tz => <option key={tz.value} value={tz.value}>{tz.label}</option>)}
+          </select>
+        </div>
+
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+          <button style={{ ...s.btnGold, flex: 1 }} onClick={saveTelegram}>
+            {telegramSaved ? '✓ Saved!' : 'Save Telegram Settings →'}
+          </button>
+          <button style={{ ...s.btnGhost, flex: 1 }} onClick={testTelegram} disabled={telegramTesting}>
+            {telegramTesting ? 'Sending...' : '◎ Send Test Message'}
+          </button>
+        </div>
+        {telegramChatId && (
+          <button onClick={disconnectTelegram}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '10px', color: '#FF9090', fontFamily: 'Rajdhani, sans-serif', letterSpacing: '0.1em' }}>
+            Disconnect Telegram
+          </button>
+        )}
+        {telegramTestMsg && (
+          <div style={{ marginTop: '8px', fontSize: '11px', color: telegramTestMsg.startsWith('✓') ? '#4DFFB4' : '#FF9090' }}>
+            {telegramTestMsg}
+          </div>
+        )}
+      </div>
+
       <div style={{ ...s.card, marginTop: '14px' }}>
         <div style={s.sectionTitle}>Subscription</div>
         {sub ? (
