@@ -2649,19 +2649,17 @@ function SettingsForm({ user, supabase }: any) {
     if (!telegramChatId) { setTelegramTestMsg('Please enter your Chat ID first'); return }
     setTelegramTesting(true); setTelegramTestMsg('')
     try {
-      const name = user?.user_metadata?.full_name || 'there'
-      const res = await fetch(`https://api.telegram.org/bot8863990215:AAH2E5qkJbPePHEg5L7FSz5kz5Y36bUuzt0/sendMessage`, {
+      const res = await fetch('/api/telegram-test', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           chat_id: telegramChatId,
-          text: `🏛 Empire PM\n\n✅ Connection successful, ${name}!\n\nYou will receive your daily project briefing at 9am (${timezone}).\n\npm.one-empire.com`,
-          parse_mode: 'HTML'
+          name: user?.user_metadata?.full_name || 'there'
         })
       })
       const data = await res.json()
-      if (data.ok) { setTelegramTestMsg('✓ Test message sent! Check your Telegram.') }
-      else { setTelegramTestMsg(`✗ Failed: ${data.description || 'Unknown error'}`) }
+      if (data.success) { setTelegramTestMsg('✓ Test message sent! Check your Telegram.') }
+      else { setTelegramTestMsg(`✗ Failed: ${data.error || 'Unknown error'}`) }
     } catch { setTelegramTestMsg('✗ Network error — please try again') }
     setTelegramTesting(false)
   }
