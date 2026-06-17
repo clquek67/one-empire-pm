@@ -1,13 +1,15 @@
 import { createClient } from '@/lib/supabase-server'
 import { NextResponse } from 'next/server'
 
-const TELEGRAM_BOT_TOKEN = '8863990215:AAH2E5qkJbPePHEg5L7FSz5kz5Y36bUuzt0'
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN!
 
 export async function POST(request: Request) {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    if (!TELEGRAM_BOT_TOKEN) return NextResponse.json({ error: 'Telegram not configured' }, { status: 500 })
 
     const { chat_id, name } = await request.json()
     if (!chat_id) return NextResponse.json({ error: 'Missing chat_id' }, { status: 400 })
