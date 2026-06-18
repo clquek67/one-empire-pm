@@ -6,7 +6,8 @@ const NAVY2 = 'rgba(16,36,72,0.6)'
 const GOLD = '#E8B84B'
 const GOLDDIM = '#C9993A'
 const TEXT = '#F0F6FF'
-const TEXTDIM = 'rgba(240,246,255,0.5)'
+const TEXTDIM = 'rgba(240,246,255,0.75)'
+const TEXTBRIGHT = '#FFFFFF'
 const BORDER = 'rgba(201,153,58,0.2)'
 
 const PLANS = [
@@ -15,7 +16,13 @@ const PLANS = [
     price: 17,
     discounted: 8.50,
     priceId: 'price_1TdjWgB2X3LkDhkWCh4mHGvs',
-    features: ['5 Projects', 'Tasks & Kanban', 'Risk Radar', 'Time & Billing', 'Timeline & Milestones'],
+    features: [
+      '5 Projects',
+      'Tasks & Kanban Board',
+      'Risk Radar',
+      'Timeline & Milestones',
+      'Time & Billing',
+    ],
     cta: 'Start with Starter',
     highlight: false,
   },
@@ -24,7 +31,16 @@ const PLANS = [
     price: 37,
     discounted: 18.50,
     priceId: 'price_1TdjgxB2X3LkDhkWabdHxsdr',
-    features: ['10 Projects', '3 Team seats', 'AI Planner', 'Proposals & Estimates', 'Invoice automation', 'Weekly AI Reports', 'Meetings AI', 'Scope Control'],
+    features: [
+      '10 Projects',
+      '3 Team seats (account-wide)',
+      'AI Planner',
+      'Meetings AI',
+      'Scope Control AI',
+      'Proposals & Estimates (AI)',
+      'Invoice automation',
+      'Weekly AI Reports',
+    ],
     cta: 'Start with Pro',
     highlight: true,
   },
@@ -33,7 +49,16 @@ const PLANS = [
     price: 67,
     discounted: 33.50,
     priceId: 'price_1TdjjLB2X3LkDhkW4Cul3QwO',
-    features: ['25 Projects', '15 Team seats', 'Everything in Pro', 'Recurring Retainers', 'Client Portal', 'Workload AI', 'Full AI Reports', 'White label emails'],
+    features: [
+      '25 Projects',
+      '15 Team seats (account-wide)',
+      'Everything in Pro',
+      'Recurring Retainer Invoices',
+      'Client Portal & client logins',
+      'Workload AI',
+      'Full AI Reports',
+      'White label emails',
+    ],
     cta: 'Start with Agency',
     highlight: false,
   },
@@ -126,7 +151,7 @@ export default function ProductHuntPage() {
             <em style={{ color: GOLD, fontStyle: 'italic' }}>one AI command centre</em>
           </h1>
 
-          <p style={{ fontSize: '17px', color: TEXTDIM, maxWidth: '560px', margin: '0 auto 32px', lineHeight: 1.7 }}>
+          <p style={{ fontSize: '17px', color: 'rgba(240,246,255,0.85)', maxWidth: '560px', margin: '0 auto 32px', lineHeight: 1.7 }}>
             Empire PM combines AI planning, proposals, invoicing, risk alerts, meeting summaries and client reports — built for freelancers and agency owners who are done juggling 5 separate tools.
           </p>
 
@@ -151,7 +176,7 @@ export default function ProductHuntPage() {
             ].map((s, i) => (
               <div key={i} style={{ flex: 1, padding: '14px 20px', borderRight: i < 2 ? `1px solid ${BORDER}` : 'none', textAlign: 'center' }}>
                 <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '26px', color: GOLD }}>{s.val}</div>
-                <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: TEXTDIM, letterSpacing: '0.14em', marginTop: '2px' }}>{s.label.toUpperCase()}</div>
+                <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(240,246,255,0.65)', letterSpacing: '0.14em', marginTop: '2px' }}>{s.label.toUpperCase()}</div>
               </div>
             ))}
           </div>
@@ -200,7 +225,7 @@ export default function ProductHuntPage() {
               <div key={i} style={{ background: NAVY2, border: `1px solid ${BORDER}`, borderRadius: '6px', padding: '20px' }}>
                 <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '20px', color: GOLD, marginBottom: '8px' }}>{f.icon}</div>
                 <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '13px', fontWeight: 700, color: TEXT, marginBottom: '6px' }}>{f.title}</div>
-                <div style={{ fontSize: '12px', color: TEXTDIM, lineHeight: 1.6 }}>{f.desc}</div>
+                <div style={{ fontSize: '12px', color: 'rgba(240,246,255,0.8)', lineHeight: 1.6 }}>{f.desc}</div>
               </div>
             ))}
           </div>
@@ -212,10 +237,10 @@ export default function ProductHuntPage() {
             <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '36px', fontWeight: 400, color: TEXT, margin: '0 0 8px' }}>
               PH-exclusive pricing
             </h2>
-            <p style={{ fontSize: '14px', color: TEXTDIM, margin: '0 0 8px' }}>
+            <p style={{ fontSize: '14px', color: 'rgba(240,246,255,0.85)', margin: '0 0 8px' }}>
               Apply code <strong style={{ color: GOLD }}>PHLAUNCH</strong> at checkout for 50% off your first 3 months
             </p>
-            <p style={{ fontSize: '12px', color: TEXTDIM }}>Plans from $17/mo · Cancel anytime · No free trial</p>
+            <p style={{ fontSize: '12px', color: 'rgba(240,246,255,0.7)' }}>Plans from $17/mo · Cancel anytime · No free trial</p>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginTop: '32px' }}>
@@ -236,12 +261,12 @@ export default function ProductHuntPage() {
                   <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '36px', color: GOLD }}>${plan.discounted}</span>
                   <span style={{ fontSize: '12px', color: TEXTDIM }}>/mo first 3 months</span>
                 </div>
-                <div style={{ fontSize: '12px', color: TEXTDIM, marginBottom: '20px' }}>
+                <div style={{ fontSize: '12px', color: 'rgba(240,246,255,0.7)', marginBottom: '20px' }}>
                   then <span style={{ textDecoration: 'line-through' }}>${plan.price}/mo</span>
                 </div>
                 <div style={{ marginBottom: '24px' }}>
                   {plan.features.map((f, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', fontSize: '12px', color: 'rgba(240,246,255,0.75)' }}>
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', fontSize: '12px', color: 'rgba(240,246,255,0.9)' }}>
                       <span style={{ color: '#4DFFB4', flexShrink: 0 }}>✓</span>
                       {f}
                     </div>
@@ -280,10 +305,10 @@ export default function ProductHuntPage() {
         {/* ── Founder note ── */}
         <div style={{ background: 'rgba(8,20,40,0.6)', borderTop: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}` }}>
           <div style={{ maxWidth: '640px', margin: '0 auto', padding: '48px 28px', textAlign: 'center' }}>
-            <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '22px', color: TEXT, marginBottom: '16px', lineHeight: 1.6 }}>
+            <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '22px', color: 'rgba(240,246,255,0.95)', marginBottom: '16px', lineHeight: 1.6 }}>
               &ldquo;I built Empire PM because I was running 3 client projects simultaneously and spending more time switching between tools than actually doing PM work.&rdquo;
             </div>
-            <div style={{ fontSize: '13px', color: TEXTDIM }}>— Shine Quek, Founder of One Empire</div>
+            <div style={{ fontSize: '13px', color: 'rgba(240,246,255,0.8)' }}>— Shine Quek, Founder of One Empire</div>
             <div style={{ marginTop: '20px' }}>
               <a href="https://www.producthunt.com/p/general/built-an-ai-powered-pm-command-centre-for-freelancers-agencies" target="_blank" rel="noopener noreferrer"
                 style={{ fontSize: '12px', color: GOLD, textDecoration: 'none' }}>
