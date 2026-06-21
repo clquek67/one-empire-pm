@@ -741,6 +741,67 @@ Proceed and set this task to active anyway?`)
                   </div>
                 </div>
               </div>
+
+            {/* ── Workflow Pipeline Summary ── */}
+            {tasks.length > 0 && (() => {
+              const STAGES = ['Drafted', 'Submitted', 'Reviewed', 'Approved', 'Executed']
+              const getAutoStage = (t: Task): string => {
+                switch (t.status) {
+                  case 'todo':    return 'Drafted'
+                  case 'active':  return 'Submitted'
+                  case 'blocked': return 'Submitted'
+                  case 'done':    return 'Executed'
+                  default:        return 'Drafted'
+                }
+              }
+              const stageCounts = STAGES.map(stage => ({
+                stage,
+                count: tasks.filter((t: Task) => getAutoStage(t) === stage).length
+              }))
+              const total = tasks.length
+              return (
+                <div style={{ ...s.card, marginTop: '14px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                    <div style={s.sectionTitle}>Workflow Pipeline</div>
+                    <button onClick={() => setTab('tasks')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: gold, letterSpacing: '0.08em' }}>
+                      View Full Workflow →
+                    </button>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px' }}>
+                    {stageCounts.map(({ stage, count }) => {
+                      const pct = total > 0 ? Math.round((count / total) * 100) : 0
+                      const stageColor = stage === 'Executed' ? '#4DFFB4' : stage === 'Approved' ? '#4DD8F0' : stage === 'Reviewed' ? gold : stage === 'Submitted' ? '#C8DCF4' : 'rgba(240,246,255,0.4)'
+                      return (
+                        <div key={stage} style={{ textAlign: 'center' }}>
+                          <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '28px', fontWeight: 400, color: count > 0 ? stageColor : 'rgba(255,255,255,0.1)', lineHeight: 1, marginBottom: '6px' }}>
+                            {count}
+                          </div>
+                          <div style={{ height: '4px', background: 'rgba(255,255,255,0.06)', borderRadius: '2px', overflow: 'hidden', marginBottom: '6px' }}>
+                            <div style={{ height: '100%', width: `${pct}%`, background: count > 0 ? stageColor : 'transparent', borderRadius: '2px', transition: 'width 0.4s' }}/>
+                          </div>
+                          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 700, letterSpacing: '0.12em', color: count > 0 ? stageColor : 'rgba(255,255,255,0.2)' }}>
+                            {stage.toUpperCase()}
+                          </div>
+                          {count > 0 && (
+                            <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: 'rgba(255,255,255,0.3)', marginTop: '2px' }}>
+                              {pct}%
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', marginTop: '12px', paddingTop: '10px', borderTop: `1px solid ${border}` }}>
+                    {STAGES.map((stage, i) => (
+                      <div key={stage} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '8px', color: 'rgba(255,255,255,0.2)', letterSpacing: '0.08em' }}>{stage}</div>
+                        {i < STAGES.length - 1 && <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.15)' }}>→</div>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
+            })()}
             </div>
           )}
 
