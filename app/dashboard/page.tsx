@@ -2282,10 +2282,10 @@ function WorkflowView({ tasks, projects, milestones, teamMembers, user, supabase
                     <td style={{ padding: '10px 12px', borderBottom: `1px solid rgba(201,153,58,0.06)` }}>
                       <div style={{ fontSize: '12px', fontWeight: 600, color: textBright, marginBottom: '5px' }}>{t.name}</div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <div style={{ flex: 1, height: '3px', background: 'rgba(255,255,255,0.08)', borderRadius: '2px', overflow: 'hidden' }}>
+                        <div style={{ flex: 1, height: '5px', background: 'rgba(255,255,255,0.08)', borderRadius: '2px', overflow: 'hidden' }}>
                           <div style={{ width: `${pct}%`, height: '100%', background: pct === 100 ? '#4DFFB4' : `linear-gradient(90deg, ${goldDim}, ${gold})`, transition: 'width 0.3s' }}/>
                         </div>
-                        <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: pct === 100 ? '#4DFFB4' : textDim, minWidth: '28px' }}>{pct}%</span>
+                        <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '13px', fontWeight: 700, color: pct === 100 ? '#4DFFB4' : gold, minWidth: '36px', textAlign: 'right' as const }}>{pct}%</span>
                       </div>
                       <div style={{ marginTop: '4px' }}>
                         <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '8px', fontWeight: 700, padding: '1px 6px', borderRadius: '2px',
