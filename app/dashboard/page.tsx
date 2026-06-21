@@ -659,8 +659,41 @@ Proceed and set this task to active anyway?`)
                 <div>
                   <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: gold, marginBottom: '4px' }}>Empire AI · Daily Insight</div>
                   <div style={{ fontSize: '12px', color: textMid, lineHeight: 1.65 }}>
-                    {projects.length === 0 ? 'Welcome to Empire PM! Start by creating your first project.' :
-                      `You have ${activeProjects} active project${activeProjects !== 1 ? 's' : ''} and ${openRisks} open risk${openRisks !== 1 ? 's' : ''}. ${unbilledTotal > 0 ? `$${unbilledTotal.toLocaleString()} is ready to invoice.` : ''}`}
+                    {(() => {
+                      if (projects.length === 0) return 'Welcome to Empire PM! Start by creating your first project.'
+                      const todayStr = new Date().toISOString().split('T')[0]
+                      // Priority 1: Critical/high overdue risks
+                      const criticalRisk = risks.find(r => (r.level === 'critical' || r.level === 'high') && r.status === 'open' && r.due_date && r.due_date < todayStr)
+                      if (criticalRisk) {
+                        const proj = projects.find(p => p.id === criticalRisk.project_id)
+                        const days = Math.ceil((new Date(todayStr).getTime() - new Date(criticalRisk.due_date!).getTime()) / (1000*60*60*24))
+                        return `⚡ "${criticalRisk.title}" is ${days}d overdue on ${proj?.name || 'a project'} — this is a ${criticalRisk.level} risk. Address it today before it impacts your timeline.`
+                      }
+                      // Priority 2: Overdue tasks
+                      const overdueTasks = tasks.filter(t => t.due_date && t.due_date < todayStr && t.status !== 'done')
+                      if (overdueTasks.length > 0) {
+                        const oldest = overdueTasks.sort((a, b) => a.due_date! < b.due_date! ? -1 : 1)[0]
+                        const proj = projects.find(p => p.id === oldest.project_id)
+                        const days = Math.ceil((new Date(todayStr).getTime() - new Date(oldest.due_date!).getTime()) / (1000*60*60*24))
+                        return `⚡ "${oldest.name}" on ${proj?.name || 'a project'} is ${days}d overdue — ${overdueTasks.length > 1 ? `along with ${overdueTasks.length - 1} other task${overdueTasks.length > 2 ? 's' : ''}. ` : ''}Move it forward or update the due date today.`
+                      }
+                      // Priority 3: Unbilled hours
+                      if (unbilledTotal > 0) {
+                        const oldestLog = timeLogs.sort((a: any, b: any) => (a.log_date || a.created_at) < (b.log_date || b.created_at) ? -1 : 1)[0]
+                        const logDate = oldestLog?.log_date || oldestLog?.created_at
+                        const daysOld = logDate ? Math.ceil((new Date(todayStr).getTime() - new Date(logDate).getTime()) / (1000*60*60*24)) : null
+                        return `⚡ $${unbilledTotal.toLocaleString()} in unbilled hours${daysOld && daysOld > 7 ? ` — oldest entry is ${daysOld} days old` : ''}. Send an invoice today before it gets delayed further.`
+                      }
+                      // Priority 4: Milestones due soon
+                      const soonMilestone = milestones.find((m: any) => m.status !== 'completed' && m.due_date && m.due_date >= todayStr && Math.ceil((new Date(m.due_date as string).getTime() - new Date(todayStr).getTime()) / (1000*60*60*24)) <= 7)
+                      if (soonMilestone) {
+                        const proj = projects.find(p => p.id === soonMilestone.project_id)
+                        const days = Math.ceil((new Date(soonMilestone.due_date as string).getTime() - new Date(todayStr).getTime()) / (1000*60*60*24))
+                        return `⚡ Milestone "${soonMilestone.title}" on ${proj?.name || 'a project'} is due in ${days} day${days !== 1 ? 's' : ''}. Make sure it&apos;s on track.`
+                      }
+                      // Priority 5: All clear
+                      return `✅ No overdue tasks or critical risks today. ${activeProjects} project${activeProjects !== 1 ? 's' : ''} running smoothly — good time to review upcoming milestones or send a client update.`
+                    })()}
                   </div>
                 </div>
               </div>
