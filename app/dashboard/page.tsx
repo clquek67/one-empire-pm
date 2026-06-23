@@ -4757,8 +4757,9 @@ Start with "Hi ${recipientName || 'there'}," — no subject line.`
     setLoading(false)
   }
 
-  const send = async () => {
-    if (!draft || !recipientEmail) return
+  const send = async (emailOverride?: string) => {
+    const toEmail = emailOverride || recipientEmail
+    if (!draft || !toEmail) return
     setSending(true)
     const project = projects.find((p: any) => p.id === selectedProjectId)
     const subjectMap: Record<string, string> = {
@@ -4785,7 +4786,7 @@ ${bodyHtml}
         body: JSON.stringify({
           client: project?.client_name || recipientName || 'Recipient',
           project: project?.name || 'Project',
-          clientEmail: recipientEmail,
+          clientEmail: toEmail,
           senderName: pmName,
           senderEmail: pmEmail,
           invoiceDate: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }),
@@ -4794,7 +4795,9 @@ ${bodyHtml}
         })
       })
       if (!res.ok) { alert(`✗ Failed to send: ${res.status}`); setSending(false); return }
-      setSent(true); setDraft(''); setRecipientEmail(''); setRecipientName(''); setExtraNotes(''); setActiveCard(null)
+      setSent(true)
+      setDraft(''); setExtraNotes(''); setActiveCard(null)
+      setTimeout(() => { setSent(false); setRecipientEmail(''); setRecipientName('') }, 2000)
     } catch { alert('Network error — check n8n is running.') }
     setSending(false)
   }
@@ -4925,7 +4928,7 @@ ${bodyHtml}
               <div style={{ fontSize: '32px', marginBottom: '10px' }}>✓</div>
               <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '20px', color: '#4DFFB4', marginBottom: '6px' }}>Message sent</div>
               <div style={{ fontSize: '11px', color: textDim, marginBottom: '20px' }}>Delivered via Empire PM.</div>
-              <button style={btnGhost} onClick={() => { setSent(false); setDraft(''); setActiveCard(null) }}>Draft another →</button>
+              <button style={btnGhost} onClick={() => { setSent(false); setDraft(''); setActiveCard(null) }}>← Back to suggestions</button>
             </div>
           )}
 
@@ -4980,7 +4983,7 @@ ${bodyHtml}
                   <input style={inputStyle} value={recipientEmail} onChange={e => setRecipientEmail(e.target.value)} placeholder="recipient@company.com" type="email"/>
                 </div>
                 <div style={{ display: 'flex', gap: '8px' }}>
-                  <button style={{ ...btnGold, flex: 1, opacity: (!recipientEmail || sending) ? 0.6 : 1 }} onClick={send} disabled={!recipientEmail || sending}>
+                  <button style={{ ...btnGold, flex: 1, opacity: (!recipientEmail || sending) ? 0.6 : 1 }} onClick={() => send(recipientEmail)} disabled={!recipientEmail || sending}>
                     {sending ? 'Sending...' : '✉ Send →'}
                   </button>
                   <button style={btnGhost} onClick={() => { setDraft(''); setSent(false) }}>↺ Redraft</button>
