@@ -4495,6 +4495,7 @@ function CommunicationAgent({ projects, tasks, risks, milestones, teamMembers, m
   const [sent, setSent] = useState(false)
   const [editingDraft, setEditingDraft] = useState(false)
   const [activeCard, setActiveCard] = useState<string | null>(null)
+  const emailRef = useRef<HTMLInputElement>(null)
 
   const todayStr = new Date().toISOString().split('T')[0]
   const in3Str = new Date(Date.now() + 3 * 86400000).toISOString().split('T')[0]
@@ -4783,8 +4784,9 @@ Start with "Hi ${recipientName || 'there'}," — no subject line.`
   }
 
   const send = async (emailOverride?: string) => {
-    const toEmail = emailOverride || recipientEmail
-    if (!draft || !toEmail) return
+    const toEmail = emailOverride || emailRef.current?.value || recipientEmail
+    console.log('[CommsAgent] send() toEmail:', toEmail, '| recipientEmail state:', recipientEmail)
+    if (!draft || !toEmail) { alert(`No recipient email — toEmail: "${toEmail}"`); return }
     setSending(true)
     const project = projects.find((p: any) => p.id === selectedProjectId)
     const subjectMap: Record<string, string> = {
@@ -5005,10 +5007,20 @@ ${bodyHtml}
               <div style={{ borderTop: `1px solid ${border}`, paddingTop: '14px', marginTop: '14px' }}>
                 <div style={{ marginBottom: '10px' }}>
                   <label style={labelStyle}>Send To</label>
-                  <input style={inputStyle} value={recipientEmail} onChange={e => setRecipientEmail(e.target.value)} placeholder="recipient@company.com" type="email"/>
+                  <input
+                    ref={emailRef}
+                    style={inputStyle}
+                    value={recipientEmail}
+                    onChange={e => setRecipientEmail(e.target.value)}
+                    placeholder="recipient@company.com"
+                    type="email"
+                  />
                 </div>
                 <div style={{ display: 'flex', gap: '8px' }}>
-                  <button style={{ ...btnGold, flex: 1, opacity: (!recipientEmail || sending) ? 0.6 : 1 }} onClick={() => send(recipientEmail)} disabled={!recipientEmail || sending}>
+                  <button
+                    style={{ ...btnGold, flex: 1, opacity: (!recipientEmail || sending) ? 0.6 : 1 }}
+                    onClick={() => send(emailRef.current?.value || recipientEmail)}
+                    disabled={!recipientEmail || sending}>
                     {sending ? 'Sending...' : '✉ Send →'}
                   </button>
                   <button style={btnGhost} onClick={() => { setDraft(''); setSent(false) }}>↺ Redraft</button>
