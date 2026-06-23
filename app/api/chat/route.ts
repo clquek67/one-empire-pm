@@ -10,6 +10,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Verify user has an active paid plan with AI features
+    const { data: subscription } = await supabase
+      .from('subscriptions')
+      .select('plan, status')
+      .eq('user_id', user.id)
+      .single()
+
+    if (!subscription || subscription.status !== 'active') {
+      return NextResponse.json({ error: 'Active subscription required' }, { status: 403 })
+    }
+
+    if (subscription.plan === 'starter') {
+      return NextResponse.json({ error: 'AI features require Pro or Agency plan' }, { status: 403 })
+    }
+
     const body = await request.json()
 
     // Whitelist only the fields we need — never pass raw body through
