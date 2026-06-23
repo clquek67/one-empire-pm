@@ -4502,9 +4502,9 @@ function CommunicationAgent({ projects, tasks, risks, milestones, teamMembers, u
     const client = teamMembers.find((m: any) =>
       m.project_id === projectId &&
       (m.role === 'client' || m.role === 'Client') &&
-      m.invited_email
+      (m.invited_email || m.email)
     )
-    return { email: client?.invited_email || '', name: client?.name || '' }
+    return { email: client?.invited_email || client?.email || '', name: client?.name || '' }
   }
 
   // ── Helper: find owner email for a task ──
@@ -4512,9 +4512,9 @@ function CommunicationAgent({ projects, tasks, risks, milestones, teamMembers, u
     const member = teamMembers.find((m: any) =>
       m.project_id === projectId &&
       m.name?.toLowerCase() === ownerName?.toLowerCase() &&
-      m.invited_email
+      (m.invited_email || m.email)
     )
-    return { email: member?.invited_email || '', name: member?.name || ownerName }
+    return { email: member?.invited_email || member?.email || '', name: member?.name || ownerName }
   }
 
   // ── Compute suggested actions ──
