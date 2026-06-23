@@ -381,13 +381,13 @@ Proceed and set this task to active anyway?`)
       teamMembers: 3,
       // Pro: AI productivity suite — planner, meetings, proposals, reports (weekly only)
       // No client-facing features, no retainers, no workload AI
-      aiFeatures: ['risks', 'planner', 'meetings', 'scope', 'reports', 'ai-reports', 'timeline', 'billing', 'proposals']
+      aiFeatures: ['risks', 'planner', 'meetings', 'scope', 'reports', 'ai-reports', 'timeline', 'billing', 'proposals', 'communication']
     },
     agency: {
       projects: 25,
       teamMembers: 15,
       // Agency: everything — client portal, retainers, workload AI, full AI reports
-      aiFeatures: ['risks', 'planner', 'meetings', 'scope', 'clients', 'workload', 'reports', 'ai-reports', 'ai-reports-full', 'timeline', 'billing', 'proposals', 'retainers']
+      aiFeatures: ['risks', 'planner', 'meetings', 'scope', 'clients', 'workload', 'reports', 'ai-reports', 'ai-reports-full', 'timeline', 'billing', 'proposals', 'retainers', 'communication']
     }
   }
   const limits = planLimits[plan] || planLimits.starter
@@ -416,11 +416,12 @@ Proceed and set this task to active anyway?`)
     { id: 'ai-reports', icon: '✦', label: 'AI Reports', section: null, ai: true, locked: !hasAIFeature('ai-reports') },
     { id: 'billing', icon: '◷', label: 'Time & Billing', section: null },
     { id: 'retainers', icon: '◷', label: 'Retainers', section: null, locked: !hasAIFeature('retainers') },
+    { id: 'communication', icon: '✉', label: 'Comms Agent', section: null, ai: true, locked: !hasAIFeature('communication') },
     { id: 'settings', icon: '⚙', label: 'Settings', section: 'Account' },
   ]
 
-  const pageLabels: Record<string,string> = { dashboard:'Dashboard', projects:'Projects', tasks:'Tasks', proposals:'Proposals', planner:'AI Planner', meetings:'Meetings', risks:'Risk Radar', scope:'Scope Control', clients:'Client Portal', workload:'Workload', timeline:'Timeline', reports:'Reports', 'ai-reports':'AI Reports', billing:'Time & Billing', retainers:'Retainers', settings:'Settings' }
-  const pageCrumbs: Record<string,string> = { dashboard:'/ Overview', projects:'/ All Projects', tasks:'/ All Tasks', proposals:'/ Estimates & Proposals', planner:'/ Generate Plan', meetings:'/ Process Notes', risks:'/ Risk Register', scope:'/ Change Log', clients:'/ Email Generator', workload:'/ Capacity', timeline:'/ Milestones & Gantt', reports:'/ Project Report', 'ai-reports':'/ AI Reporting Agent', billing:'/ Timer & Invoices', retainers:'/ Recurring Invoices', settings:'/ Account' }
+  const pageLabels: Record<string,string> = { dashboard:'Dashboard', projects:'Projects', tasks:'Tasks', proposals:'Proposals', planner:'AI Planner', meetings:'Meetings', risks:'Risk Radar', scope:'Scope Control', clients:'Client Portal', workload:'Workload', timeline:'Timeline', reports:'Reports', 'ai-reports':'AI Reports', billing:'Time & Billing', retainers:'Retainers', communication:'Comms Agent', settings:'Settings' }
+  const pageCrumbs: Record<string,string> = { dashboard:'/ Overview', projects:'/ All Projects', tasks:'/ All Tasks', proposals:'/ Estimates & Proposals', planner:'/ Generate Plan', meetings:'/ Process Notes', risks:'/ Risk Register', scope:'/ Change Log', clients:'/ Email Generator', workload:'/ Capacity', timeline:'/ Milestones & Gantt', reports:'/ Project Report', 'ai-reports':'/ AI Reporting Agent', billing:'/ Timer & Invoices', retainers:'/ Recurring Invoices', communication:'/ Communication Agent', settings:'/ Account' }
 
   return (
     <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', height: '100dvh', width: '100vw', background: navy, overflow: 'hidden' }} onClick={() => setShowNotifications(false)}>
@@ -480,6 +481,7 @@ Proceed and set this task to active anyway?`)
                         scope: `⬆ Upgrade to Pro\n\nScope Control requires the Pro plan ($37/mo).\n\nLog scope changes and get instant AI analysis of time, budget and risk impact.`,
                         reports: `⬆ Upgrade to Pro\n\nReports requires the Pro plan ($37/mo).\n\nGenerate professional project status reports with RAG indicators, milestone tracking and executive summaries.`,
                         'ai-reports': `⬆ Upgrade to Pro\n\nAI Reports requires the Pro plan ($37/mo).\n\nGenerate Weekly Status reports from live project data in one click and send directly to clients.`,
+                        communication: `⬆ Upgrade to Pro\n\nComms Agent requires the Pro plan ($37/mo).\n\nAuto-draft client update emails, deadline reminders, and meeting follow-ups from live project data.`,
                         clients: isPro
                           ? `⬆ Upgrade to Agency\n\nClient Portal requires the Agency plan ($67/mo).\n\nYou're on Pro — upgrade to Agency to unlock client logins, client-facing project views, and Client-Ready AI reports.`
                           : `⬆ Upgrade to Agency\n\nClient Portal requires the Agency plan ($67/mo).\n\nGive clients a professional view of project progress with their own login and AI-generated status updates.`,
@@ -2046,6 +2048,18 @@ Proceed and set this task to active anyway?`)
                 </div>
               </div>
             </div>
+          )}
+
+          {tab === 'communication' && (
+            <CommunicationAgent
+              projects={projects}
+              tasks={tasks}
+              risks={risks}
+              milestones={milestones}
+              teamMembers={teamMembers}
+              user={user}
+              isMobile={isMobile}
+            />
           )}
 
           {tab === 'settings' && (
@@ -4452,6 +4466,429 @@ Paragraph 3: Confidence statement and forward outlook.`
           <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: '#C9993A', letterSpacing: '0.2em' }}>GENERATED BY EMPIRE PM · pm.one-empire.com · {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase()}</div>
         </div>
 
+      </div>
+    </div>
+  )
+}
+
+// ─── COMMUNICATION AGENT ─────────────────────────────────────────────────────
+
+function CommunicationAgent({ projects, tasks, risks, milestones, teamMembers, user, isMobile }: any) {
+  const gold = '#E8B84B'; const goldDim = '#C9993A'; const navy = '#050D1A'
+  const navyCard = 'rgba(16,36,72,0.7)'; const border = 'rgba(201,153,58,0.2)'
+  const borderMd = 'rgba(201,153,58,0.35)'; const textBright = '#F0F6FF'
+  const textMid = '#C8DCF4'; const textDim = '#A8C0DC'
+
+  const [commType, setCommType] = useState<'client-update' | 'deadline-reminder' | 'meeting-followup'>('client-update')
+  const [selectedProjectId, setSelectedProjectId] = useState('')
+  const [recipientEmail, setRecipientEmail] = useState('')
+  const [recipientName, setRecipientName] = useState('')
+  const [extraNotes, setExtraNotes] = useState('')
+  const [draft, setDraft] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [sending, setSending] = useState(false)
+  const [sent, setSent] = useState(false)
+  const [editingDraft, setEditingDraft] = useState(false)
+
+  const todayStr = new Date().toISOString().split('T')[0]
+  const in3Str = new Date(Date.now() + 3 * 86400000).toISOString().split('T')[0]
+
+  // Auto-detect upcoming deadlines for reminder tab
+  const upcomingTasks = tasks.filter((t: any) =>
+    t.due_date && t.due_date >= todayStr && t.due_date <= in3Str && t.status !== 'done'
+  )
+  const upcomingMilestones = milestones.filter((m: any) =>
+    m.due_date && m.due_date >= todayStr && m.due_date <= in3Str && m.status !== 'completed'
+  )
+  const overdueTasks = tasks.filter((t: any) =>
+    t.due_date && t.due_date < todayStr && t.status !== 'done'
+  )
+
+  const pmName = user?.user_metadata?.full_name || 'Project Manager'
+  const pmEmail = user?.email || ''
+
+  const generate = async () => {
+    setLoading(true)
+    setDraft('')
+    setSent(false)
+
+    const project = projects.find((p: any) => p.id === selectedProjectId)
+    const projTasks = tasks.filter((t: any) => t.project_id === selectedProjectId)
+    const projRisks = risks.filter((r: any) => r.project_id === selectedProjectId && r.status !== 'closed')
+    const projMilestones = milestones.filter((m: any) => m.project_id === selectedProjectId)
+
+    let system = ''
+    let prompt = ''
+
+    if (commType === 'client-update') {
+      const doneTasks = projTasks.filter((t: any) => t.status === 'done').length
+      const activeTasks = projTasks.filter((t: any) => t.status === 'active')
+      const overdue = projTasks.filter((t: any) => t.due_date && t.due_date < todayStr && t.status !== 'done')
+      const upcomingMs = projMilestones.filter((m: any) => m.status !== 'completed' && m.due_date)
+
+      system = `You are ${pmName}, a professional project manager writing a client update email. Write in warm, confident, first-person voice. No markdown, no bullet points — flowing professional prose only. 3-4 short paragraphs. Never mention internal blockers or team issues. Always end with a clear next step or call to action.`
+      prompt = `Write a professional client update email.
+
+To: ${recipientName || 'Client'}
+Project: ${project?.name || 'Project'} (Client: ${project?.client_name || 'Client'})
+Project health: ${project?.health}%
+Timeline: ${project?.start_date || 'TBD'} → ${project?.end_date || 'TBD'}
+Tasks: ${doneTasks}/${projTasks.length} complete
+Active work: ${activeTasks.map((t: any) => t.name).join(', ') || 'In progress'}
+Overdue items: ${overdue.length > 0 ? overdue.map((t: any) => t.name).join(', ') : 'None'}
+Upcoming milestones: ${upcomingMs.map((m: any) => `${m.title} due ${fmtDate(m.due_date)}`).join(', ') || 'None scheduled'}
+Open risks: ${projRisks.length > 0 ? projRisks.map((r: any) => `${r.title} [${r.level}]`).join(', ') : 'None'}
+PM notes: ${extraNotes || 'General progress update'}
+
+Start with "Hi ${recipientName || 'there'}," — do not include a subject line.`
+
+    } else if (commType === 'deadline-reminder') {
+      const allUpcoming = [
+        ...upcomingTasks.map((t: any) => {
+          const proj = projects.find((p: any) => p.id === t.project_id)
+          return `Task: "${t.name}" due ${fmtDate(t.due_date)} [owner: ${t.owner || 'unassigned'}] — ${proj?.name || 'Project'}`
+        }),
+        ...upcomingMilestones.map((m: any) => {
+          const proj = projects.find((p: any) => p.id === m.project_id)
+          return `Milestone: "${m.title}" due ${fmtDate(m.due_date)} — ${proj?.name || 'Project'}`
+        }),
+        ...overdueTasks.map((t: any) => {
+          const proj = projects.find((p: any) => p.id === t.project_id)
+          return `OVERDUE Task: "${t.name}" was due ${fmtDate(t.due_date)} [owner: ${t.owner || 'unassigned'}] — ${proj?.name || 'Project'}`
+        }),
+      ]
+
+      system = `You are ${pmName}, a project manager sending a friendly but firm deadline reminder. Write in warm, direct first-person voice. No markdown, no bullet points — flowing prose. Keep it concise: 2-3 short paragraphs. Professional but human tone.`
+      prompt = `Write a deadline reminder email.
+
+To: ${recipientName || 'Team / Client'}
+Upcoming deadlines and overdue items:
+${allUpcoming.join('\n') || 'No items found — write a general check-in reminder'}
+PM notes: ${extraNotes || 'Friendly reminder to keep things on track'}
+
+Start with "Hi ${recipientName || 'there'}," — do not include a subject line.`
+
+    } else {
+      // meeting-followup
+      const recentMeetings = tasks.filter((t: any) =>
+        t.project_id === selectedProjectId && t.status === 'active'
+      )
+      const projActiveTasks = projTasks.filter((t: any) => t.status === 'active')
+      const actionItems = projActiveTasks.slice(0, 5).map((t: any) =>
+        `"${t.name}" [owner: ${t.owner || 'unassigned'}${t.due_date ? `, due ${fmtDate(t.due_date)}` : ''}]`
+      ).join(', ')
+
+      system = `You are ${pmName}, a project manager sending a meeting follow-up email. Write in warm, professional first-person voice. No markdown, no bullet points — flowing prose only. 3 short paragraphs: brief thank-you + meeting context, key decisions or outcomes, action items and next steps. End with a clear next meeting or deliverable.`
+      prompt = `Write a meeting follow-up email.
+
+To: ${recipientName || 'Attendees'}
+Project: ${project?.name || 'Project'} (Client: ${project?.client_name || 'Client'})
+Current active tasks / action items: ${actionItems || 'See project board'}
+Open risks to flag: ${projRisks.slice(0, 3).map((r: any) => r.title).join(', ') || 'None'}
+PM notes / meeting context: ${extraNotes || 'Follow-up from our recent meeting'}
+
+Start with "Hi ${recipientName || 'there'}," — do not include a subject line.`
+    }
+
+    const text = await callAI(system, prompt, 800)
+    setDraft(text)
+    setLoading(false)
+  }
+
+  const send = async () => {
+    if (!draft || !recipientEmail) return
+    setSending(true)
+    const project = projects.find((p: any) => p.id === selectedProjectId)
+
+    const subjectMap: Record<string, string> = {
+      'client-update': `Project Update — ${project?.name || 'Your Project'}`,
+      'deadline-reminder': `Deadline Reminder — ${project?.name || 'Project'}`,
+      'meeting-followup': `Meeting Follow-up — ${project?.name || 'Your Project'}`,
+    }
+
+    // Convert plain text draft to simple HTML
+    const bodyHtml = draft
+      .split('\n\n')
+      .filter(Boolean)
+      .map((para: string) => `<p style="margin:0 0 14px;font-size:14px;line-height:1.7;color:#333;font-family:Arial,sans-serif;">${para.replace(/\n/g, '<br/>')}</p>`)
+      .join('')
+
+    const fullHtml = `
+<div style="background:#f8f9fa;border-left:4px solid #C9993A;padding:12px 16px;margin-bottom:20px;border-radius:0 4px 4px 0;">
+  <div style="font-size:10px;color:#C9993A;font-weight:700;letter-spacing:2px;margin-bottom:2px;">EMPIRE PM</div>
+  <div style="font-size:16px;color:#050D1A;font-weight:600;font-family:Arial,sans-serif;">${subjectMap[commType]}</div>
+</div>
+${bodyHtml}
+<p style="margin:20px 0 0;font-size:12px;color:#999;font-family:Arial,sans-serif;border-top:1px solid #eee;padding-top:14px;">
+  ${pmName} · ${pmEmail}<br/>pm.one-empire.com
+</p>`
+
+    try {
+      const res = await fetch('https://n8n.one-empire.com/webhook/empire-pm-invoice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          client: project?.client_name || recipientName || 'Recipient',
+          project: project?.name || 'Project',
+          clientEmail: recipientEmail,
+          senderName: pmName,
+          senderEmail: pmEmail,
+          invoiceDate: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }),
+          dueDate: '',
+          lineItems: '',
+          total: '',
+          coverEmail: fullHtml,
+        })
+      })
+      if (!res.ok) {
+        alert(`✗ Failed to send: ${res.status}`)
+        setSending(false)
+        return
+      }
+      setSent(true)
+      setDraft('')
+      setRecipientEmail('')
+      setRecipientName('')
+      setExtraNotes('')
+    } catch {
+      alert('Network error — check n8n is running.')
+    }
+    setSending(false)
+  }
+
+  const commTypes = [
+    { id: 'client-update',      icon: '◇', label: 'Client Update',      desc: 'Professional status update from live project data' },
+    { id: 'deadline-reminder',  icon: '⚠', label: 'Deadline Reminder',  desc: 'Chase overdue tasks and flag upcoming deadlines' },
+    { id: 'meeting-followup',   icon: '◎', label: 'Meeting Follow-up',  desc: 'Follow-up email with action items and next steps' },
+  ]
+
+  const inputStyle = { width: '100%', background: 'rgba(16,36,72,0.8)', border: `1px solid ${border}`, borderRadius: '3px', padding: '9px 12px', fontFamily: 'DM Sans, sans-serif', fontSize: '12px', color: textBright, outline: 'none' }
+  const labelStyle = { fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600 as const, letterSpacing: '0.18em', textTransform: 'uppercase' as const, color: goldDim, marginBottom: '5px', display: 'block' }
+  const btnGold = { fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', fontWeight: 700 as const, letterSpacing: '0.14em', background: `linear-gradient(135deg, ${goldDim}, ${gold})`, color: navy, border: 'none', padding: '9px 16px', borderRadius: '2px', cursor: 'pointer' }
+  const btnGhost = { fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', fontWeight: 600 as const, letterSpacing: '0.12em', border: `1px solid ${borderMd}`, background: 'transparent', color: textMid, padding: '8px 14px', borderRadius: '2px', cursor: 'pointer' }
+
+  return (
+    <div>
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '22px' }}>
+        <div>
+          <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '26px', color: textBright }}>
+            ✉ Comms <em style={{ color: gold, fontStyle: 'italic' }}>Agent</em>
+          </div>
+          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: textMid, marginTop: '5px' }}>
+            Draft and send client updates, deadline reminders, and meeting follow-ups in one click
+          </div>
+        </div>
+        {/* Deadline alert badge */}
+        {(upcomingTasks.length + overdueTasks.length) > 0 && (
+          <div style={{ background: 'rgba(226,75,74,0.1)', border: '1px solid rgba(226,75,74,0.3)', borderRadius: '4px', padding: '8px 14px', cursor: 'pointer' }}
+            onClick={() => setCommType('deadline-reminder')}>
+            <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 700, color: '#FF9090', letterSpacing: '0.15em' }}>
+              ⚠ {overdueTasks.length > 0 ? `${overdueTasks.length} OVERDUE` : ''}{overdueTasks.length > 0 && upcomingTasks.length > 0 ? ' · ' : ''}{upcomingTasks.length > 0 ? `${upcomingTasks.length} DUE SOON` : ''}
+            </div>
+            <div style={{ fontSize: '10px', color: '#C8DCF4', marginTop: '2px' }}>Click to draft reminder →</div>
+          </div>
+        )}
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1.5fr', gap: '14px' }}>
+
+        {/* Left — Controls */}
+        <div>
+          {/* Comm type selector */}
+          <div style={{ background: navyCard, border: `1px solid ${border}`, borderRadius: '4px', padding: '16px 18px', marginBottom: '12px' }}>
+            <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600, letterSpacing: '0.22em', color: goldDim, marginBottom: '12px' }}>MESSAGE TYPE</div>
+            {commTypes.map(ct => (
+              <div key={ct.id} onClick={() => { setCommType(ct.id as any); setDraft(''); setSent(false) }}
+                style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', padding: '10px 12px', borderRadius: '3px', cursor: 'pointer', marginBottom: '6px', border: `1px solid ${commType === ct.id ? 'rgba(201,153,58,0.5)' : border}`, background: commType === ct.id ? 'rgba(201,153,58,0.08)' : 'rgba(16,36,72,0.4)', transition: 'all 0.15s' }}>
+                <span style={{ fontSize: '15px', color: commType === ct.id ? gold : textDim, flexShrink: 0, marginTop: '1px' }}>{ct.icon}</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '12px', fontWeight: 600, color: commType === ct.id ? gold : textMid }}>{ct.label}</div>
+                  <div style={{ fontSize: '10px', color: textDim, marginTop: '1px' }}>{ct.desc}</div>
+                </div>
+                {commType === ct.id && <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: gold, flexShrink: 0, marginTop: '4px' }}/>}
+              </div>
+            ))}
+          </div>
+
+          {/* Fields */}
+          <div style={{ background: navyCard, border: `1px solid ${border}`, borderRadius: '4px', padding: '16px 18px', marginBottom: '12px' }}>
+            <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600, letterSpacing: '0.22em', color: goldDim, marginBottom: '14px' }}>DETAILS</div>
+
+            {commType !== 'deadline-reminder' && (
+              <div style={{ marginBottom: '10px' }}>
+                <label style={labelStyle}>Project</label>
+                <select style={inputStyle} value={selectedProjectId} onChange={e => setSelectedProjectId(e.target.value)}>
+                  <option value="">Select project...</option>
+                  {projects.map((p: any) => <option key={p.id} value={p.id}>{p.name}{p.client_name ? ` — ${p.client_name}` : ''}</option>)}
+                </select>
+              </div>
+            )}
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+              <div>
+                <label style={labelStyle}>Recipient Name</label>
+                <input style={inputStyle} value={recipientName} onChange={e => setRecipientName(e.target.value)} placeholder="e.g. Sarah"/>
+              </div>
+              <div>
+                <label style={labelStyle}>Recipient Email</label>
+                <input style={inputStyle} value={recipientEmail} onChange={e => setRecipientEmail(e.target.value)} placeholder="client@co.com" type="email"/>
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '14px' }}>
+              <label style={labelStyle}>
+                {commType === 'client-update' ? 'Key Points to Highlight' : commType === 'deadline-reminder' ? 'Additional Context' : 'Meeting Context / Key Decisions'}
+              </label>
+              <textarea style={{ ...inputStyle, minHeight: '72px', resize: 'vertical' as const }}
+                value={extraNotes} onChange={e => setExtraNotes(e.target.value)}
+                placeholder={
+                  commType === 'client-update' ? 'e.g. milestone reached, next phase starting, awaiting client feedback...' :
+                  commType === 'deadline-reminder' ? 'e.g. please confirm availability, blocking other tasks...' :
+                  'e.g. agreed to extend timeline, client approved design direction...'
+                }/>
+            </div>
+
+            <button style={{ ...btnGold, width: '100%', opacity: loading ? 0.6 : 1 }}
+              onClick={generate} disabled={loading}>
+              {loading ? '✦ Drafting...' : '✦ Draft Message →'}
+            </button>
+
+            {loading && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '10px' }}>
+                <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: gold, animation: 'pulse 1.2s infinite' }}/>
+                <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: goldDim, letterSpacing: '0.1em' }}>Writing your message...</span>
+              </div>
+            )}
+          </div>
+
+          {/* Deadline summary for reminder type */}
+          {commType === 'deadline-reminder' && (
+            <div style={{ background: navyCard, border: `1px solid ${border}`, borderRadius: '4px', padding: '16px 18px' }}>
+              <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600, letterSpacing: '0.22em', color: goldDim, marginBottom: '12px' }}>DETECTED ITEMS</div>
+              {overdueTasks.length === 0 && upcomingTasks.length === 0 && upcomingMilestones.length === 0 ? (
+                <div style={{ fontSize: '11px', color: textDim }}>No overdue or upcoming items in the next 3 days.</div>
+              ) : (
+                <>
+                  {overdueTasks.slice(0, 4).map((t: any) => {
+                    const proj = projects.find((p: any) => p.id === t.project_id)
+                    return (
+                      <div key={t.id} style={{ display: 'flex', gap: '8px', padding: '5px 0', borderBottom: `1px solid rgba(255,255,255,0.04)` }}>
+                        <span style={{ fontSize: '9px', color: '#FF9090', flexShrink: 0, marginTop: '2px' }}>⚠</span>
+                        <div>
+                          <div style={{ fontSize: '11px', color: '#FF9090', fontWeight: 600 }}>{t.name}</div>
+                          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: textDim }}>{proj?.name} · overdue {fmtDate(t.due_date)}</div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                  {upcomingTasks.slice(0, 3).map((t: any) => {
+                    const proj = projects.find((p: any) => p.id === t.project_id)
+                    return (
+                      <div key={t.id} style={{ display: 'flex', gap: '8px', padding: '5px 0', borderBottom: `1px solid rgba(255,255,255,0.04)` }}>
+                        <span style={{ fontSize: '9px', color: '#FFD080', flexShrink: 0, marginTop: '2px' }}>◷</span>
+                        <div>
+                          <div style={{ fontSize: '11px', color: '#FFD080', fontWeight: 600 }}>{t.name}</div>
+                          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: textDim }}>{proj?.name} · due {fmtDate(t.due_date)}</div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                  {upcomingMilestones.slice(0, 2).map((m: any) => {
+                    const proj = projects.find((p: any) => p.id === m.project_id)
+                    return (
+                      <div key={m.id} style={{ display: 'flex', gap: '8px', padding: '5px 0', borderBottom: `1px solid rgba(255,255,255,0.04)` }}>
+                        <span style={{ fontSize: '9px', color: gold, flexShrink: 0, marginTop: '2px' }}>◈</span>
+                        <div>
+                          <div style={{ fontSize: '11px', color: gold, fontWeight: 600 }}>{m.title}</div>
+                          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '10px', color: textDim }}>{proj?.name} · due {fmtDate(m.due_date)}</div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Right — Draft Output */}
+        <div style={{ background: navyCard, border: `1px solid ${border}`, borderRadius: '4px', padding: '20px 22px' }}>
+          {sent && (
+            <div style={{ textAlign: 'center', padding: '60px 24px' }}>
+              <div style={{ fontSize: '36px', marginBottom: '12px' }}>✓</div>
+              <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '20px', color: '#4DFFB4', marginBottom: '6px' }}>Message sent</div>
+              <div style={{ fontSize: '11px', color: textDim, marginBottom: '20px' }}>Delivered to {recipientEmail || 'recipient'} via Empire PM.</div>
+              <button style={btnGhost} onClick={() => { setSent(false); setDraft('') }}>Draft another →</button>
+            </div>
+          )}
+
+          {!draft && !loading && !sent && (
+            <div style={{ textAlign: 'center', padding: '60px 24px' }}>
+              <div style={{ fontSize: '32px', opacity: 0.15, marginBottom: '12px' }}>✉</div>
+              <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '18px', color: textMid, marginBottom: '6px' }}>Your draft will appear here</div>
+              <div style={{ fontSize: '11px', color: textDim, lineHeight: 1.7, maxWidth: '280px', margin: '0 auto' }}>
+                Select a message type, fill in the details, and click Draft. Review the message, edit if needed, then send.
+              </div>
+            </div>
+          )}
+
+          {loading && (
+            <div style={{ textAlign: 'center', padding: '60px 24px' }}>
+              <div style={{ fontSize: '28px', color: gold, animation: 'pulse 1.5s infinite', marginBottom: '14px' }}>✦</div>
+              <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: goldDim, letterSpacing: '0.15em' }}>WRITING YOUR MESSAGE...</div>
+            </div>
+          )}
+
+          {draft && !sent && (
+            <div>
+              {/* Draft header */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', paddingBottom: '12px', borderBottom: `1px solid ${border}` }}>
+                <div>
+                  <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600, letterSpacing: '0.2em', color: goldDim, marginBottom: '2px' }}>
+                    {commType === 'client-update' ? 'CLIENT UPDATE' : commType === 'deadline-reminder' ? 'DEADLINE REMINDER' : 'MEETING FOLLOW-UP'}
+                  </div>
+                  <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: textMid }}>
+                    To: {recipientName || 'Recipient'}{recipientEmail ? ` <${recipientEmail}>` : ''}
+                  </div>
+                </div>
+                <button onClick={() => setEditingDraft(v => !v)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: editingDraft ? gold : 'rgba(200,220,255,0.6)', letterSpacing: '0.1em' }}>
+                  {editingDraft ? 'DONE' : '✎ EDIT'}
+                </button>
+              </div>
+
+              {/* Draft body */}
+              {editingDraft ? (
+                <textarea value={draft} onChange={e => setDraft(e.target.value)}
+                  style={{ width: '100%', background: 'rgba(8,20,44,0.8)', border: `1px solid ${borderMd}`, borderRadius: '3px', padding: '14px', color: textMid, fontFamily: 'DM Sans, sans-serif', fontSize: '13px', lineHeight: '1.8', resize: 'vertical' as const, minHeight: '240px', outline: 'none' }}/>
+              ) : (
+                <div style={{ fontSize: '13px', color: textMid, lineHeight: '1.8', fontFamily: 'DM Sans, sans-serif', whiteSpace: 'pre-wrap', marginBottom: '20px' }}>{draft}</div>
+              )}
+
+              {/* Send controls */}
+              <div style={{ borderTop: `1px solid ${border}`, paddingTop: '16px', marginTop: '16px' }}>
+                <div style={{ marginBottom: '10px' }}>
+                  <label style={labelStyle}>Send To</label>
+                  <input style={inputStyle} value={recipientEmail} onChange={e => setRecipientEmail(e.target.value)}
+                    placeholder="recipient@company.com" type="email"/>
+                </div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button style={{ ...btnGold, flex: 1, opacity: (!recipientEmail || sending) ? 0.6 : 1 }}
+                    onClick={send} disabled={!recipientEmail || sending}>
+                    {sending ? 'Sending...' : '✉ Send Message →'}
+                  </button>
+                  <button style={btnGhost} onClick={() => { setDraft(''); setSent(false) }}>
+                    ↺ Redraft
+                  </button>
+                </div>
+                <div style={{ marginTop: '8px', fontSize: '10px', color: textDim }}>
+                  Sends via empire-pm-invoice n8n webhook · from {pmEmail}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
