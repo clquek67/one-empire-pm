@@ -4785,8 +4785,7 @@ Start with "Hi ${recipientName || 'there'}," — no subject line.`
 
   const send = async (emailOverride?: string) => {
     const toEmail = emailOverride || emailRef.current?.value || recipientEmail
-    console.log('[CommsAgent] send() toEmail:', toEmail, '| recipientEmail state:', recipientEmail)
-    if (!draft || !toEmail) { alert(`No recipient email — toEmail: "${toEmail}"`); return }
+    if (!draft || !toEmail) return
     setSending(true)
     const project = projects.find((p: any) => p.id === selectedProjectId)
     const subjectMap: Record<string, string> = {
