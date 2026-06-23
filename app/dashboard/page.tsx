@@ -4988,7 +4988,6 @@ ${bodyHtml}
                   </button>
                   <button style={btnGhost} onClick={() => { setDraft(''); setSent(false) }}>↺ Redraft</button>
                 </div>
-                <div style={{ marginTop: '8px', fontSize: '10px', color: textDim }}>Sends via empire-pm-invoice n8n webhook</div>
               </div>
             </div>
           )}
