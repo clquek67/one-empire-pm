@@ -84,8 +84,12 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
-  // Admin routes — logged in only, no subscription check
+  // Admin routes — restrict to admin emails only
   if (pathname.startsWith('/admin')) {
+    const ADMIN_EMAILS = ['clquek@gmail.com']
+    if (!ADMIN_EMAILS.includes(user.email || '')) {
+      return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
     return supabaseResponse
   }
 
