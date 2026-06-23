@@ -84,6 +84,7 @@ export default function Dashboard() {
   const [milestones, setMilestones] = useState<Milestone[]>([])
   const [proposals, setProposals] = useState<Proposal[]>([])
   const [recurringInvoices, setRecurringInvoices] = useState<RecurringInvoice[]>([])
+  const [meetings, setMeetings] = useState<any[]>([])
   const [subscription, setSubscription] = useState<any>(null)
   const [aiText, setAiText] = useState<Record<string, string>>({})
   const [aiLoading, setAiLoading] = useState<Record<string, boolean>>({})
@@ -118,7 +119,7 @@ export default function Dashboard() {
   }, [])
 
   const loadData = async (userId: string) => {
-    const [p, t, r, tm, tl, profile, ms, subData, pr, ri] = await Promise.all([
+    const [p, t, r, tm, tl, profile, ms, subData, pr, ri, mt] = await Promise.all([
       supabase.from('projects').select('*').eq('user_id', userId),
       supabase.from('tasks').select('*').eq('user_id', userId),
       supabase.from('risks').select('*').eq('user_id', userId),
@@ -129,6 +130,7 @@ export default function Dashboard() {
       supabase.from('subscriptions').select('plan,status').eq('user_id', userId).single(),
       supabase.from('proposals').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
       supabase.from('recurring_invoices').select('*').eq('user_id', userId).order('next_run_date', { ascending: true }),
+      supabase.from('meetings').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(10),
     ])
     if (p.data) setProjects(p.data)
     if (t.data) setTasks(t.data)
@@ -138,6 +140,7 @@ export default function Dashboard() {
     if (ms.data) setMilestones(ms.data)
     if (pr.data) setProposals(pr.data)
     if (ri.data) setRecurringInvoices(ri.data)
+    if (mt.data) setMeetings(mt.data)
     if (subData.data) setSubscription(subData.data)
     if (profile.data && (profile.data.onboarded === false || profile.data.onboarded === null)) setShowWizard(true)
   }
@@ -2057,6 +2060,7 @@ Proceed and set this task to active anyway?`)
               risks={risks}
               milestones={milestones}
               teamMembers={teamMembers}
+              meetings={meetings}
               user={user}
               isMobile={isMobile}
             />
@@ -2558,7 +2562,7 @@ function TimeLogForm({ user, projects, onCreated, supabase, isMobile }: any) {
 }
 
 function MeetingProcessor({ user, projects, tasks, risks, supabase, onSaved, isMobile }: any) {
-  const [title, setTitle] = useState(''); const [notes, setNotes] = useState(''); const [email, setEmail] = useState(''); const [projectId, setProjectId] = useState(''); const [result, setResult] = useState(''); const [loading, setLoading] = useState(false); const [meetingDate, setMeetingDate] = useState(new Date().toISOString().split('T')[0])
+  const [title, setTitle] = useState(''); const [notes, setNotes] = useState(''); const [projectId, setProjectId] = useState(''); const [result, setResult] = useState(''); const [loading, setLoading] = useState(false); const [meetingDate, setMeetingDate] = useState(new Date().toISOString().split('T')[0])
   const process = async () => {
     if (!notes) return
     setLoading(true); setResult('')
@@ -2581,14 +2585,8 @@ Use this context to cross-reference action items with existing tasks and flag an
       await supabase.from('meetings').insert({ user_id: user.id, project_id: projectId, title, notes, summary: text, meeting_date: meetingDate || null })
       onSaved()
     }
-    if (email) {
-      await fetch('https://n8n.one-empire.com/webhook/empire-pm-meeting', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, notes, email, senderName: user?.user_metadata?.full_name, senderEmail: user?.email })
-      }).catch(() => {})
-    }
     setLoading(false)
-    setTimeout(() => { setTitle(''); setNotes(''); setEmail(''); setResult('') }, 5000)
+    setTimeout(() => { setTitle(''); setNotes(''); setResult('') }, 5000)
   }
   return (
     <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '14px' }}>
@@ -2603,11 +2601,17 @@ Use this context to cross-reference action items with existing tasks and flag an
             </select>
           </div>
           <div><div style={s.label}>Meeting Date</div><input style={s.input} value={meetingDate} onChange={e => setMeetingDate(e.target.value)} type="date"/></div>
-        <div><div style={s.label}>Send Summary To</div><input style={s.input} value={email} onChange={e => setEmail(e.target.value)} placeholder="team@client.com" type="email"/></div>
         </div>
         <div style={{ marginBottom: '12px' }}><div style={s.label}>Notes / Transcript</div><textarea style={{ ...s.input, minHeight: '160px', resize: 'vertical' as const }} value={notes} onChange={e => setNotes(e.target.value)} placeholder="Paste raw meeting notes here..."/></div>
         <button style={{ ...s.btnGold, width: '100%' }} onClick={process} disabled={loading}>{loading ? 'Processing...' : '✦ Process with AI →'}</button>
-        {result && <div style={s.aiResponse} dangerouslySetInnerHTML={{ __html: formatAI(result) }}/>}
+        {result && (
+          <>
+            <div style={s.aiResponse} dangerouslySetInnerHTML={{ __html: formatAI(result) }}/>
+            <div style={{ marginTop: '10px', padding: '10px 14px', background: 'rgba(201,153,58,0.05)', border: '1px solid rgba(201,153,58,0.2)', borderRadius: '3px', fontSize: '11px', color: '#A8C0DC' }}>
+              ✓ Meeting saved — go to <strong style={{ color: '#E8B84B', cursor: 'pointer' }} onClick={() => {}}>Comms Agent</strong> to send a follow-up email to attendees.
+            </div>
+          </>
+        )}
       </div>
       <div style={s.card}>
         <div style={s.sectionTitle}>How It Works</div>
@@ -2617,7 +2621,7 @@ Use this context to cross-reference action items with existing tasks and flag an
           <span style={{ color: gold }}>▸</span> <strong style={{ color: textMid }}>Key Decisions</strong> — what was agreed<br/>
           <span style={{ color: gold }}>▸</span> <strong style={{ color: textMid }}>Action Items</strong> — who does what by when<br/>
           <span style={{ color: gold }}>▸</span> <strong style={{ color: textMid }}>Follow-up Questions</strong><br/><br/>
-          Add an email address to automatically send the summary to your team via n8n.
+          After processing, go to <strong style={{ color: gold }}>Comms Agent</strong> to send a polished follow-up email to attendees.
         </div>
       </div>
     </div>
@@ -4474,7 +4478,7 @@ Paragraph 3: Confidence statement and forward outlook.`
 
 // ─── COMMUNICATION AGENT ─────────────────────────────────────────────────────
 
-function CommunicationAgent({ projects, tasks, risks, milestones, teamMembers, user, isMobile }: any) {
+function CommunicationAgent({ projects, tasks, risks, milestones, teamMembers, meetings, user, isMobile }: any) {
   const gold = '#E8B84B'; const goldDim = '#C9993A'; const navy = '#050D1A'
   const navyCard = 'rgba(16,36,72,0.7)'; const border = 'rgba(201,153,54,0.2)'
   const borderMd = 'rgba(201,153,58,0.35)'; const textBright = '#F0F6FF'
@@ -4623,6 +4627,27 @@ function CommunicationAgent({ projects, tasks, risks, milestones, teamMembers, u
           context: `Task "${t.name}" is due in ${daysLeft} day${daysLeft !== 1 ? 's' : ''} on ${fmtDate(t.due_date)}. Project: ${proj?.name}. Owner: ${t.owner}. Send a friendly heads-up.`,
         })
       }
+    }
+  })
+
+  // Trigger 6: Recent meeting saved in last 24h — suggest follow-up to client
+  const recentCutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+  ;(meetings || []).forEach((m: any) => {
+    if (!m.created_at || m.created_at < recentCutoff) return
+    const proj = projects.find((p: any) => p.id === m.project_id)
+    const { email, name } = getClientEmail(m.project_id)
+    if (email) {
+      suggestions.push({
+        id: `meeting-${m.id}`,
+        type: 'meeting-followup',
+        priority: 'info',
+        title: `Send follow-up — "${m.title}"`,
+        detail: `Meeting processed for ${proj?.name || 'project'} — send summary to ${name || 'client'}`,
+        projectId: m.project_id,
+        recipientEmail: email,
+        recipientName: name,
+        context: `Meeting: "${m.title}" on ${fmtDate(m.meeting_date || m.created_at)}. Project: ${proj?.name}. Summary: ${m.summary?.slice(0, 300) || 'See meeting notes'}`,
+      })
     }
   })
 
