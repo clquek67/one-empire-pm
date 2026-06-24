@@ -1,6 +1,12 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+// API routes that must remain public — called by external services with no session cookie
+const PUBLIC_API_ROUTES = [
+  '/api/auth/callback',     // Supabase auth redirect
+  '/api/webhooks/stripe',   // Stripe webhook (signature-verified internally)
+]
+
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
@@ -24,15 +30,29 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   const { pathname } = request.nextUrl
 
-  // Public routes — no auth required
+  // Public page routes — no auth required
   if (
     pathname === '/login' ||
     pathname === '/pricing' ||
     pathname === '/roadmap' ||
     pathname === '/producthunt' ||
-    pathname.startsWith('/api') ||
     pathname.startsWith('/invite')
   ) {
+    return supabaseResponse
+  }
+
+  // API routes — only whitelisted paths bypass auth; all others pass through to route-level auth
+  // Route-level auth is the primary enforcement; this is defence-in-depth
+  if (pathname.startsWith('/api')) {
+    const isPublicApi = PUBLIC_API_ROUTES.some(route => pathname.startsWith(route))
+    if (isPublicApi) return supabaseResponse
+
+    // For all other API routes: if no session at all, reject at middleware
+    // (Each route also independently verifies auth — this is an extra layer)
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     return supabaseResponse
   }
 
@@ -52,7 +72,7 @@ export async function middleware(request: NextRequest) {
 
   // Team members → always route to team dashboard, no subscription check needed
   if (role === 'team_member') {
-    if (!pathname.startsWith('/team-dashboard') && !pathname.startsWith('/api')) {
+    if (!pathname.startsWith('/team-dashboard')) {
       return NextResponse.redirect(new URL('/team-dashboard', request.url))
     }
     return supabaseResponse
@@ -60,7 +80,7 @@ export async function middleware(request: NextRequest) {
 
   // Clients → always route to client dashboard, no subscription check needed
   if (role === 'client') {
-    if (!pathname.startsWith('/client-dashboard') && !pathname.startsWith('/api')) {
+    if (!pathname.startsWith('/client-dashboard')) {
       return NextResponse.redirect(new URL('/client-dashboard', request.url))
     }
     return supabaseResponse
