@@ -1969,17 +1969,24 @@ Proceed and set this task to active anyway?`)
                                     }
                                   }
 
-                                  // 2 — Create the project
-                                  const { data: newProject } = await supabase.from('projects').insert({
-                                    user_id: user.id,
-                                    name: prop.title,
-                                    client_name: prop.client_name,
-                                    status: 'active',
-                                    health: 100,
-                                    budget: prop.budget || null,
-                                    start_date: startDate,
-                                    end_date: endDate,
-                                  }).select().single()
+                                  // 2 — Create the project via server-side API (enforces plan limits)
+                                  const projRes = await fetch('/api/projects', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                      name: prop.title,
+                                      client_name: prop.client_name,
+                                      budget: prop.budget || null,
+                                      start_date: startDate,
+                                      end_date: endDate,
+                                    })
+                                  })
+                                  if (!projRes.ok) {
+                                    const projErr = await projRes.json()
+                                    alert(projErr.message || projErr.error || 'Failed to create project — plan limit may have been reached.')
+                                    return
+                                  }
+                                  const { project: newProject } = await projRes.json()
 
                                   await supabase.from('proposals').update({ status: 'accepted' }).eq('id', prop.id)
 
