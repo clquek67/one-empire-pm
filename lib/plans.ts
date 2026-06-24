@@ -4,6 +4,8 @@ export const PLANS = {
     description: 'For freelancers managing their own projects',
     projects: 5,
     teamMembers: 0,
+    aiFeatures: ['risks', 'timeline', 'billing'],
+    display: '5 projects · No team logins · Tasks, Kanban & Timeline · Risk Radar · Time & Billing · No AI suite · No Proposals',
     features: [
       '5 Projects',
       'Tasks & Kanban Board',
@@ -21,7 +23,8 @@ export const PLANS = {
       'Recurring Retainer Invoices',
       'Client Portal',
       'Workload AI',
-      'Team member login',      'Invoice automation',
+      'Team member login',
+      'Invoice automation',
     ],
     prices: {
       monthly: { id: 'price_1TdjWgB2X3LkDhkWCh4mHGvs', amount: 17 },
@@ -34,6 +37,8 @@ export const PLANS = {
     description: 'For consultants who want AI to work smarter',
     projects: 10,
     teamMembers: 3,
+    aiFeatures: ['risks', 'planner', 'meetings', 'scope', 'reports', 'ai-reports', 'timeline', 'billing', 'proposals', 'communication'],
+    display: '10 projects · 3 team seats (account-wide) · AI Planner · Meetings AI · Scope Control · Proposals & Estimates · Invoice automation · Weekly AI Reports',
     features: [
       '10 Projects',
       '3 Team seats (account-wide across all projects)',
@@ -64,6 +69,8 @@ export const PLANS = {
     description: 'For agencies running a team and retainer clients',
     projects: 25,
     teamMembers: 15,
+    aiFeatures: ['risks', 'planner', 'meetings', 'scope', 'clients', 'workload', 'reports', 'ai-reports', 'ai-reports-full', 'timeline', 'billing', 'proposals', 'retainers', 'communication'],
+    display: '25 projects · 15 team seats (account-wide) · Everything in Pro · Recurring Retainers · Client Portal · Workload AI · Full AI Reports · White label emails',
     features: [
       '25 Projects',
       '15 Team seats (account-wide across all projects)',
