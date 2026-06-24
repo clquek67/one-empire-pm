@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase-client'
 import DOMPurify from 'isomorphic-dompurify'
+import { PLANS } from '@/lib/plans'
 
 type User = { id: string; email: string; user_metadata: { full_name?: string; avatar_url?: string } }
 type Project = { id: string; name: string; client_name: string; status: string; health: number; budget?: number; start_date?: string; end_date?: string }
@@ -371,30 +372,9 @@ Proceed and set this task to active anyway?`)
   const criticalCount = notifications.filter(n => n.type === 'critical').length
   const notifCount = notifications.length
 
-  // ── Plan Limits ──
+  // ── Plan Limits — sourced from lib/plans.ts (single source of truth) ──
   const plan = subscription?.plan || 'starter'
-  const planLimits: Record<string, { projects: number; teamMembers: number; aiFeatures: string[] }> = {
-    starter: {
-      projects: 5,
-      teamMembers: 0,
-      // Starter: core PM tools only — no AI, no team logins, no client features
-      aiFeatures: ['risks', 'timeline', 'billing']
-    },
-    pro: {
-      projects: 10,
-      teamMembers: 3,
-      // Pro: AI productivity suite — planner, meetings, proposals, reports (weekly only)
-      // No client-facing features, no retainers, no workload AI
-      aiFeatures: ['risks', 'planner', 'meetings', 'scope', 'reports', 'ai-reports', 'timeline', 'billing', 'proposals', 'communication']
-    },
-    agency: {
-      projects: 25,
-      teamMembers: 15,
-      // Agency: everything — client portal, retainers, workload AI, full AI reports
-      aiFeatures: ['risks', 'planner', 'meetings', 'scope', 'clients', 'workload', 'reports', 'ai-reports', 'ai-reports-full', 'timeline', 'billing', 'proposals', 'retainers', 'communication']
-    }
-  }
-  const limits = planLimits[plan] || planLimits.starter
+  const limits = PLANS[plan as keyof typeof PLANS] || PLANS.starter
   const activeProjectCount = projects.filter((p: Project) => p.status !== 'completed').length
   const canAddProject = activeProjectCount < limits.projects
   const uniqueTeamSeats = new Set(teamMembers.map((m: TeamMember) => m.email.toLowerCase())).size
@@ -2986,12 +2966,13 @@ function SettingsForm({ user, supabase }: any) {
   }
 
   const planNames: any = { starter: 'Starter', pro: 'Pro', agency: 'Agency' }
-  const planLimitsDisplay: any = {
-    starter: '5 projects · No team logins · Tasks, Kanban & Timeline · Risk Radar · Time & Billing · No AI suite · No Proposals',
-    pro: '10 projects · 3 team seats (account-wide) · AI Planner · Meetings AI · Scope Control · Proposals & Estimates · Invoice automation · Weekly AI Reports',
-    agency: '25 projects · 15 team seats (account-wide) · Everything in Pro · Recurring Retainers · Client Portal · Workload AI · Full AI Reports · White label emails'
-  }
-  const planPrices: any = { starter: { monthly: '$17', quarterly: '$42', yearly: '$147' }, pro: { monthly: '$37', quarterly: '$89', yearly: '$297' }, agency: { monthly: '$67', quarterly: '$161', yearly: '$537' } }
+  // Plan display strings and prices derived from PLANS (lib/plans.ts) — no local duplication
+  const planPrices: any = Object.fromEntries(
+    Object.entries(PLANS).map(([key, p]) => [
+      key,
+      Object.fromEntries(Object.entries(p.prices).map(([period, v]) => [period, `$${v.amount}`]))
+    ])
+  )
 
   const timezones = [
     { value: 'Asia/Singapore', label: 'Singapore (SGT, UTC+8)' },
@@ -3109,7 +3090,7 @@ function SettingsForm({ user, supabase }: any) {
             {/* Plan limits display */}
             <div style={{ marginBottom: '16px', padding: '12px 14px', background: 'rgba(8,20,44,0.5)', border: '1px solid rgba(201,153,58,0.15)', borderRadius: '4px' }}>
               <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600, letterSpacing: '0.16em', color: goldDim, marginBottom: '6px' }}>PLAN LIMITS</div>
-              <div style={{ fontSize: '11px', color: textMid }}>{planLimitsDisplay[sub.plan] || planLimitsDisplay.starter}</div>
+              <div style={{ fontSize: '11px', color: textMid }}>{PLANS[sub.plan as keyof typeof PLANS]?.display || PLANS.starter.display}</div>
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
               <button style={{ ...s.btnGold, flex: 1 }} onClick={manageSubscription} disabled={portalLoading}>{portalLoading ? 'Loading...' : 'Manage Subscription →'}</button>
