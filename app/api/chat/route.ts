@@ -27,12 +27,24 @@ export async function POST(request: Request) {
 
     const body = await request.json()
 
-    // Whitelist only the fields we need — never pass raw body through
-    const { model, max_tokens, system, messages } = body
+    // Only accept system and messages from the caller — model and token limits are server-controlled
+    const { system, messages } = body
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
     }
+
+    // Validate message shape — each must have role and string content
+    const validRoles = new Set(['user', 'assistant'])
+    for (const msg of messages) {
+      if (!validRoles.has(msg.role) || typeof msg.content !== 'string') {
+        return NextResponse.json({ error: 'Invalid message format' }, { status: 400 })
+      }
+    }
+
+    // Model and max_tokens are pinned server-side — never trust caller values
+    const PINNED_MODEL = 'claude-sonnet-4-5'
+    const MAX_TOKENS_CAP = 2000 // sufficient for all Empire PM AI features
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -42,9 +54,9 @@ export async function POST(request: Request) {
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: model || 'claude-sonnet-4-5',
-        max_tokens: max_tokens || 1000,
-        system: system || '',
+        model: PINNED_MODEL,
+        max_tokens: MAX_TOKENS_CAP,
+        system: typeof system === 'string' ? system : '',
         messages
       })
     })
