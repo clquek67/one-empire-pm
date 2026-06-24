@@ -1,6 +1,30 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 
+// ── In-memory rate limiter ──────────────────────────────────────────────────
+// Limits each user to MAX_REQUESTS calls per WINDOW_MS.
+// Resets on cold start — sufficient to block abuse loops within a function instance.
+const WINDOW_MS = 60_000  // 1 minute
+const MAX_REQUESTS = 20   // 20 AI calls per minute per user (well above normal usage)
+
+const rateLimitMap = new Map<string, { count: number; windowStart: number }>()
+
+function isRateLimited(userId: string): boolean {
+  const now = Date.now()
+  const entry = rateLimitMap.get(userId)
+
+  if (!entry || now - entry.windowStart > WINDOW_MS) {
+    rateLimitMap.set(userId, { count: 1, windowStart: now })
+    return false
+  }
+
+  if (entry.count >= MAX_REQUESTS) return true
+
+  entry.count++
+  return false
+}
+// ───────────────────────────────────────────────────────────────────────────
+
 export async function POST(request: Request) {
   try {
     // Verify authenticated user before proxying to Anthropic
@@ -23,6 +47,14 @@ export async function POST(request: Request) {
 
     if (subscription.plan === 'starter') {
       return NextResponse.json({ error: 'AI features require Pro or Agency plan' }, { status: 403 })
+    }
+
+    // Check rate limit after auth — uses verified user.id, never a client-supplied value
+    if (isRateLimited(user.id)) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please wait a moment before trying again.' },
+        { status: 429 }
+      )
     }
 
     const body = await request.json()
