@@ -8,13 +8,13 @@ export async function POST(request: Request) {
     const sig = request.headers.get('stripe-signature')!
     const Stripe = (await import('stripe')).default
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
-    
+
     let event
     try {
       event = stripe.webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET!)
     } catch (err: any) {
-      console.error('Webhook signature error:', err.message)
-      return NextResponse.json({ error: 'Invalid signature', details: err.message }, { status: 400 })
+      // Do not log err.message — it may echo back parts of the raw payload
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
     }
 
     const supabase = createClient(
@@ -26,15 +26,14 @@ export async function POST(request: Request) {
 
     switch (event.type) {
       case 'checkout.session.completed': {
-        // Handle checkout session — this is the most reliable place to get userId
         const session = event.data.object as any
         const userId = session.metadata?.userId || session.subscription_data?.metadata?.userId
         const stripeSubscriptionId = session.subscription
 
-        console.log('Checkout session completed:', { userId, stripeSubscriptionId, customerEmail: session.customer_email })
+        // Log only non-PII identifiers — never email, name, or customer details
+        console.log('[webhook] checkout.session.completed', { userId, stripeSubscriptionId })
 
         if (userId && stripeSubscriptionId) {
-          // Fetch the full subscription from Stripe to get price info
           const stripeSub = await stripe.subscriptions.retrieve(stripeSubscriptionId) as any
           const priceId = stripeSub.items?.data?.[0]?.price?.id
           const planData = priceId ? getPlanFromPriceId(priceId) : null
@@ -52,12 +51,12 @@ export async function POST(request: Request) {
           }, { onConflict: 'user_id' })
 
           if (error) {
-            console.error('Supabase upsert error (checkout):', error)
+            console.error('[webhook] upsert error (checkout):', error.code)
           } else {
-            console.log('✓ Subscription created via checkout.session.completed for user:', userId)
+            console.log('[webhook] ✓ subscription created for user:', userId)
           }
         } else {
-          // Fallback: look up user by email
+          // Fallback: look up user by email — email itself is never logged
           if (session.customer_email) {
             const { data: profile } = await supabase
               .from('profiles')
@@ -83,13 +82,13 @@ export async function POST(request: Request) {
               }, { onConflict: 'user_id' })
 
               if (error) {
-                console.error('Supabase upsert error (email fallback):', error)
+                console.error('[webhook] upsert error (email fallback):', error.code)
               } else {
-                console.log('✓ Subscription created via email fallback for:', session.customer_email)
+                console.log('[webhook] ✓ subscription created via email fallback for user:', profile.id)
               }
             }
           } else {
-            console.error('No userId or email found in checkout session:', session.id)
+            console.error('[webhook] no userId or email in session:', session.id)
           }
         }
         break
@@ -100,10 +99,8 @@ export async function POST(request: Request) {
         const priceId = subscription.items?.data?.[0]?.price?.id
         const planData = priceId ? getPlanFromPriceId(priceId) : null
 
-        // Try userId from metadata first
         let userId = subscription.metadata?.userId
 
-        // Fallback: look up by stripe_customer_id in our DB
         if (!userId && subscription.customer) {
           const { data: existingSub } = await supabase
             .from('subscriptions')
@@ -113,7 +110,7 @@ export async function POST(request: Request) {
           if (existingSub) userId = existingSub.user_id
         }
 
-        // Fallback: look up customer email from Stripe
+        // Fallback: resolve via Stripe customer — email is used for lookup only, never logged
         if (!userId && subscription.customer) {
           try {
             const customer = await stripe.customers.retrieve(subscription.customer as string) as any
@@ -125,17 +122,19 @@ export async function POST(request: Request) {
                 .single()
               if (profile) userId = profile.id
             }
-          } catch (e) {
-            console.error('Error fetching customer:', e)
+          } catch {
+            console.error('[webhook] error retrieving customer for sub:', subscription.id)
           }
         }
 
         const periodEnd = subscription.current_period_end
           || Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60
 
-        console.log('Subscription event:', { 
-          type: event.type, userId, priceId, 
-          plan: planData?.plan, status: subscription.status 
+        // Log only safe identifiers — no email, no customer details
+        console.log('[webhook]', event.type, {
+          userId,
+          plan: planData?.plan,
+          status: subscription.status,
         })
 
         if (userId && planData) {
@@ -151,12 +150,16 @@ export async function POST(request: Request) {
           }, { onConflict: 'user_id' })
 
           if (error) {
-            console.error('Supabase upsert error:', error)
-            return NextResponse.json({ error: 'Database error', details: error.message }, { status: 500 })
+            console.error('[webhook] upsert error:', error.code)
+            return NextResponse.json({ error: 'Database error' }, { status: 500 })
           }
-          console.log('✓ Subscription updated for user:', userId)
+          console.log('[webhook] ✓ subscription updated for user:', userId)
         } else {
-          console.error('Could not resolve userId:', { userId, planData, priceId, customer: subscription.customer })
+          console.error('[webhook] could not resolve userId:', {
+            hasUserId: !!userId,
+            hasPlanData: !!planData,
+            priceId,
+          })
         }
         break
       }
@@ -166,15 +169,19 @@ export async function POST(request: Request) {
           .from('subscriptions')
           .update({ status: 'cancelled' })
           .eq('stripe_subscription_id', subscription.id)
-        if (error) console.error('Cancel error:', error)
-        else console.log('✓ Subscription cancelled:', subscription.id)
+        if (error) {
+          console.error('[webhook] cancel error:', error.code)
+        } else {
+          console.log('[webhook] ✓ subscription cancelled:', subscription.id)
+        }
         break
       }
     }
 
     return NextResponse.json({ received: true })
-  } catch (err: any) {
-    console.error('Webhook handler error:', err)
-    return NextResponse.json({ error: 'Internal error', details: err.message }, { status: 500 })
+  } catch {
+    // Catch-all — no err.message logged to avoid leaking payload details
+    console.error('[webhook] unhandled error in handler')
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 })
   }
 }
