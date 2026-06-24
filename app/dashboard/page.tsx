@@ -56,11 +56,12 @@ function fmtDate(d?: string | null) {
   return new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
-async function callAI(system: string, content: string, maxTokens = 1000): Promise<string> {
+async function callAI(system: string, content: string, _maxTokens = 1000): Promise<string> {
   try {
+    // model and max_tokens are pinned server-side in /api/chat — do not send from client
     const res = await fetch('/api/chat', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-5', max_tokens: maxTokens, system, messages: [{ role: 'user', content }] })
+      body: JSON.stringify({ system, messages: [{ role: 'user', content }] })
     })
     const data = await res.json()
     if (data.content?.[0]?.text) return data.content[0].text
@@ -2203,10 +2204,21 @@ Proceed and set this task to active anyway?`)
 
 function ProjectForm({ user, onCreated, supabase, isMobile, canAddProject, limits, plan }: any) {
   const [name, setName] = useState(''); const [client, setClient] = useState(''); const [budget, setBudget] = useState(''); const [startDate, setStartDate] = useState(''); const [endDate, setEndDate] = useState('')
+  const [error, setError] = useState('')
   const submit = async () => {
     if (!name || !user) return
-    await supabase.from('projects').insert({ user_id: user.id, name, client_name: client, budget: budget ? parseFloat(budget) : null, start_date: startDate || null, end_date: endDate || null })
-    setName(''); setClient(''); setBudget(''); setStartDate(''); setEndDate(''); onCreated()
+    setError('')
+    const res = await fetch('/api/projects', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, client_name: client, budget: budget || null, start_date: startDate || null, end_date: endDate || null })
+    })
+    if (!res.ok) {
+      const data = await res.json()
+      setError(data.message || data.error || 'Failed to create project')
+      return
+    }
+    setName(''); setClient(''); setBudget(''); setStartDate(''); setEndDate(''); setError(''); onCreated()
   }
   return (
     <div>
@@ -2223,7 +2235,10 @@ function ProjectForm({ user, onCreated, supabase, isMobile, canAddProject, limit
           <div style={{ fontSize: '11px', color: '#A8C0DC' }}>Upgrade your plan to add more projects.</div>
         </div>
       ) : (
-        <button style={{ ...s.btnGold, width: '100%' }} onClick={submit}>Create Project →</button>
+        <>
+          {error && <div style={{ padding: '10px 12px', background: 'rgba(226,75,74,0.08)', border: '1px solid rgba(226,75,74,0.25)', borderRadius: '4px', fontSize: '12px', color: '#FF9090', marginBottom: '10px' }}>{error}</div>}
+          <button style={{ ...s.btnGold, width: '100%' }} onClick={submit}>Create Project →</button>
+        </>
       )}
     </div>
   )
@@ -2231,10 +2246,21 @@ function ProjectForm({ user, onCreated, supabase, isMobile, canAddProject, limit
 
 function TeamMemberForm({ user, projects, onCreated, supabase, isMobile, canAddTeamMember, limits, plan, uniqueTeamSeats }: any) {
   const [name, setName] = useState(''); const [email, setEmail] = useState(''); const [role, setRole] = useState(''); const [projectId, setProjectId] = useState(''); const [capacity, setCapacity] = useState('100')
+  const [error, setError] = useState('')
   const submit = async () => {
     if (!name || !email || !projectId || !user) return
-    await supabase.from('team_members').insert({ user_id: user.id, project_id: projectId, name, email, role, capacity: parseInt(capacity) })
-    setName(''); setEmail(''); setRole(''); onCreated()
+    setError('')
+    const res = await fetch('/api/team-members', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, role, project_id: projectId, capacity })
+    })
+    if (!res.ok) {
+      const data = await res.json()
+      setError(data.message || data.error || 'Failed to add team member')
+      return
+    }
+    setName(''); setEmail(''); setRole(''); setError(''); onCreated()
   }
 
   const planName = (plan || 'starter').charAt(0).toUpperCase() + (plan || 'starter').slice(1)
@@ -2278,7 +2304,10 @@ function TeamMemberForm({ user, projects, onCreated, supabase, isMobile, canAddT
           <div style={{ fontSize: '11px', color: '#A8C0DC' }}>Upgrade to Agency for 15 seats, or remove an existing team member to free up a seat.</div>
         </div>
       ) : (
-        <button style={{ ...s.btnGold, width: '100%' }} onClick={submit}>Add Team Member →</button>
+        <>
+          {error && <div style={{ padding: '10px 12px', background: 'rgba(226,75,74,0.08)', border: '1px solid rgba(226,75,74,0.25)', borderRadius: '4px', fontSize: '12px', color: '#FF9090', marginBottom: '10px' }}>{error}</div>}
+          <button style={{ ...s.btnGold, width: '100%' }} onClick={submit}>Add Team Member →</button>
+        </>
       )}
     </div>
   )
