@@ -1,7 +1,5 @@
 import type { NextConfig } from "next";
-
 const isDev = process.env.NODE_ENV === 'development'
-
 const securityHeaders = [
   {
     key: 'X-DNS-Prefetch-Control',
@@ -31,7 +29,6 @@ const securityHeaders = [
     key: 'Content-Security-Policy',
     value: [
       "default-src 'self'",
-      // unsafe-eval removed in production — only present during local dev for Next.js HMR
       isDev
         ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
         : "script-src 'self' 'unsafe-inline'",
@@ -45,7 +42,6 @@ const securityHeaders = [
     ].join('; ')
   }
 ]
-
 const nextConfig: NextConfig = {
   async headers() {
     return [
@@ -55,6 +51,19 @@ const nextConfig: NextConfig = {
       },
     ]
   },
+  async redirects() {
+    return [
+      {
+        source: '/pricing\u2014plans',  // em dash variant
+        destination: '/pricing',
+        permanent: true,
+      },
+      {
+        source: '/pricing-plans',       // hyphen variant
+        destination: '/pricing',
+        permanent: true,
+      },
+    ]
+  },
 }
-
 export default nextConfig;
