@@ -87,6 +87,7 @@ export default function Dashboard() {
   const [proposals, setProposals] = useState<Proposal[]>([])
   const [recurringInvoices, setRecurringInvoices] = useState<RecurringInvoice[]>([])
   const [meetings, setMeetings] = useState<any[]>([])
+  const [lastMeeting, setLastMeeting] = useState<any>(null)
   const [subscription, setSubscription] = useState<any>(null)
   const [aiText, setAiText] = useState<Record<string, string>>({})
   const [aiLoading, setAiLoading] = useState<Record<string, boolean>>({})
@@ -1309,57 +1310,7 @@ Proceed and set this task to active anyway?`)
                   <div style={s.card}>
                     <div style={s.sectionTitle}>✦ AI Risk Analysis</div>
                     {aiLoading['risks'] && <div style={{ color: textDim, fontSize: '12px' }}>Scanning {riskProjectId === 'all' ? 'all projects' : (projects.find((p: Project) => p.id === riskProjectId)?.name || 'project')} for risks...</div>}
-                    {aiText['risks'] && (
-                      <>
-                        <div style={s.aiResponse} dangerouslySetInnerHTML={{ __html: formatAI(aiText['risks']) }}/>
-                        <div style={{ marginTop: '12px', padding: '12px 14px', background: 'rgba(201,153,58,0.04)', border: '1px solid rgba(201,153,58,0.15)', borderRadius: '3px' }}>
-                          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600, letterSpacing: '0.16em', color: goldDim, marginBottom: '8px' }}>✉ SEND RISK REPORT</div>
-                          <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
-                            <input
-                              id="risk-send-email"
-                              style={{ ...s.input, fontSize: '11px', padding: '7px 10px', flex: 1 }}
-                              placeholder="recipient@company.com"
-                              type="email"
-                            />
-                            <button
-                              style={{ ...s.btnGold, fontSize: '9px', padding: '7px 14px', whiteSpace: 'nowrap' as const }}
-                              onClick={async () => {
-                                const emailEl = document.getElementById('risk-send-email') as HTMLInputElement
-                                const toEmail = emailEl?.value
-                                if (!toEmail) { alert('Please enter a recipient email'); return }
-                                const project = projects.find((p: Project) => p.id === riskProjectId)
-                                const pmName = user?.user_metadata?.full_name || 'Project Manager'
-                                const bodyHtml = aiText['risks']
-                                  .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                                  .replace(/^[-•] (.+)$/gm, '<li style="margin:4px 0;color:#333;font-size:13px;">$1</li>')
-                                  .replace(/\n/g, '<br/>')
-                                const fullHtml = `<div style="background:#f8f9fa;border-left:4px solid #C9993A;padding:12px 16px;margin-bottom:20px;"><div style="font-size:10px;color:#C9993A;font-weight:700;letter-spacing:2px;margin-bottom:2px;">RISK RADAR REPORT</div><div style="font-size:16px;color:#050D1A;font-weight:600;">${project?.name || 'Portfolio'}</div><div style="font-size:12px;color:#666;margin-top:4px;">${new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</div></div><div style="font-size:13px;line-height:1.8;color:#333;">${bodyHtml}</div><p style="margin:20px 0 0;font-size:12px;color:#999;border-top:1px solid #eee;padding-top:14px;">${pmName} · ${user?.email}<br/>pm.one-empire.com</p>`
-                                try {
-                                  const res = await fetch('https://n8n.one-empire.com/webhook/empire-pm-invoice', {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({
-                                      client: project?.client_name || 'Team',
-                                      project: project?.name || 'Portfolio Risk Report',
-                                      clientEmail: toEmail,
-                                      senderName: pmName,
-                                      senderEmail: user?.email,
-                                      invoiceDate: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }),
-                                      dueDate: '', lineItems: '', total: '',
-                                      coverEmail: fullHtml,
-                                    })
-                                  })
-                                  if (!res.ok) { alert(`✗ Failed to send: ${res.status}`); return }
-                                  alert(`✓ Risk report sent to ${toEmail}`)
-                                  emailEl.value = ''
-                                } catch { alert('Network error — check n8n is running.') }
-                              }}
-                            >✉ Send →</button>
-                          </div>
-                          <button onClick={() => navigator.clipboard.writeText(aiText['risks'])} style={{ ...s.btnGhost, fontSize: '9px', padding: '5px 12px' }}>⎘ Copy Output</button>
-                        </div>
-                      </>
-                    )}
+                    {aiText['risks'] && <div style={s.aiResponse} dangerouslySetInnerHTML={{ __html: formatAI(aiText['risks']) }}/>}
                     {!aiLoading['risks'] && !aiText['risks'] && (
                       <div style={{ fontSize: '11px', color: textDim, lineHeight: 1.7 }}>
                         Select a project then click <strong style={{ color: gold }}>AI Risk Scan</strong> for a project-specific analysis, or leave on All Projects for portfolio-wide scan.
@@ -1377,7 +1328,7 @@ Proceed and set this task to active anyway?`)
               <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '26px', color: '#F0F6FF', marginBottom: '22px' }}>
                 Meeting <em style={{ color: gold, fontStyle: 'italic' }}>Processor</em>
               </div>
-              <MeetingProcessor user={user} projects={projects} tasks={tasks} risks={risks} supabase={supabase} onSaved={() => user && loadData(user.id)} isMobile={isMobile} />
+              <MeetingProcessor user={user} projects={projects} tasks={tasks} risks={risks} supabase={supabase} onSaved={() => user && loadData(user.id)} onProcessed={(m: any) => setLastMeeting(m)} isMobile={isMobile} />
             </div>
           )}
 
@@ -2099,6 +2050,7 @@ Proceed and set this task to active anyway?`)
               milestones={milestones}
               teamMembers={teamMembers}
               meetings={meetings}
+              lastMeeting={lastMeeting}
               user={user}
               isMobile={isMobile}
             />
@@ -2627,7 +2579,7 @@ function TimeLogForm({ user, projects, onCreated, supabase, isMobile }: any) {
   )
 }
 
-function MeetingProcessor({ user, projects, tasks, risks, supabase, onSaved, isMobile }: any) {
+function MeetingProcessor({ user, projects, tasks, risks, supabase, onSaved, onProcessed, isMobile }: any) {
   const [title, setTitle] = useState(''); const [notes, setNotes] = useState(''); const [projectId, setProjectId] = useState(''); const [result, setResult] = useState(''); const [loading, setLoading] = useState(false); const [meetingDate, setMeetingDate] = useState(new Date().toISOString().split('T')[0])
   const process = async () => {
     if (!notes) return
@@ -2651,6 +2603,7 @@ Use this context to cross-reference action items with existing tasks and flag an
       await supabase.from('meetings').insert({ user_id: user.id, project_id: projectId, title, notes, summary: text, meeting_date: meetingDate || null })
       onSaved()
     }
+    if (onProcessed) onProcessed({ title, projectId, summary: text, meetingDate })
     setLoading(false)
   }
   return (
@@ -4552,7 +4505,7 @@ Paragraph 3: Confidence statement and forward outlook.`
 
 // ─── COMMUNICATION AGENT ─────────────────────────────────────────────────────
 
-function CommunicationAgent({ projects, tasks, risks, milestones, teamMembers, meetings, user, isMobile }: any) {
+function CommunicationAgent({ projects, tasks, risks, milestones, teamMembers, meetings, lastMeeting, user, isMobile }: any) {
   const gold = '#E8B84B'; const goldDim = '#C9993A'; const navy = '#050D1A'
   const navyCard = 'rgba(16,36,72,0.7)'; const border = 'rgba(201,153,54,0.2)'
   const borderMd = 'rgba(201,153,58,0.35)'; const textBright = '#F0F6FF'
@@ -4570,6 +4523,17 @@ function CommunicationAgent({ projects, tasks, risks, milestones, teamMembers, m
   const [editingDraft, setEditingDraft] = useState(false)
   const [activeCard, setActiveCard] = useState<string | null>(null)
   const emailRef = useRef<HTMLInputElement>(null)
+
+  // Auto-populate from last processed meeting
+  useEffect(() => {
+    if (lastMeeting) {
+      setCommType('meeting-followup')
+      setSelectedProjectId(lastMeeting.projectId || '')
+      setExtraNotes(lastMeeting.summary ? `Meeting: ${lastMeeting.title}\n\nSummary:\n${lastMeeting.summary.slice(0, 600)}` : '')
+      setDraft('')
+      setSent(false)
+    }
+  }, [lastMeeting])
 
   const todayStr = new Date().toISOString().split('T')[0]
   const in3Str = new Date(Date.now() + 3 * 86400000).toISOString().split('T')[0]
