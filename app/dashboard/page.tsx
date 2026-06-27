@@ -1253,7 +1253,8 @@ Proceed and set this task to active anyway?`)
                     }).join('\n\n')
                     ai('risks',
                       'You are an expert risk manager with 20 years PM experience. Analyse this specific project data. Be highly specific — reference actual task names, owners, and dates. Never give generic advice. Use bullet points only. Structure: 1. CRITICAL RISKS, 2. HIDDEN RISKS NOT YET LOGGED, 3. CAPACITY & DEADLINE CONFLICTS, 4. RECOMMENDED ACTIONS (with owner and deadline).',
-                      'Risk analysis for: ' + (riskProjectId === 'all' ? 'Full Portfolio' : (selectedProjects[0]?.name || 'Project')) + '\n\n' + projectContext
+                      'Risk analysis for: ' + (riskProjectId === 'all' ? 'Full Portfolio' : (selectedProjects[0]?.name || 'Project')) + '\n\n' + projectContext,
+                      riskProjectId !== 'all' ? riskProjectId : undefined
                     )
                   }}>✦ AI Risk Scan</button>
                 </div>
@@ -1378,7 +1379,8 @@ Proceed and set this task to active anyway?`)
                   }).join('\n')
                   ai('workload',
                     'You are an expert resource manager with 20 years experience. Analyse team workload and provide specific, actionable rebalancing recommendations. Use bullet points only — no markdown tables.',
-                    `Team capacity analysis:\n${capacityData || 'No team members yet'}\n\nTotal active tasks: ${tasks.filter((t: Task) => t.status === 'active').length}\nTotal blocked tasks: ${tasks.filter((t: Task) => t.status === 'blocked').length}\n\nProvide: 1. Overloaded members (risk of burnout), 2. Underutilised capacity, 3. Specific task rebalancing suggestions by name, 4. Bottleneck risks.`
+                    `Team capacity analysis:\n${capacityData || 'No team members yet'}\n\nTotal active tasks: ${tasks.filter((t: Task) => t.status === 'active').length}\nTotal blocked tasks: ${tasks.filter((t: Task) => t.status === 'blocked').length}\n\nProvide: 1. Overloaded members (risk of burnout), 2. Underutilised capacity, 3. Specific task rebalancing suggestions by name, 4. Bottleneck risks.`,
+                    projects.find((p: Project) => p.status === 'active')?.id
                   )
                 }}>✦ AI Capacity Analysis</button>
               </div>
@@ -2892,9 +2894,10 @@ Project health: ${project.health}%
 Budget: ${project.budget ? `$${Number(project.budget).toLocaleString()}` : 'Not set'}
 Timeline: ${project.start_date || 'TBD'} → ${project.end_date || 'TBD'}
 Active tasks: ${projTasks.filter((t: Task) => t.status === 'active').length}, Blocked: ${projTasks.filter((t: Task) => t.status === 'blocked').length}` : ''
-    ai('scope',
+   ai('scope',
       'You are an expert PM. Analyse scope changes and provide impact assessments. Use bullet points only — no markdown tables. Sections: Impact Summary, Time Impact (days/weeks), Budget Impact (estimated cost), Risk Level (Low/Medium/High/Critical), Effect on existing tasks, Recommendation (approve/reject/negotiate).',
-      `Project: ${project?.name || 'Unknown'}${scopeContext}\nRequested by: ${by || 'Unknown'}\nScope change requested:\n${desc}`
+      `Project: ${project?.name || 'Unknown'}${scopeContext}\nRequested by: ${by || 'Unknown'}\nScope change requested:\n${desc}`,
+      projectId || undefined
     )
   }
   return (
