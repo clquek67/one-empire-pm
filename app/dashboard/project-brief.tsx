@@ -84,7 +84,9 @@ export default function ProjectBrief({ projectId, projectName, planId }: Project
   const [applyingTemplate, setApplyingTemplate] = useState<string | null>(null);
 
   useEffect(() => { loadProfile(); }, [projectId]);
-  useEffect(() => { if (activeTab === 'templates' && isAgency(planId)) loadTemplates(); }, [activeTab]);
+  useEffect(() => {
+    if (isAgency(planId)) loadTemplates();
+  }, [activeTab]);
 
   async function loadProfile() {
     setLoading(true);
@@ -149,7 +151,7 @@ export default function ProjectBrief({ projectId, projectName, planId }: Project
       goals: profile.goals,
       timeline_summary: profile.timeline_summary,
       notes: profile.notes,
-      stakeholders: profile.stakeholders,
+      stakeholders: [],
       risk_summary: profile.risk_summary,
       project_style: profile.project_style,
       communication_cadence: profile.communication_cadence,
@@ -162,7 +164,11 @@ export default function ProjectBrief({ projectId, projectName, planId }: Project
       setTemplateSaved(true);
       setNewTemplateName('');
       setTimeout(() => setTemplateSaved(false), 2500);
+      // Always reload templates regardless of which tab is active
       await loadTemplates();
+    } else {
+      console.error('Failed to save template:', error);
+      alert('Failed to save template. Please try again.');
     }
     setSavingTemplate(false);
   }
@@ -170,7 +176,7 @@ export default function ProjectBrief({ projectId, projectName, planId }: Project
   // Apply a template into the current project brief
   async function applyTemplate(template: ProjectProfile) {
     if (!window.confirm(`Apply template "${template.template_name}" to ${projectName}?\n\nThis will overwrite the current brief fields. Your stakeholders will be kept.`)) return;
-    setApplyingTemplate(template.id || '');
+    setApplyingTemplate(template.id || 'applying');
 
     const merged: ProjectProfile = {
       ...profile,
@@ -185,10 +191,15 @@ export default function ProjectBrief({ projectId, projectName, planId }: Project
 
     setProfile(merged);
 
-    // Persist immediately
-    await supabase
+    // Persist immediately — upsert handles both new and existing profiles
+    const { error } = await supabase
       .from('project_profiles')
-      .upsert({ ...merged, project_id: projectId }, { onConflict: 'project_id' });
+      .upsert({ ...merged, project_id: projectId, is_template: false, template_name: null }, { onConflict: 'project_id' });
+
+    if (error) {
+      console.error('Failed to apply template:', error);
+      alert('Failed to apply template. Please try again.');
+    }
 
     setApplyingTemplate(null);
     setActiveTab('brief'); // Jump back to brief so user sees the applied content
