@@ -87,7 +87,6 @@ export default function Dashboard() {
   const [proposals, setProposals] = useState<Proposal[]>([])
   const [recurringInvoices, setRecurringInvoices] = useState<RecurringInvoice[]>([])
   const [meetings, setMeetings] = useState<any[]>([])
-  const [lastMeeting, setLastMeeting] = useState<any>(null)
   const [subscription, setSubscription] = useState<any>(null)
   const [aiText, setAiText] = useState<Record<string, string>>({})
   const [aiLoading, setAiLoading] = useState<Record<string, boolean>>({})
@@ -1328,7 +1327,7 @@ Proceed and set this task to active anyway?`)
               <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '26px', color: '#F0F6FF', marginBottom: '22px' }}>
                 Meeting <em style={{ color: gold, fontStyle: 'italic' }}>Processor</em>
               </div>
-              <MeetingProcessor user={user} projects={projects} tasks={tasks} risks={risks} supabase={supabase} onSaved={() => user && loadData(user.id)} onProcessed={(m: any) => setLastMeeting(m)} isMobile={isMobile} />
+              <MeetingProcessor user={user} projects={projects} tasks={tasks} risks={risks} supabase={supabase} onSaved={() => user && loadData(user.id)} isMobile={isMobile} />
             </div>
           )}
 
@@ -2050,7 +2049,6 @@ Proceed and set this task to active anyway?`)
               milestones={milestones}
               teamMembers={teamMembers}
               meetings={meetings}
-              lastMeeting={lastMeeting}
               user={user}
               isMobile={isMobile}
             />
@@ -2579,7 +2577,7 @@ function TimeLogForm({ user, projects, onCreated, supabase, isMobile }: any) {
   )
 }
 
-function MeetingProcessor({ user, projects, tasks, risks, supabase, onSaved, onProcessed, isMobile }: any) {
+function MeetingProcessor({ user, projects, tasks, risks, supabase, onSaved, isMobile }: any) {
   const [title, setTitle] = useState(''); const [notes, setNotes] = useState(''); const [projectId, setProjectId] = useState(''); const [result, setResult] = useState(''); const [loading, setLoading] = useState(false); const [meetingDate, setMeetingDate] = useState(new Date().toISOString().split('T')[0])
   const process = async () => {
     if (!notes) return
@@ -2603,7 +2601,6 @@ Use this context to cross-reference action items with existing tasks and flag an
       await supabase.from('meetings').insert({ user_id: user.id, project_id: projectId, title, notes, summary: text, meeting_date: meetingDate || null })
       onSaved()
     }
-    if (onProcessed) onProcessed({ title, projectId, summary: text, meetingDate })
     setLoading(false)
   }
   return (
@@ -4505,7 +4502,7 @@ Paragraph 3: Confidence statement and forward outlook.`
 
 // ─── COMMUNICATION AGENT ─────────────────────────────────────────────────────
 
-function CommunicationAgent({ projects, tasks, risks, milestones, teamMembers, meetings, lastMeeting, user, isMobile }: any) {
+function CommunicationAgent({ projects, tasks, risks, milestones, teamMembers, meetings, user, isMobile }: any) {
   const gold = '#E8B84B'; const goldDim = '#C9993A'; const navy = '#050D1A'
   const navyCard = 'rgba(16,36,72,0.7)'; const border = 'rgba(201,153,54,0.2)'
   const borderMd = 'rgba(201,153,58,0.35)'; const textBright = '#F0F6FF'
@@ -4523,17 +4520,6 @@ function CommunicationAgent({ projects, tasks, risks, milestones, teamMembers, m
   const [editingDraft, setEditingDraft] = useState(false)
   const [activeCard, setActiveCard] = useState<string | null>(null)
   const emailRef = useRef<HTMLInputElement>(null)
-
-  // Auto-populate from last processed meeting
-  useEffect(() => {
-    if (lastMeeting) {
-      setCommType('meeting-followup')
-      setSelectedProjectId(lastMeeting.projectId || '')
-      setExtraNotes(lastMeeting.summary ? `Meeting: ${lastMeeting.title}\n\nSummary:\n${lastMeeting.summary.slice(0, 600)}` : '')
-      setDraft('')
-      setSent(false)
-    }
-  }, [lastMeeting])
 
   const todayStr = new Date().toISOString().split('T')[0]
   const in3Str = new Date(Date.now() + 3 * 86400000).toISOString().split('T')[0]
@@ -4891,12 +4877,61 @@ ${bodyHtml}
       </div>
 
       {/* ── SUGGESTED ACTIONS ── */}
-      {suggestions.length > 0 && (
+      {(suggestions.length > 0 || lastMeeting) && (
         <div style={{ marginBottom: '20px' }}>
           <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600, letterSpacing: '0.22em', color: goldDim, marginBottom: '10px' }}>
-            ✦ SUGGESTED ACTIONS · {suggestions.length} detected
+            ✦ SUGGESTED ACTIONS · {suggestions.length + (lastMeeting ? 1 : 0)} detected
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(300px, 1fr))', gap: '8px' }}>
+
+            {/* Meeting follow-up card — appears when a meeting was just processed */}
+            {lastMeeting && (() => {
+              const meetingCardId = `meeting-processed-${lastMeeting.title}`
+              const proj = projects.find((p: any) => p.id === lastMeeting.projectId)
+              const { email: clientEmail, name: clientName } = (() => {
+                const client = teamMembers.find((m: any) => m.project_id === lastMeeting.projectId && (m.role === 'client' || m.role === 'Client') && (m.invited_email || m.email))
+                return { email: client?.invited_email || client?.email || '', name: client?.name || '' }
+              })()
+              return (
+                <div
+                  onClick={() => {
+                    setCommType('meeting-followup')
+                    setSelectedProjectId(lastMeeting.projectId || '')
+                    setRecipientEmail(clientEmail)
+                    setRecipientName(clientName)
+                    setExtraNotes(`Meeting: ${lastMeeting.title}\n\nKey outcomes:\n${lastMeeting.summary ? lastMeeting.summary.slice(0, 500) : 'See meeting notes'}`)
+                    setDraft('')
+                    setSent(false)
+                    setActiveCard(meetingCardId)
+                  }}
+                  style={{ background: activeCard === meetingCardId ? 'rgba(77,216,240,0.08)' : 'rgba(16,36,72,0.5)', border: `1px solid ${activeCard === meetingCardId ? '#4DD8F0' : 'rgba(77,216,240,0.2)'}`, borderRadius: '4px', padding: '12px 14px', cursor: 'pointer', transition: 'all 0.15s' }}
+                  onMouseEnter={e => { if (activeCard !== meetingCardId) e.currentTarget.style.borderColor = '#4DD8F0' }}
+                  onMouseLeave={e => { if (activeCard !== meetingCardId) e.currentTarget.style.borderColor = 'rgba(77,216,240,0.2)' }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#4DD8F0', flexShrink: 0, marginTop: '5px' }}/>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '12px', fontWeight: 600, color: '#4DD8F0', marginBottom: '2px' }}>
+                        Send follow-up — &quot;{lastMeeting.title}&quot;
+                      </div>
+                      <div style={{ fontSize: '11px', color: textDim, marginBottom: '6px', lineHeight: 1.5 }}>
+                        Meeting just processed for {proj?.name || 'project'} — draft and send a follow-up now
+                      </div>
+                      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                        <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '8px', fontWeight: 700, padding: '2px 6px', borderRadius: '2px', background: 'rgba(77,216,240,0.1)', color: '#4DD8F0', border: '1px solid rgba(77,216,240,0.25)' }}>
+                          ◎ MEETING FOLLOW-UP
+                        </span>
+                        {clientEmail && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: textDim }}>{clientEmail}</span>}
+                      </div>
+                    </div>
+                    <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: activeCard === meetingCardId ? '#4DD8F0' : textDim, flexShrink: 0, marginTop: '2px' }}>
+                      {activeCard === meetingCardId ? '✦ Active' : '→'}
+                    </div>
+                  </div>
+                </div>
+              )
+            })()}
+
             {suggestions.map(s => (
               <div key={s.id}
                 onClick={() => loadSuggestion(s)}
@@ -4925,7 +4960,7 @@ ${bodyHtml}
         </div>
       )}
 
-      {suggestions.length === 0 && (
+      {suggestions.length === 0 && !lastMeeting && (
         <div style={{ background: 'rgba(34,201,144,0.05)', border: '1px solid rgba(34,201,144,0.2)', borderRadius: '4px', padding: '12px 16px', marginBottom: '20px', display: 'flex', gap: '10px', alignItems: 'center' }}>
           <span style={{ color: '#22C990', fontSize: '14px' }}>✓</span>
           <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '11px', color: '#4DFFB4' }}>No urgent communications detected — all projects look healthy</div>
