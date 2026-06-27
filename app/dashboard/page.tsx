@@ -1429,7 +1429,6 @@ Proceed and set this task to active anyway?`)
             </div>
           )}
 
-          {/* ═══ BILLING ═══ */}
           {tab === 'brief' && (
   <div style={{ padding: '24px', maxWidth: '760px', margin: '0 auto' }}>
     {projects.filter((p: Project) => p.status !== 'completed').length === 0 ? (
@@ -1451,6 +1450,7 @@ Proceed and set this task to active anyway?`)
     )}
   </div>
 )}
+          {/* ═══ BILLING ═══ */}
           {tab === 'billing' && (
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '22px' }}>
