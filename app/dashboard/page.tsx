@@ -1,7 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase-client'
-import ProjectBrief from './project-brief'
 import DOMPurify from 'isomorphic-dompurify'
 import { PLANS } from '@/lib/plans'
 
@@ -58,11 +57,12 @@ function fmtDate(d?: string | null) {
   return new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
-async function callAI(system: string, content: string, _maxTokens = 1000, projectId?: string): Promise<string> {
+async function callAI(system: string, content: string, _maxTokens = 1000): Promise<string> {
   try {
+    // model and max_tokens are pinned server-side in /api/chat — do not send from client
     const res = await fetch('/api/chat', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ system, messages: [{ role: 'user', content }], projectId })
+      body: JSON.stringify({ system, messages: [{ role: 'user', content }] })
     })
     const data = await res.json()
     if (data.content?.[0]?.text) return data.content[0].text
@@ -270,10 +270,10 @@ Proceed and set this task to active anyway?`)
     }
   }
 
-  const ai = async (key: string, system: string, content: string, projectId?: string): Promise<string> => {
+  const ai = async (key: string, system: string, content: string): Promise<string> => {
     setAiLoading(prev => ({ ...prev, [key]: true }))
     setAiText(prev => ({ ...prev, [key]: '' }))
-    const text = await callAI(system, content, 1000, projectId)
+    const text = await callAI(system, content)
     setAiText(prev => ({ ...prev, [key]: text }))
     setAiLoading(prev => ({ ...prev, [key]: false }))
     return text
@@ -399,14 +399,13 @@ Proceed and set this task to active anyway?`)
     { id: 'reports', icon: '◈', label: 'Reports', section: null, locked: !hasAIFeature('reports') },
     { id: 'ai-reports', icon: '✦', label: 'AI Reports', section: null, ai: true, locked: !hasAIFeature('ai-reports') },
     { id: 'billing', icon: '◷', label: 'Time & Billing', section: null },
-    { id: 'brief', icon: '◫', label: 'Project Brief', section: null, ai: true, locked: !hasAIFeature('planner') },
     { id: 'retainers', icon: '◷', label: 'Retainers', section: null, locked: !hasAIFeature('retainers') },
     { id: 'communication', icon: '✉', label: 'Comms Agent', section: null, ai: true, locked: !hasAIFeature('communication') },
     { id: 'settings', icon: '⚙', label: 'Settings', section: 'Account' },
   ]
 
-  const pageLabels: Record<string,string> = { dashboard:'Dashboard', projects:'Projects', tasks:'Tasks', proposals:'Proposals', planner:'AI Planner', meetings:'Meetings', risks:'Risk Radar', scope:'Scope Control', clients:'Client Portal', workload:'Workload', timeline:'Timeline', reports:'Reports', 'ai-reports':'AI Reports', billing:'Time & Billing', brief:'Project Brief', retainers:'Retainers', communication:'Comms Agent', settings:'Settings' }
-  const pageCrumbs: Record<string,string> = { dashboard:'/ Overview', projects:'/ All Projects', tasks:'/ All Tasks', proposals:'/ Estimates & Proposals', planner:'/ Generate Plan', meetings:'/ Process Notes', risks:'/ Risk Register', scope:'/ Change Log', clients:'/ Email Generator', workload:'/ Capacity', timeline:'/ Milestones & Gantt', reports:'/ Project Report', 'ai-reports':'/ AI Reporting Agent', billing:'/ Timer & Invoices', retainers:'/ Recurring Invoices', communication:'/ Communication Agent', brief:'/ Intelligence Profile', settings:'/ Account' }
+  const pageLabels: Record<string,string> = { dashboard:'Dashboard', projects:'Projects', tasks:'Tasks', proposals:'Proposals', planner:'AI Planner', meetings:'Meetings', risks:'Risk Radar', scope:'Scope Control', clients:'Client Portal', workload:'Workload', timeline:'Timeline', reports:'Reports', 'ai-reports':'AI Reports', billing:'Time & Billing', retainers:'Retainers', communication:'Comms Agent', settings:'Settings' }
+  const pageCrumbs: Record<string,string> = { dashboard:'/ Overview', projects:'/ All Projects', tasks:'/ All Tasks', proposals:'/ Estimates & Proposals', planner:'/ Generate Plan', meetings:'/ Process Notes', risks:'/ Risk Register', scope:'/ Change Log', clients:'/ Email Generator', workload:'/ Capacity', timeline:'/ Milestones & Gantt', reports:'/ Project Report', 'ai-reports':'/ AI Reporting Agent', billing:'/ Timer & Invoices', retainers:'/ Recurring Invoices', communication:'/ Communication Agent', settings:'/ Account' }
 
   return (
     <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', height: '100dvh', width: '100vw', background: navy, overflow: 'hidden' }} onClick={() => setShowNotifications(false)}>
@@ -1252,9 +1251,8 @@ Proceed and set this task to active anyway?`)
                       return `PROJECT: ${p.name} | Client: ${p.client_name || 'Internal'} | Health: ${p.health}% | Timeline: ${p.start_date || 'TBD'} to ${p.end_date || 'TBD'}\nTasks: ${projTasks.map((t: Task) => t.name + ' [' + t.status + ', due: ' + (t.due_date || 'none') + ', owner: ' + (t.owner || 'unassigned') + ']').join('; ') || 'None'}\nOverdue: ${overdueTasks.map((t: Task) => t.name).join(', ') || 'None'}\nOpen Risks: ${projRisks.map((r: Risk) => r.title + ' [' + r.level + ']').join(', ') || 'None'}\nTeam: ${projTeam.map((m: TeamMember) => m.name + ' (' + m.role + ', ' + m.capacity + '% capacity)').join(', ') || 'No team'}`
                     }).join('\n\n')
                     ai('risks',
-                      'You are a senior risk manager and project director with 20 years experience across agency, SaaS, and consulting projects. Your job is to surface what the PM might be missing — not just restate what they already know. Rules: Be brutally specific — name actual tasks, owners, and dates. Never state the obvious. Surface hidden risks between the lines of the data. If something looks fine on the surface but has a pattern that leads to failure, call it out. Use bullet points only. No intros or conclusions. Structure your output with these exact headers: 1. CRITICAL — needs action this week, 2. HIDDEN RISKS — not yet logged but implied by the data, 3. SCHEDULE & CAPACITY CONFLICTS — deadlines, dependencies, overload, 4. RECOMMENDED ACTIONS — specific action, named owner, deadline.',
-                      'Risk analysis for: ' + (riskProjectId === 'all' ? 'Full Portfolio' : (selectedProjects[0]?.name || 'Project')) + '\n\n' + projectContext,
-                      riskProjectId !== 'all' ? riskProjectId : undefined
+                      'You are an expert risk manager with 20 years PM experience. Analyse this specific project data. Be highly specific — reference actual task names, owners, and dates. Never give generic advice. Use bullet points only. Structure: 1. CRITICAL RISKS, 2. HIDDEN RISKS NOT YET LOGGED, 3. CAPACITY & DEADLINE CONFLICTS, 4. RECOMMENDED ACTIONS (with owner and deadline).',
+                      'Risk analysis for: ' + (riskProjectId === 'all' ? 'Full Portfolio' : (selectedProjects[0]?.name || 'Project')) + '\n\n' + projectContext
                     )
                   }}>✦ AI Risk Scan</button>
                 </div>
@@ -1378,9 +1376,8 @@ Proceed and set this task to active anyway?`)
                     return `${m.name} (${m.role || 'No role'}, ${m.capacity}% capacity, project: ${proj?.name || 'None'}): ${memberTasks.length} active tasks, ${overdue.length} overdue`
                   }).join('\n')
                   ai('workload',
-                    'You are a senior resource manager and delivery lead. Your job is to prevent burnout, unblock delivery, and surface capacity risks before they become delays. Rules: Be specific — name the person, the task, and the action. Never give generic advice like consider redistributing work. If someone is overloaded, say exactly which tasks to move and to whom. If someone is underutilised, say exactly what they should pick up. Use bullet points only. Structure: OVERLOADED MEMBERS (name | current load | risk), UNDERUTILISED CAPACITY (name | available hours | suggested tasks), REBALANCING ACTIONS (specific task | move from | move to | reason), BOTTLENECK RISKS (what will break first and when).',
-                    `Team capacity analysis:\n${capacityData || 'No team members yet'}\n\nTotal active tasks: ${tasks.filter((t: Task) => t.status === 'active').length}\nTotal blocked tasks: ${tasks.filter((t: Task) => t.status === 'blocked').length}\n\nProvide: 1. Overloaded members (risk of burnout), 2. Underutilised capacity, 3. Specific task rebalancing suggestions by name, 4. Bottleneck risks.`,
-                    projects.find((p: Project) => p.status === 'active')?.id
+                    'You are an expert resource manager with 20 years experience. Analyse team workload and provide specific, actionable rebalancing recommendations. Use bullet points only — no markdown tables.',
+                    `Team capacity analysis:\n${capacityData || 'No team members yet'}\n\nTotal active tasks: ${tasks.filter((t: Task) => t.status === 'active').length}\nTotal blocked tasks: ${tasks.filter((t: Task) => t.status === 'blocked').length}\n\nProvide: 1. Overloaded members (risk of burnout), 2. Underutilised capacity, 3. Specific task rebalancing suggestions by name, 4. Bottleneck risks.`
                   )
                 }}>✦ AI Capacity Analysis</button>
               </div>
@@ -1430,27 +1427,6 @@ Proceed and set this task to active anyway?`)
             </div>
           )}
 
-          {tab === 'brief' && (
-  <div style={{ padding: '24px', maxWidth: '760px', margin: '0 auto' }}>
-    {projects.filter((p: Project) => p.status !== 'completed').length === 0 ? (
-      <div style={{ textAlign: 'center', padding: '48px 0' }}>
-        <p style={{ color: '#8FA8C8', fontSize: '14px', marginBottom: '16px' }}>No active projects yet. Create a project first.</p>
-        <button style={s.btnGold} onClick={() => setTab('projects')}>+ New Project</button>
-      </div>
-    ) : (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
-        {projects.filter((p: Project) => p.status !== 'completed').map((p: Project) => (
-          <div key={p.id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '24px' }}>
-            <div style={{ fontSize: '13px', fontWeight: 600, color: '#C9A84C', letterSpacing: '0.06em', marginBottom: '20px', textTransform: 'uppercase' as const }}>
-              {p.name}
-            </div>
-            <ProjectBrief projectId={p.id} projectName={p.name} planId={plan} />
-          </div>
-        ))}
-      </div>
-    )}
-  </div>
-)}
           {/* ═══ BILLING ═══ */}
           {tab === 'billing' && (
             <div>
@@ -2617,7 +2593,7 @@ Open risks: ${pRisks.map((r: Risk) => `${r.title} [${r.level}]`).join(', ') || '
 Use this context to cross-reference action items with existing tasks and flag any conflicts or overlaps with open risks.`
     })() : ''
     const text = await callAI(
-      'You are a senior project manager processing meeting notes into structured intelligence. Your output will be read by the PM immediately after the meeting — make it actionable, not just descriptive. Rules: Extract only what was explicitly said or clearly implied. Never pad with generic filler. If an action item has no owner, flag it as UNASSIGNED. If a deadline was mentioned, include it. If project context is provided, cross-reference action items against existing tasks — flag duplicates, conflicts, and new risks not yet logged. Use bullet points only. Output with these exact headers: SUMMARY (2 sentences max), KEY DECISIONS (what was agreed — not discussed), ACTION ITEMS (owner | action | deadline), NEW RISKS IDENTIFIED (title | level: low/medium/high/critical), OPEN QUESTIONS (unresolved items needing follow-up).',
+      'You are an expert meeting facilitator and project manager. Extract and structure the following from the meeting notes. Use bullet points only — no markdown tables. Sections: 1. Summary (2-3 sentences), 2. Key Decisions, 3. Action Items (with owner and deadline if mentioned), 4. Risks or Issues Raised, 5. Follow-up Questions. If project context is provided, cross-reference action items against existing tasks and flag overlaps with open risks.',
       `Meeting: ${title}\n\nNotes:\n${notes}${projContext}`
     )
     setResult(text)
@@ -2626,7 +2602,6 @@ Use this context to cross-reference action items with existing tasks and flag an
       onSaved()
     }
     setLoading(false)
-    setTimeout(() => { setTitle(''); setNotes(''); setResult('') }, 5000)
   }
   return (
     <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '14px' }}>
@@ -2647,7 +2622,11 @@ Use this context to cross-reference action items with existing tasks and flag an
         {result && (
           <>
             <div style={s.aiResponse} dangerouslySetInnerHTML={{ __html: formatAI(result) }}/>
-            <div style={{ marginTop: '10px', padding: '10px 14px', background: 'rgba(201,153,58,0.05)', border: '1px solid rgba(201,153,58,0.2)', borderRadius: '3px', fontSize: '11px', color: '#A8C0DC' }}>
+            <div style={{ marginTop: '10px', display: 'flex', gap: '8px', flexWrap: 'wrap' as const }}>
+              <button onClick={() => navigator.clipboard.writeText(result)} style={{ ...s.btnGhost, fontSize: '9px', padding: '5px 12px' }}>⎘ Copy Output</button>
+              <button onClick={() => { setTitle(''); setNotes(''); setResult('') }} style={{ ...s.btnGhost, fontSize: '9px', padding: '5px 12px' }}>↺ Clear</button>
+            </div>
+            <div style={{ marginTop: '8px', padding: '10px 14px', background: 'rgba(201,153,58,0.05)', border: '1px solid rgba(201,153,58,0.2)', borderRadius: '3px', fontSize: '11px', color: '#A8C0DC' }}>
               ✓ Meeting saved — go to <strong style={{ color: '#E8B84B', cursor: 'pointer' }} onClick={() => {}}>Comms Agent</strong> to send a follow-up email to attendees.
             </div>
           </>
@@ -2681,8 +2660,7 @@ Timeline: ${project?.start_date || 'TBD'} → ${project?.end_date || 'TBD'}
 Tone: ${tone}
 Key points from PM: ${notes || 'General progress update — project on track'}
 
-Write a professional client status update email.`,
-  projectId || undefined
+Write a professional client status update email.`
     )
   }
   return (
@@ -2723,7 +2701,7 @@ Available team members: ${teamMembers.length > 0 ? teamMembers.map((m: TeamMembe
 Current open risks across portfolio: ${risks.filter((r: Risk) => r.status !== 'closed').length} open risks
 Total active tasks in flight: ${tasks.filter((t: Task) => t.status === 'active').length}` : ''
     ai('planner',
-      `You are a senior project director who has delivered 200+ projects. You build plans that actually get executed — not theoretical plans. Your plans are specific, sequenced, and risk-aware from day one. Rules: Every task must have a clear deliverable implied in its name. Sequence tasks logically — dependencies first. Distribute tasks across team members by role if provided. Flag the top 3 risks immediately in RISKS. Milestones mark client-visible checkpoints only. IMPORTANT: Today is ${new Date().toISOString().split('T')[0]} — ALL dates must be after today. Never use past dates. Output using EXACTLY this structure with these EXACT section headers (used for parsing):
+      `You are an expert PM with 20 years experience. Generate a comprehensive project plan using EXACTLY this structure with these EXACT section headers (used for parsing):
 
 TASKS:
 - Task name | priority (high/medium/low) | owner name or "Unassigned" | due date as YYYY-MM-DD or "TBD"
@@ -2744,10 +2722,9 @@ KPIS:
 Success metrics.
 
 Rules: Use bullet points only. No markdown tables. Be specific, not generic. Assign tasks to named team members if provided. IMPORTANT: Today is ${new Date().toISOString().split('T')[0]} — ALL dates must be AFTER today. Never use past dates.`,
-      `New Project: ${name || 'New Project'}\nProject Start Date: ${new Date().toISOString().split('T')[0]}\nTimeline: ${timeline}\nTeam Size: ${team}\n\nBrief:\n${brief}${existingContext}`,
-      targetProjectId || undefined
-    )    
-      setPopulateResult(null)
+      `New Project: ${name || 'New Project'}\nProject Start Date: ${new Date().toISOString().split('T')[0]}\nTimeline: ${timeline}\nTeam Size: ${team}\n\nBrief:\n${brief}${existingContext}`
+    )
+    setPopulateResult(null)
   }
 
   const autoPopulate = async () => {
@@ -2839,6 +2816,10 @@ Rules: Use bullet points only. No markdown tables. Be specific, not generic. Ass
             <div style={{ fontSize: '11px', color: '#A8C0DC', marginBottom: '10px', lineHeight: 1.6 }}>
               Select a project and click Populate — tasks, risks and milestones from this plan will be created automatically.
             </div>
+            <div style={{ marginBottom: '10px', display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: goldDim, letterSpacing: '0.12em' }}>Don&apos;t see your project?</div>
+              <button onClick={() => { if (onPopulated) onPopulated() }} style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600, letterSpacing: '0.1em', background: 'transparent', border: `1px solid rgba(201,153,58,0.25)`, color: goldDim, padding: '3px 10px', borderRadius: '2px', cursor: 'pointer' }}>↺ Refresh list</button>
+            </div>
             <div style={{ marginBottom: '10px' }}>
               <div style={s.label}>Target Project</div>
               <select style={s.input} value={targetProjectId} onChange={e => setTargetProjectId(e.target.value)}>
@@ -2896,10 +2877,9 @@ Project health: ${project.health}%
 Budget: ${project.budget ? `$${Number(project.budget).toLocaleString()}` : 'Not set'}
 Timeline: ${project.start_date || 'TBD'} → ${project.end_date || 'TBD'}
 Active tasks: ${projTasks.filter((t: Task) => t.status === 'active').length}, Blocked: ${projTasks.filter((t: Task) => t.status === 'blocked').length}` : ''
-   ai('scope',
-      'You are a senior project manager and commercial advisor. Your job is to protect the project timeline, budget, and team capacity from uncontrolled scope changes. Be direct and commercial — not diplomatic. Rules: Quantify everything. Never say may impact — say will add X days and Y dollars. If the scope change is reasonable, say so and explain the trade-off. If it is risky, say no and explain why. Reference the specific tasks and timeline from the project data. Use bullet points only. Structure: IMPACT SUMMARY (1 sentence verdict), TIME IMPACT (specific days or weeks with reasoning), BUDGET IMPACT (estimated cost with hourly rate assumption), RISK LEVEL (Low/Medium/High/Critical with reason), EFFECT ON EXISTING TASKS (which tasks are blocked or delayed), RECOMMENDATION (Approve / Reject / Negotiate — with exact counter-proposal if negotiating).',
-      `Project: ${project?.name || 'Unknown'}${scopeContext}\nRequested by: ${by || 'Unknown'}\nScope change requested:\n${desc}`,
-      projectId || undefined
+    ai('scope',
+      'You are an expert PM. Analyse scope changes and provide impact assessments. Use bullet points only — no markdown tables. Sections: Impact Summary, Time Impact (days/weeks), Budget Impact (estimated cost), Risk Level (Low/Medium/High/Critical), Effect on existing tasks, Recommendation (approve/reject/negotiate).',
+      `Project: ${project?.name || 'Unknown'}${scopeContext}\nRequested by: ${by || 'Unknown'}\nScope change requested:\n${desc}`
     )
   }
   return (
