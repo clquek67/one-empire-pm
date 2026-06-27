@@ -1419,7 +1419,32 @@ Proceed and set this task to active anyway?`)
                 <div style={s.card}>
                   <div style={s.sectionTitle}>✦ AI Rebalancing</div>
                   {aiLoading['workload'] && <div style={{ color: textDim, fontSize: '12px' }}>Analysing workload...</div>}
-                  {aiText['workload'] && <div style={s.aiResponse} dangerouslySetInnerHTML={{ __html: formatAI(aiText['workload']) }}/>}
+                  {aiText['workload'] && (
+                    <>
+                      <div style={s.aiResponse} dangerouslySetInnerHTML={{ __html: formatAI(aiText['workload']) }}/>
+                      <div style={{ marginTop: '12px', padding: '12px 14px', background: 'rgba(201,153,58,0.04)', border: '1px solid rgba(201,153,58,0.15)', borderRadius: '3px' }}>
+                        <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600, letterSpacing: '0.16em', color: goldDim, marginBottom: '8px' }}>✉ SEND WORKLOAD REPORT</div>
+                        <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                          <input id="workload-send-email" style={{ ...s.input, fontSize: '11px', padding: '7px 10px', flex: 1 }} placeholder="recipient@company.com" type="email"/>
+                          <button style={{ ...s.btnGold, fontSize: '9px', padding: '7px 14px', whiteSpace: 'nowrap' as const }} onClick={async () => {
+                            const emailEl = document.getElementById('workload-send-email') as HTMLInputElement
+                            const toEmail = emailEl?.value
+                            if (!toEmail) { alert('Please enter a recipient email'); return }
+                            const pmName = user?.user_metadata?.full_name || 'Project Manager'
+                            const bodyHtml = aiText['workload'].replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/^[-•] (.+)$/gm, '<li style="margin:4px 0;color:#333;font-size:13px;">$1</li>').replace(/\n/g, '<br/>')
+                            const fullHtml = `<div style="background:#f8f9fa;border-left:4px solid #C9993A;padding:12px 16px;margin-bottom:20px;"><div style="font-size:10px;color:#C9993A;font-weight:700;letter-spacing:2px;margin-bottom:2px;">WORKLOAD ANALYSIS</div><div style="font-size:16px;color:#050D1A;font-weight:600;">Team Capacity Report</div><div style="font-size:12px;color:#666;margin-top:4px;">${new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</div></div><div style="font-size:13px;line-height:1.8;color:#333;">${bodyHtml}</div><p style="margin:20px 0 0;font-size:12px;color:#999;border-top:1px solid #eee;padding-top:14px;">${pmName} · ${user?.email}<br/>pm.one-empire.com</p>`
+                            try {
+                              const res = await fetch('https://n8n.one-empire.com/webhook/empire-pm-invoice', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ client: 'Team', project: 'Workload Report', clientEmail: toEmail, senderName: pmName, senderEmail: user?.email, invoiceDate: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }), dueDate: '', lineItems: '', total: '', coverEmail: fullHtml }) })
+                              if (!res.ok) { alert(`✗ Failed: ${res.status}`); return }
+                              alert(`✓ Workload report sent to ${toEmail}`)
+                              emailEl.value = ''
+                            } catch { alert('Network error — check n8n is running.') }
+                          }}>✉ Send →</button>
+                        </div>
+                        <button onClick={() => navigator.clipboard.writeText(aiText['workload'])} style={{ ...s.btnGhost, fontSize: '9px', padding: '5px 12px' }}>⎘ Copy Output</button>
+                      </div>
+                    </>
+                  )}
                   {!aiLoading['workload'] && !aiText['workload'] && (
                     <div style={{ fontSize: '11px', color: textDim, lineHeight: 1.7 }}>Click <strong style={{ color: gold }}>AI Rebalance</strong> for recommendations based on your team capacity.</div>
                   )}
@@ -2902,7 +2927,34 @@ Active tasks: ${projTasks.filter((t: Task) => t.status === 'active').length}, Bl
         <button style={{ ...s.btnGold, width: '100%' }} onClick={analyse}>{aiLoading['scope'] ? 'Analysing...' : '✦ Analyse Impact →'}</button>
       </div>
       <div style={s.card}>
-        {aiText['scope'] && <div style={s.aiResponse} dangerouslySetInnerHTML={{ __html: formatAI(aiText['scope']) }}/>}
+        {aiText['scope'] && (
+          <>
+            <div style={s.aiResponse} dangerouslySetInnerHTML={{ __html: formatAI(aiText['scope']) }}/>
+            <div style={{ marginTop: '12px', padding: '12px 14px', background: 'rgba(201,153,58,0.04)', border: '1px solid rgba(201,153,58,0.15)', borderRadius: '3px' }}>
+              <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600, letterSpacing: '0.16em', color: goldDim, marginBottom: '8px' }}>✉ SEND SCOPE DECISION TO CLIENT</div>
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                <input id="scope-send-email" style={{ ...s.input, fontSize: '11px', padding: '7px 10px', flex: 1 }} placeholder="client@company.com" type="email"/>
+                <button style={{ ...s.btnGold, fontSize: '9px', padding: '7px 14px', whiteSpace: 'nowrap' as const }} onClick={async () => {
+                  const emailEl = document.getElementById('scope-send-email') as HTMLInputElement
+                  const toEmail = emailEl?.value
+                  if (!toEmail) { alert('Please enter a recipient email'); return }
+                  const pmName = user?.user_metadata?.full_name || 'Project Manager'
+                  const proj = projects.find((p: Project) => p.id === projectId)
+                  const bodyHtml = aiText['scope'].replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/^[-•] (.+)$/gm, '<li style="margin:4px 0;color:#333;font-size:13px;">$1</li>').replace(/
+/g, '<br/>')
+                  const fullHtml = `<div style="background:#f8f9fa;border-left:4px solid #C9993A;padding:12px 16px;margin-bottom:20px;"><div style="font-size:10px;color:#C9993A;font-weight:700;letter-spacing:2px;margin-bottom:2px;">SCOPE CHANGE ASSESSMENT</div><div style="font-size:16px;color:#050D1A;font-weight:600;">${proj?.name || 'Project'}</div><div style="font-size:12px;color:#666;margin-top:4px;">${new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</div></div><div style="font-size:13px;line-height:1.8;color:#333;">${bodyHtml}</div><p style="margin:20px 0 0;font-size:12px;color:#999;border-top:1px solid #eee;padding-top:14px;">${pmName} · ${user?.email}<br/>pm.one-empire.com</p>`
+                  try {
+                    const res = await fetch('https://n8n.one-empire.com/webhook/empire-pm-invoice', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ client: proj?.client_name || 'Client', project: proj?.name || 'Project', clientEmail: toEmail, senderName: pmName, senderEmail: user?.email, invoiceDate: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }), dueDate: '', lineItems: '', total: '', coverEmail: fullHtml }) })
+                    if (!res.ok) { alert(`✗ Failed: ${res.status}`); return }
+                    alert(`✓ Scope decision sent to ${toEmail}`)
+                    emailEl.value = ''
+                  } catch { alert('Network error — check n8n is running.') }
+                }}>✉ Send →</button>
+              </div>
+              <button onClick={() => navigator.clipboard.writeText(aiText['scope'])} style={{ ...s.btnGhost, fontSize: '9px', padding: '5px 12px' }}>⎘ Copy Output</button>
+            </div>
+          </>
+        )}
         {!aiText['scope'] && !aiLoading['scope'] && (
           <div style={{ fontSize: '12px', color: textDim, lineHeight: 1.7 }}>
             Log a scope change on the left and Empire AI will analyse the time, budget, and risk impact instantly.
