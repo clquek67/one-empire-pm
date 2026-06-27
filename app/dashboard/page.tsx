@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase-client'
+import ProjectBrief from './project-brief'
 import DOMPurify from 'isomorphic-dompurify'
 import { PLANS } from '@/lib/plans'
 
@@ -399,6 +400,7 @@ Proceed and set this task to active anyway?`)
     { id: 'reports', icon: '◈', label: 'Reports', section: null, locked: !hasAIFeature('reports') },
     { id: 'ai-reports', icon: '✦', label: 'AI Reports', section: null, ai: true, locked: !hasAIFeature('ai-reports') },
     { id: 'billing', icon: '◷', label: 'Time & Billing', section: null },
+    { id: 'brief', icon: '◫', label: 'Project Brief', section: null, ai: true, locked: !hasAIFeature('planner') },
     { id: 'retainers', icon: '◷', label: 'Retainers', section: null, locked: !hasAIFeature('retainers') },
     { id: 'communication', icon: '✉', label: 'Comms Agent', section: null, ai: true, locked: !hasAIFeature('communication') },
     { id: 'settings', icon: '⚙', label: 'Settings', section: 'Account' },
@@ -1428,6 +1430,27 @@ Proceed and set this task to active anyway?`)
           )}
 
           {/* ═══ BILLING ═══ */}
+          {tab === 'brief' && (
+  <div style={{ padding: '24px', maxWidth: '760px', margin: '0 auto' }}>
+    {projects.filter((p: Project) => p.status !== 'completed').length === 0 ? (
+      <div style={{ textAlign: 'center', padding: '48px 0' }}>
+        <p style={{ color: '#8FA8C8', fontSize: '14px', marginBottom: '16px' }}>No active projects yet. Create a project first.</p>
+        <button style={s.btnGold} onClick={() => setTab('projects')}>+ New Project</button>
+      </div>
+    ) : (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+        {projects.filter((p: Project) => p.status !== 'completed').map((p: Project) => (
+          <div key={p.id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '24px' }}>
+            <div style={{ fontSize: '13px', fontWeight: 600, color: '#C9A84C', letterSpacing: '0.06em', marginBottom: '20px', textTransform: 'uppercase' as const }}>
+              {p.name}
+            </div>
+            <ProjectBrief projectId={p.id} projectName={p.name} planId={plan} />
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+)}
           {tab === 'billing' && (
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '22px' }}>
