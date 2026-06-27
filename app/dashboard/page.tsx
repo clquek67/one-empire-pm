@@ -4502,7 +4502,7 @@ Paragraph 3: Confidence statement and forward outlook.`
 
 // ─── COMMUNICATION AGENT ─────────────────────────────────────────────────────
 
-function CommunicationAgent({ projects, tasks, risks, milestones, teamMembers, meetings, user, isMobile }: any) {
+function CommunicationAgent({ projects, tasks, risks, milestones, teamMembers, meetings, lastMeeting, user, isMobile }: any) {
   const gold = '#E8B84B'; const goldDim = '#C9993A'; const navy = '#050D1A'
   const navyCard = 'rgba(16,36,72,0.7)'; const border = 'rgba(201,153,54,0.2)'
   const borderMd = 'rgba(201,153,58,0.35)'; const textBright = '#F0F6FF'
