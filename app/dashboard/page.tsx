@@ -1252,7 +1252,7 @@ Proceed and set this task to active anyway?`)
                       return `PROJECT: ${p.name} | Client: ${p.client_name || 'Internal'} | Health: ${p.health}% | Timeline: ${p.start_date || 'TBD'} to ${p.end_date || 'TBD'}\nTasks: ${projTasks.map((t: Task) => t.name + ' [' + t.status + ', due: ' + (t.due_date || 'none') + ', owner: ' + (t.owner || 'unassigned') + ']').join('; ') || 'None'}\nOverdue: ${overdueTasks.map((t: Task) => t.name).join(', ') || 'None'}\nOpen Risks: ${projRisks.map((r: Risk) => r.title + ' [' + r.level + ']').join(', ') || 'None'}\nTeam: ${projTeam.map((m: TeamMember) => m.name + ' (' + m.role + ', ' + m.capacity + '% capacity)').join(', ') || 'No team'}`
                     }).join('\n\n')
                     ai('risks',
-                      'You are an expert risk manager with 20 years PM experience. Analyse this specific project data. Be highly specific — reference actual task names, owners, and dates. Never give generic advice. Use bullet points only. Structure: 1. CRITICAL RISKS, 2. HIDDEN RISKS NOT YET LOGGED, 3. CAPACITY & DEADLINE CONFLICTS, 4. RECOMMENDED ACTIONS (with owner and deadline).',
+                      'You are a senior risk manager and project director with 20 years experience across agency, SaaS, and consulting projects. Your job is to surface what the PM might be missing — not just restate what they already know. Rules: Be brutally specific — name actual tasks, owners, and dates. Never state the obvious. Surface hidden risks between the lines of the data. If something looks fine on the surface but has a pattern that leads to failure, call it out. Use bullet points only. No intros or conclusions. Structure your output with these exact headers: 1. CRITICAL — needs action this week, 2. HIDDEN RISKS — not yet logged but implied by the data, 3. SCHEDULE & CAPACITY CONFLICTS — deadlines, dependencies, overload, 4. RECOMMENDED ACTIONS — specific action, named owner, deadline.',
                       'Risk analysis for: ' + (riskProjectId === 'all' ? 'Full Portfolio' : (selectedProjects[0]?.name || 'Project')) + '\n\n' + projectContext,
                       riskProjectId !== 'all' ? riskProjectId : undefined
                     )
@@ -1378,7 +1378,7 @@ Proceed and set this task to active anyway?`)
                     return `${m.name} (${m.role || 'No role'}, ${m.capacity}% capacity, project: ${proj?.name || 'None'}): ${memberTasks.length} active tasks, ${overdue.length} overdue`
                   }).join('\n')
                   ai('workload',
-                    'You are an expert resource manager with 20 years experience. Analyse team workload and provide specific, actionable rebalancing recommendations. Use bullet points only — no markdown tables.',
+                    'You are a senior resource manager and delivery lead. Your job is to prevent burnout, unblock delivery, and surface capacity risks before they become delays. Rules: Be specific — name the person, the task, and the action. Never give generic advice like consider redistributing work. If someone is overloaded, say exactly which tasks to move and to whom. If someone is underutilised, say exactly what they should pick up. Use bullet points only. Structure: OVERLOADED MEMBERS (name | current load | risk), UNDERUTILISED CAPACITY (name | available hours | suggested tasks), REBALANCING ACTIONS (specific task | move from | move to | reason), BOTTLENECK RISKS (what will break first and when).',
                     `Team capacity analysis:\n${capacityData || 'No team members yet'}\n\nTotal active tasks: ${tasks.filter((t: Task) => t.status === 'active').length}\nTotal blocked tasks: ${tasks.filter((t: Task) => t.status === 'blocked').length}\n\nProvide: 1. Overloaded members (risk of burnout), 2. Underutilised capacity, 3. Specific task rebalancing suggestions by name, 4. Bottleneck risks.`,
                     projects.find((p: Project) => p.status === 'active')?.id
                   )
@@ -2617,7 +2617,7 @@ Open risks: ${pRisks.map((r: Risk) => `${r.title} [${r.level}]`).join(', ') || '
 Use this context to cross-reference action items with existing tasks and flag any conflicts or overlaps with open risks.`
     })() : ''
     const text = await callAI(
-      'You are an expert meeting facilitator and project manager. Extract and structure the following from the meeting notes. Use bullet points only — no markdown tables. Sections: 1. Summary (2-3 sentences), 2. Key Decisions, 3. Action Items (with owner and deadline if mentioned), 4. Risks or Issues Raised, 5. Follow-up Questions. If project context is provided, cross-reference action items against existing tasks and flag overlaps with open risks.',
+      'You are a senior project manager processing meeting notes into structured intelligence. Your output will be read by the PM immediately after the meeting — make it actionable, not just descriptive. Rules: Extract only what was explicitly said or clearly implied. Never pad with generic filler. If an action item has no owner, flag it as UNASSIGNED. If a deadline was mentioned, include it. If project context is provided, cross-reference action items against existing tasks — flag duplicates, conflicts, and new risks not yet logged. Use bullet points only. Output with these exact headers: SUMMARY (2 sentences max), KEY DECISIONS (what was agreed — not discussed), ACTION ITEMS (owner | action | deadline), NEW RISKS IDENTIFIED (title | level: low/medium/high/critical), OPEN QUESTIONS (unresolved items needing follow-up).',
       `Meeting: ${title}\n\nNotes:\n${notes}${projContext}`
     )
     setResult(text)
@@ -2723,7 +2723,7 @@ Available team members: ${teamMembers.length > 0 ? teamMembers.map((m: TeamMembe
 Current open risks across portfolio: ${risks.filter((r: Risk) => r.status !== 'closed').length} open risks
 Total active tasks in flight: ${tasks.filter((t: Task) => t.status === 'active').length}` : ''
     ai('planner',
-      `You are an expert PM with 20 years experience. Generate a comprehensive project plan using EXACTLY this structure with these EXACT section headers (used for parsing):
+      `You are a senior project director who has delivered 200+ projects. You build plans that actually get executed — not theoretical plans. Your plans are specific, sequenced, and risk-aware from day one. Rules: Every task must have a clear deliverable implied in its name. Sequence tasks logically — dependencies first. Distribute tasks across team members by role if provided. Flag the top 3 risks immediately in RISKS. Milestones mark client-visible checkpoints only. IMPORTANT: Today is ${new Date().toISOString().split('T')[0]} — ALL dates must be after today. Never use past dates. Output using EXACTLY this structure with these EXACT section headers (used for parsing):
 
 TASKS:
 - Task name | priority (high/medium/low) | owner name or "Unassigned" | due date as YYYY-MM-DD or "TBD"
@@ -2897,7 +2897,7 @@ Budget: ${project.budget ? `$${Number(project.budget).toLocaleString()}` : 'Not 
 Timeline: ${project.start_date || 'TBD'} → ${project.end_date || 'TBD'}
 Active tasks: ${projTasks.filter((t: Task) => t.status === 'active').length}, Blocked: ${projTasks.filter((t: Task) => t.status === 'blocked').length}` : ''
    ai('scope',
-      'You are an expert PM. Analyse scope changes and provide impact assessments. Use bullet points only — no markdown tables. Sections: Impact Summary, Time Impact (days/weeks), Budget Impact (estimated cost), Risk Level (Low/Medium/High/Critical), Effect on existing tasks, Recommendation (approve/reject/negotiate).',
+      'You are a senior project manager and commercial advisor. Your job is to protect the project timeline, budget, and team capacity from uncontrolled scope changes. Be direct and commercial — not diplomatic. Rules: Quantify everything. Never say may impact — say will add X days and Y dollars. If the scope change is reasonable, say so and explain the trade-off. If it is risky, say no and explain why. Reference the specific tasks and timeline from the project data. Use bullet points only. Structure: IMPACT SUMMARY (1 sentence verdict), TIME IMPACT (specific days or weeks with reasoning), BUDGET IMPACT (estimated cost with hourly rate assumption), RISK LEVEL (Low/Medium/High/Critical with reason), EFFECT ON EXISTING TASKS (which tasks are blocked or delayed), RECOMMENDATION (Approve / Reject / Negotiate — with exact counter-proposal if negotiating).',
       `Project: ${project?.name || 'Unknown'}${scopeContext}\nRequested by: ${by || 'Unknown'}\nScope change requested:\n${desc}`,
       projectId || undefined
     )
