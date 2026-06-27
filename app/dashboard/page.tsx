@@ -87,6 +87,7 @@ export default function Dashboard() {
   const [proposals, setProposals] = useState<Proposal[]>([])
   const [recurringInvoices, setRecurringInvoices] = useState<RecurringInvoice[]>([])
   const [meetings, setMeetings] = useState<any[]>([])
+  const [lastMeeting, setLastMeeting] = useState<any>(null)
   const [subscription, setSubscription] = useState<any>(null)
   const [aiText, setAiText] = useState<Record<string, string>>({})
   const [aiLoading, setAiLoading] = useState<Record<string, boolean>>({})
@@ -1327,7 +1328,7 @@ Proceed and set this task to active anyway?`)
               <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '26px', color: '#F0F6FF', marginBottom: '22px' }}>
                 Meeting <em style={{ color: gold, fontStyle: 'italic' }}>Processor</em>
               </div>
-              <MeetingProcessor user={user} projects={projects} tasks={tasks} risks={risks} supabase={supabase} onSaved={() => user && loadData(user.id)} isMobile={isMobile} />
+              <MeetingProcessor user={user} projects={projects} tasks={tasks} risks={risks} supabase={supabase} onSaved={() => user && loadData(user.id)} onProcessed={(m: any) => setLastMeeting(m)} isMobile={isMobile} />
             </div>
           )}
 
@@ -2049,6 +2050,7 @@ Proceed and set this task to active anyway?`)
               milestones={milestones}
               teamMembers={teamMembers}
               meetings={meetings}
+              lastMeeting={lastMeeting}
               user={user}
               isMobile={isMobile}
             />
@@ -2577,7 +2579,7 @@ function TimeLogForm({ user, projects, onCreated, supabase, isMobile }: any) {
   )
 }
 
-function MeetingProcessor({ user, projects, tasks, risks, supabase, onSaved, isMobile }: any) {
+function MeetingProcessor({ user, projects, tasks, risks, supabase, onSaved, onProcessed, isMobile }: any) {
   const [title, setTitle] = useState(''); const [notes, setNotes] = useState(''); const [projectId, setProjectId] = useState(''); const [result, setResult] = useState(''); const [loading, setLoading] = useState(false); const [meetingDate, setMeetingDate] = useState(new Date().toISOString().split('T')[0])
   const process = async () => {
     if (!notes) return
@@ -2601,6 +2603,7 @@ Use this context to cross-reference action items with existing tasks and flag an
       await supabase.from('meetings').insert({ user_id: user.id, project_id: projectId, title, notes, summary: text, meeting_date: meetingDate || null })
       onSaved()
     }
+    if (onProcessed) onProcessed({ title, projectId, summary: text, meetingDate })
     setLoading(false)
   }
   return (
