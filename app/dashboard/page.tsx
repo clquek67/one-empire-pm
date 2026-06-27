@@ -1338,7 +1338,7 @@ Proceed and set this task to active anyway?`)
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '22px' }}>
                 <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '26px', color: '#F0F6FF' }}>Client <em style={{ color: gold, fontStyle: 'italic' }}>Portal</em></div>
-                <button style={s.btnGold} onClick={() => ai('client', 'You are a professional PM writing client updates. Write clear professional updates that build confidence. Never reveal internal issues unless explicitly included. Use bullet points only — no markdown tables.', `Generate a professional client status update covering all active projects.\n\nActive projects:\n${projects.filter((p: Project) => p.status === 'active').map((p: Project) => `- ${p.name} (Client: ${p.client_name || 'Internal'}, Health: ${p.health}%, Due: ${p.end_date || 'TBD'})`).join('\n') || 'No active projects'}`)}>✦ Quick Update</button>
+                <button style={s.btnGold} onClick={() => ai('client', 'You are a professional PM writing client updates. Write clear professional updates that build confidence. Never reveal internal issues unless explicitly included. Use bullet points only — no markdown tables.', `Generate a professional client status update covering all active projects.\n\nActive projects:\n${projects.filter((p: Project) => p.status === 'active').map((p: Project) => `- ${p.name} (Client: ${p.client_name || 'Internal'}, Health: ${p.health}%, Due: ${p.end_date || 'TBD'})`).join('\n') || 'No active projects'}`, projects.find((p: Project) => p.status === 'active')?.id)}>✦ Quick Update</button>onClick={() => ai('client', 'You are a professional PM writing client updates. Write clear professional updates that build confidence. Never reveal internal issues unless explicitly included. Use bullet points only — no markdown tables.', `Generate a professional client status update covering all active projects.\n\nActive projects:\n${projects.filter((p: Project) => p.status === 'active').map((p: Project) => `- ${p.name} (Client: ${p.client_name || 'Internal'}, Health: ${p.health}%, Due: ${p.end_date || 'TBD'})`).join('\n') || 'No active projects'}`, projects.find((p: Project) => p.status === 'active')?.id)}>✦ Quick Update</button>onClick={() => ai('client', 'You are a professional PM writing client updates. Write clear professional updates that build confidence. Never reveal internal issues unless explicitly included. Use bullet points only — no markdown tables.', `Generate a professional client status update covering all active projects.\n\nActive projects:\n${projects.filter((p: Project) => p.status === 'active').map((p: Project) => `- ${p.name} (Client: ${p.client_name || 'Internal'}, Health: ${p.health}%, Due: ${p.end_date || 'TBD'})`).join('\n') || 'No active projects'}`)}>✦ Quick Update</button>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '14px' }}>
                 <div style={s.card}>
@@ -2681,7 +2681,8 @@ Timeline: ${project?.start_date || 'TBD'} → ${project?.end_date || 'TBD'}
 Tone: ${tone}
 Key points from PM: ${notes || 'General progress update — project on track'}
 
-Write a professional client status update email.`
+Write a professional client status update email.`,
+  projectId || undefined
     )
   }
   return (
@@ -2743,9 +2744,10 @@ KPIS:
 Success metrics.
 
 Rules: Use bullet points only. No markdown tables. Be specific, not generic. Assign tasks to named team members if provided. IMPORTANT: Today is ${new Date().toISOString().split('T')[0]} — ALL dates must be AFTER today. Never use past dates.`,
-      `New Project: ${name || 'New Project'}\nProject Start Date: ${new Date().toISOString().split('T')[0]}\nTimeline: ${timeline}\nTeam Size: ${team}\n\nBrief:\n${brief}${existingContext}`
-    )
-    setPopulateResult(null)
+      `New Project: ${name || 'New Project'}\nProject Start Date: ${new Date().toISOString().split('T')[0]}\nTimeline: ${timeline}\nTeam Size: ${team}\n\nBrief:\n${brief}${existingContext}`,
+      targetProjectId || undefined
+    )    
+      setPopulateResult(null)
   }
 
   const autoPopulate = async () => {
