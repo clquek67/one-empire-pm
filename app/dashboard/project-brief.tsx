@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@/lib/supabase-client';
 
 interface Stakeholder {
   name: string;
@@ -33,7 +33,7 @@ const isPro = (planId: string) => ['pro', 'agency'].includes(planId);
 const isAgency = (planId: string) => planId === 'agency';
 
 export default function ProjectBrief({ projectId, projectName, planId }: ProjectBriefProps) {
-  const supabase = createClientComponentClient();
+  const supabase = createClient();
   const [profile, setProfile] = useState<ProjectProfile>({
     project_id: projectId,
     goals: '',
