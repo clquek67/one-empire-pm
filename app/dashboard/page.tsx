@@ -399,14 +399,13 @@ Proceed and set this task to active anyway?`)
     { id: 'reports', icon: '◈', label: 'Reports', section: null, locked: !hasAIFeature('reports') },
     { id: 'ai-reports', icon: '✦', label: 'AI Reports', section: null, ai: true, locked: !hasAIFeature('ai-reports') },
     { id: 'billing', icon: '◷', label: 'Time & Billing', section: null },
-    { id: 'brief', icon: '◫', label: 'Project Brief', section: null, ai: true, locked: !hasAIFeature('planner') },
     { id: 'retainers', icon: '◷', label: 'Retainers', section: null, locked: !hasAIFeature('retainers') },
     { id: 'communication', icon: '✉', label: 'Comms Agent', section: null, ai: true, locked: !hasAIFeature('communication') },
     { id: 'settings', icon: '⚙', label: 'Settings', section: 'Account' },
   ]
 
-  const pageLabels: Record<string,string> = { dashboard:'Dashboard', projects:'Projects', tasks:'Tasks', proposals:'Proposals', planner:'AI Planner', meetings:'Meetings', risks:'Risk Radar', scope:'Scope Control', clients:'Client Portal', workload:'Workload', timeline:'Timeline', reports:'Reports', 'ai-reports':'AI Reports', billing:'Time & Billing', brief:'Project Brief', retainers:'Retainers', communication:'Comms Agent', settings:'Settings' }
-  const pageCrumbs: Record<string,string> = { dashboard:'/ Overview', projects:'/ All Projects', tasks:'/ All Tasks', proposals:'/ Estimates & Proposals', planner:'/ Generate Plan', meetings:'/ Process Notes', risks:'/ Risk Register', scope:'/ Change Log', clients:'/ Email Generator', workload:'/ Capacity', timeline:'/ Milestones & Gantt', reports:'/ Project Report', 'ai-reports':'/ AI Reporting Agent', billing:'/ Timer & Invoices', brief:'/ Intelligence Profile', retainers:'/ Recurring Invoices', communication:'/ Communication Agent', settings:'/ Account' }
+  const pageLabels: Record<string,string> = { dashboard:'Dashboard', projects:'Projects', tasks:'Tasks', proposals:'Proposals', planner:'AI Planner', meetings:'Meetings', risks:'Risk Radar', scope:'Scope Control', clients:'Client Portal', workload:'Workload', timeline:'Timeline', reports:'Reports', 'ai-reports':'AI Reports', billing:'Time & Billing', retainers:'Retainers', communication:'Comms Agent', settings:'Settings' }
+  const pageCrumbs: Record<string,string> = { dashboard:'/ Overview', projects:'/ All Projects', tasks:'/ All Tasks', proposals:'/ Estimates & Proposals', planner:'/ Generate Plan', meetings:'/ Process Notes', risks:'/ Risk Register', scope:'/ Change Log', clients:'/ Email Generator', workload:'/ Capacity', timeline:'/ Milestones & Gantt', reports:'/ Project Report', 'ai-reports':'/ AI Reporting Agent', billing:'/ Timer & Invoices', retainers:'/ Recurring Invoices', communication:'/ Communication Agent', settings:'/ Account' }
 
   return (
     <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', height: '100dvh', width: '100vw', background: navy, overflow: 'hidden' }} onClick={() => setShowNotifications(false)}>
@@ -1310,7 +1309,57 @@ Proceed and set this task to active anyway?`)
                   <div style={s.card}>
                     <div style={s.sectionTitle}>✦ AI Risk Analysis</div>
                     {aiLoading['risks'] && <div style={{ color: textDim, fontSize: '12px' }}>Scanning {riskProjectId === 'all' ? 'all projects' : (projects.find((p: Project) => p.id === riskProjectId)?.name || 'project')} for risks...</div>}
-                    {aiText['risks'] && <div style={s.aiResponse} dangerouslySetInnerHTML={{ __html: formatAI(aiText['risks']) }}/>}
+                    {aiText['risks'] && (
+                      <>
+                        <div style={s.aiResponse} dangerouslySetInnerHTML={{ __html: formatAI(aiText['risks']) }}/>
+                        <div style={{ marginTop: '12px', padding: '12px 14px', background: 'rgba(201,153,58,0.04)', border: '1px solid rgba(201,153,58,0.15)', borderRadius: '3px' }}>
+                          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600, letterSpacing: '0.16em', color: goldDim, marginBottom: '8px' }}>✉ SEND RISK REPORT</div>
+                          <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                            <input
+                              id="risk-send-email"
+                              style={{ ...s.input, fontSize: '11px', padding: '7px 10px', flex: 1 }}
+                              placeholder="recipient@company.com"
+                              type="email"
+                            />
+                            <button
+                              style={{ ...s.btnGold, fontSize: '9px', padding: '7px 14px', whiteSpace: 'nowrap' as const }}
+                              onClick={async () => {
+                                const emailEl = document.getElementById('risk-send-email') as HTMLInputElement
+                                const toEmail = emailEl?.value
+                                if (!toEmail) { alert('Please enter a recipient email'); return }
+                                const project = projects.find((p: Project) => p.id === riskProjectId)
+                                const pmName = user?.user_metadata?.full_name || 'Project Manager'
+                                const bodyHtml = aiText['risks']
+                                  .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                                  .replace(/^[-•] (.+)$/gm, '<li style="margin:4px 0;color:#333;font-size:13px;">$1</li>')
+                                  .replace(/\n/g, '<br/>')
+                                const fullHtml = `<div style="background:#f8f9fa;border-left:4px solid #C9993A;padding:12px 16px;margin-bottom:20px;"><div style="font-size:10px;color:#C9993A;font-weight:700;letter-spacing:2px;margin-bottom:2px;">RISK RADAR REPORT</div><div style="font-size:16px;color:#050D1A;font-weight:600;">${project?.name || 'Portfolio'}</div><div style="font-size:12px;color:#666;margin-top:4px;">${new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</div></div><div style="font-size:13px;line-height:1.8;color:#333;">${bodyHtml}</div><p style="margin:20px 0 0;font-size:12px;color:#999;border-top:1px solid #eee;padding-top:14px;">${pmName} · ${user?.email}<br/>pm.one-empire.com</p>`
+                                try {
+                                  const res = await fetch('https://n8n.one-empire.com/webhook/empire-pm-invoice', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                      client: project?.client_name || 'Team',
+                                      project: project?.name || 'Portfolio Risk Report',
+                                      clientEmail: toEmail,
+                                      senderName: pmName,
+                                      senderEmail: user?.email,
+                                      invoiceDate: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }),
+                                      dueDate: '', lineItems: '', total: '',
+                                      coverEmail: fullHtml,
+                                    })
+                                  })
+                                  if (!res.ok) { alert(`✗ Failed to send: ${res.status}`); return }
+                                  alert(`✓ Risk report sent to ${toEmail}`)
+                                  emailEl.value = ''
+                                } catch { alert('Network error — check n8n is running.') }
+                              }}
+                            >✉ Send →</button>
+                          </div>
+                          <button onClick={() => navigator.clipboard.writeText(aiText['risks'])} style={{ ...s.btnGhost, fontSize: '9px', padding: '5px 12px' }}>⎘ Copy Output</button>
+                        </div>
+                      </>
+                    )}
                     {!aiLoading['risks'] && !aiText['risks'] && (
                       <div style={{ fontSize: '11px', color: textDim, lineHeight: 1.7 }}>
                         Select a project then click <strong style={{ color: gold }}>AI Risk Scan</strong> for a project-specific analysis, or leave on All Projects for portfolio-wide scan.
