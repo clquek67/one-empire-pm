@@ -399,13 +399,14 @@ Proceed and set this task to active anyway?`)
     { id: 'reports', icon: '◈', label: 'Reports', section: null, locked: !hasAIFeature('reports') },
     { id: 'ai-reports', icon: '✦', label: 'AI Reports', section: null, ai: true, locked: !hasAIFeature('ai-reports') },
     { id: 'billing', icon: '◷', label: 'Time & Billing', section: null },
+    { id: 'brief', icon: '◫', label: 'Project Brief', section: null, ai: true, locked: !hasAIFeature('planner') },
     { id: 'retainers', icon: '◷', label: 'Retainers', section: null, locked: !hasAIFeature('retainers') },
     { id: 'communication', icon: '✉', label: 'Comms Agent', section: null, ai: true, locked: !hasAIFeature('communication') },
     { id: 'settings', icon: '⚙', label: 'Settings', section: 'Account' },
   ]
 
-  const pageLabels: Record<string,string> = { dashboard:'Dashboard', projects:'Projects', tasks:'Tasks', proposals:'Proposals', planner:'AI Planner', meetings:'Meetings', risks:'Risk Radar', scope:'Scope Control', clients:'Client Portal', workload:'Workload', timeline:'Timeline', reports:'Reports', 'ai-reports':'AI Reports', billing:'Time & Billing', retainers:'Retainers', communication:'Comms Agent', settings:'Settings' }
-  const pageCrumbs: Record<string,string> = { dashboard:'/ Overview', projects:'/ All Projects', tasks:'/ All Tasks', proposals:'/ Estimates & Proposals', planner:'/ Generate Plan', meetings:'/ Process Notes', risks:'/ Risk Register', scope:'/ Change Log', clients:'/ Email Generator', workload:'/ Capacity', timeline:'/ Milestones & Gantt', reports:'/ Project Report', 'ai-reports':'/ AI Reporting Agent', billing:'/ Timer & Invoices', retainers:'/ Recurring Invoices', communication:'/ Communication Agent', settings:'/ Account' }
+  const pageLabels: Record<string,string> = { dashboard:'Dashboard', projects:'Projects', tasks:'Tasks', proposals:'Proposals', planner:'AI Planner', meetings:'Meetings', risks:'Risk Radar', scope:'Scope Control', clients:'Client Portal', workload:'Workload', timeline:'Timeline', reports:'Reports', 'ai-reports':'AI Reports', billing:'Time & Billing', brief:'Project Brief', retainers:'Retainers', communication:'Comms Agent', settings:'Settings' }
+  const pageCrumbs: Record<string,string> = { dashboard:'/ Overview', projects:'/ All Projects', tasks:'/ All Tasks', proposals:'/ Estimates & Proposals', planner:'/ Generate Plan', meetings:'/ Process Notes', risks:'/ Risk Register', scope:'/ Change Log', clients:'/ Email Generator', workload:'/ Capacity', timeline:'/ Milestones & Gantt', reports:'/ Project Report', 'ai-reports':'/ AI Reporting Agent', billing:'/ Timer & Invoices', brief:'/ Intelligence Profile', retainers:'/ Recurring Invoices', communication:'/ Communication Agent', settings:'/ Account' }
 
   return (
     <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', height: '100dvh', width: '100vw', background: navy, overflow: 'hidden' }} onClick={() => setShowNotifications(false)}>
