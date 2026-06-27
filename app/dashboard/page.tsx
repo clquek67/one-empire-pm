@@ -58,12 +58,11 @@ function fmtDate(d?: string | null) {
   return new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
-async function callAI(system: string, content: string, _maxTokens = 1000): Promise<string> {
+async function callAI(system: string, content: string, _maxTokens = 1000, projectId?: string): Promise<string> {
   try {
-    // model and max_tokens are pinned server-side in /api/chat — do not send from client
     const res = await fetch('/api/chat', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ system, messages: [{ role: 'user', content }] })
+      body: JSON.stringify({ system, messages: [{ role: 'user', content }], projectId })
     })
     const data = await res.json()
     if (data.content?.[0]?.text) return data.content[0].text
@@ -271,10 +270,10 @@ Proceed and set this task to active anyway?`)
     }
   }
 
-  const ai = async (key: string, system: string, content: string): Promise<string> => {
+  const ai = async (key: string, system: string, content: string, projectId?: string): Promise<string> => {
     setAiLoading(prev => ({ ...prev, [key]: true }))
     setAiText(prev => ({ ...prev, [key]: '' }))
-    const text = await callAI(system, content)
+    const text = await callAI(system, content, 1000, projectId)
     setAiText(prev => ({ ...prev, [key]: text }))
     setAiLoading(prev => ({ ...prev, [key]: false }))
     return text
