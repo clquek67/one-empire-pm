@@ -2761,19 +2761,19 @@ Rules: Use bullet points only. No markdown tables. Be specific, not generic. Ass
     const raw = aiText['planner']
 
     // Parse TASKS section
-    const tasksMatch = raw.match(/TASKS[:\s]*\n([\s\S]*?)(?=\n[A-Z]+:|$)/i)
+    const tasksMatch = raw.match(/TASKS[^\n]*\n([\s\S]*?)(?=\n(?:RISKS|MILESTONES|SUMMARY|PHASES|KPIS|[A-Z]{3,})[:\s]|$)/i)
     const tasksRaw = tasksMatch ? tasksMatch[1] : ''
-    const taskLines = tasksRaw.split('\n').filter((l: string) => l.trim().startsWith('-')).map((l: string) => l.replace(/^-\s*/, '').trim())
+    const taskLines = tasksRaw.split('\n').filter((l: string) => l.trim().startsWith('-') || l.trim().startsWith('\u25b8')).map((l: string) => l.replace(/^[-\u25b8]\s*/, '').trim())
 
     // Parse RISKS section
-    const risksMatch = raw.match(/RISKS[:\s]*\n([\s\S]*?)(?=\n[A-Z]+:|$)/i)
+    const risksMatch = raw.match(/RISKS[^\n]*\n([\s\S]*?)(?=\n(?:MILESTONES|SUMMARY|PHASES|KPIS|[A-Z]{3,})[:\s]|$)/i)
     const risksRaw = risksMatch ? risksMatch[1] : ''
-    const riskLines = risksRaw.split('\n').filter((l: string) => l.trim().startsWith('-')).map((l: string) => l.replace(/^-\s*/, '').trim())
+    const riskLines = risksRaw.split('\n').filter((l: string) => l.trim().startsWith('-') || l.trim().startsWith('\u25b8')).map((l: string) => l.replace(/^[-\u25b8]\s*/, '').trim())
 
     // Parse MILESTONES section
-    const msMatch = raw.match(/MILESTONES[:\s]*\n([\s\S]*?)(?=\n[A-Z]+:|$)/i)
+    const msMatch = raw.match(/MILESTONES[^\n]*\n([\s\S]*?)(?=\n(?:SUMMARY|PHASES|KPIS|[A-Z]{3,})[:\s]|$)/i)
     const msRaw = msMatch ? msMatch[1] : ''
-    const msLines = msRaw.split('\n').filter((l: string) => l.trim().startsWith('-')).map((l: string) => l.replace(/^-\s*/, '').trim())
+    const msLines = msRaw.split('\n').filter((l: string) => l.trim().startsWith('-') || l.trim().startsWith('\u25b8')).map((l: string) => l.replace(/^[-\u25b8]\s*/, '').trim())
 
     let taskCount = 0; let riskCount = 0; let msCount = 0
 
