@@ -2774,6 +2774,9 @@ Rules: Use bullet points only. No markdown tables. Be specific, not generic. Ass
     const msMatch = raw.match(/MILESTONES[^\n]*\n([\s\S]*?)(?=\n(?:SUMMARY|PHASES|KPIS|[A-Z]{3,})[:\s]|$)/i)
     const msRaw = msMatch ? msMatch[1] : ''
     const msLines = msRaw.split('\n').filter((l: string) => l.trim().startsWith('-') || l.trim().startsWith('\u25b8')).map((l: string) => l.replace(/^[-\u25b8]\s*/, '').trim())
+    console.log('[AutoPopulate] RAW MILESTONES SECTION:', msRaw)
+    console.log('[AutoPopulate] MILESTONE LINES:', msLines)
+    console.log('[AutoPopulate] FULL RAW (first 2000 chars):', raw.slice(0, 2000))
 
     let taskCount = 0; let riskCount = 0; let msCount = 0
 
