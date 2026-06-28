@@ -101,11 +101,12 @@ export default function ProjectBrief({ projectId, projectName, planId }: Project
 
   async function loadTemplates() {
     setTemplatesLoading(true);
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('project_profiles')
       .select('*')
       .eq('is_template', true)
       .order('template_name', { ascending: true });
+    if (error) console.error('loadTemplates error:', error);
     if (data) setTemplates(data);
     setTemplatesLoading(false);
   }
@@ -142,12 +143,9 @@ export default function ProjectBrief({ projectId, projectName, planId }: Project
     if (!newTemplateName.trim() || !isAgency(planId)) return;
     setSavingTemplate(true);
 
-    // Templates are stored as project_profiles rows with is_template = true
-    // We use a fake project_id prefix to avoid UNIQUE constraint on real project_ids
-    const templateProjectId = `template_${Date.now()}`;
-
+    // Templates use null project_id — no FK constraint violation
     const { error } = await supabase.from('project_profiles').insert({
-      project_id: templateProjectId,
+      project_id: null,
       goals: profile.goals,
       timeline_summary: profile.timeline_summary,
       notes: profile.notes,
