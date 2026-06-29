@@ -2940,10 +2940,10 @@ Rules: Use bullet points only. No markdown tables. Be specific, not generic. Ass
             <div style={{ marginTop: '12px', padding: '12px 14px', background: 'rgba(201,153,58,0.04)', border: '1px solid rgba(201,153,58,0.15)', borderRadius: '3px' }}>
               <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600, letterSpacing: '0.16em', color: goldDim, marginBottom: '8px' }}>✉ SHARE PROJECT PLAN</div>
               <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
-                <input id="planner-send-email" style={{ ...s.input, fontSize: '11px', padding: '7px 10px', flex: 1 }} placeholder="recipient@company.com" type="email"/>
-                <button style={{ ...s.btnGold, fontSize: '9px', padding: '7px 14px', whiteSpace: 'nowrap' as const }} onClick={sendPlannerReport} disabled={plannerSending}>{plannerSending ? 'Sending...' : '✉ Send →'}</button>
+                <input id="planner-send-email" style={{ flex: 1, background: 'rgba(16,36,72,0.8)', border: '1px solid rgba(201,153,58,0.2)', borderRadius: '3px', padding: '7px 10px', fontFamily: 'DM Sans, sans-serif', fontSize: '11px', color: '#F0F6FF', outline: 'none' }} placeholder="recipient@company.com" type="email"/>
+                <button style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 700, letterSpacing: '0.14em', background: 'linear-gradient(135deg, #C9993A, #E8B84B)', color: '#050D1A', border: 'none', padding: '7px 14px', borderRadius: '2px', cursor: 'pointer', whiteSpace: 'nowrap' as const, opacity: plannerSending ? 0.6 : 1 }} onClick={sendPlannerReport} disabled={plannerSending}>{plannerSending ? 'Sending...' : '✉ Send →'}</button>
               </div>
-              <button onClick={() => navigator.clipboard.writeText(aiText['planner'])} style={{ ...s.btnGhost, fontSize: '9px', padding: '5px 12px' }}>⎘ Copy Plan</button>
+              <button onClick={() => navigator.clipboard.writeText(aiText['planner'])} style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600, letterSpacing: '0.12em', border: '1px solid rgba(201,153,58,0.35)', background: 'transparent', color: '#C8DCF4', padding: '5px 12px', borderRadius: '2px', cursor: 'pointer' }}>⎘ Copy Plan</button>
             </div>
           </>
         )}
