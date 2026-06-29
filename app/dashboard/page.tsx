@@ -2753,8 +2753,31 @@ function AIPlannerForm({ ai, aiLoading, aiText, projects, tasks, risks, teamMemb
   const [targetProjectId, setTargetProjectId] = useState('')
   const [populating, setPopulating] = useState(false)
   const [populateResult, setPopulateResult] = useState<{tasks: number, risks: number, milestones: number} | null>(null)
+  const [plannerSending, setPlannerSending] = useState(false)
 
   const gold = '#E8B84B'; const goldDim = '#C9993A'
+
+  const sendPlannerReport = async () => {
+    const emailEl = document.getElementById('planner-send-email') as HTMLInputElement
+    const toEmail = emailEl?.value
+    if (!toEmail) { alert('Please enter a recipient email'); return }
+    setPlannerSending(true)
+    const pmName = user?.user_metadata?.full_name || 'Project Manager'
+    const cleaned = (aiText['planner'] || '')
+      .split('**').join('')
+      .split('\n').join('<br/>')
+    const fullHtml = '<div style="background:#f8f9fa;border-left:4px solid #C9993A;padding:12px 16px;margin-bottom:20px;"><div style="font-size:10px;color:#C9993A;font-weight:700;letter-spacing:2px;margin-bottom:2px;">PROJECT PLAN</div><div style="font-size:16px;color:#050D1A;font-weight:600;">' + (name || 'New Project') + '</div><div style="font-size:12px;color:#666;margin-top:4px;">' + new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) + '</div></div><div style="font-size:13px;line-height:1.8;color:#333;">' + cleaned + '</div><p style="margin:20px 0 0;font-size:12px;color:#999;border-top:1px solid #eee;padding-top:14px;">' + pmName + ' · ' + (user?.email || '') + '<br/>pm.one-empire.com</p>'
+    try {
+      const res = await fetch('https://n8n.one-empire.com/webhook/empire-pm-invoice', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ client: 'Team', project: name || 'Project Plan', clientEmail: toEmail, senderName: pmName, senderEmail: user?.email, invoiceDate: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }), dueDate: '', lineItems: '', total: '', coverEmail: fullHtml })
+      })
+      if (!res.ok) { alert('Failed to send: ' + res.status); setPlannerSending(false); return }
+      alert('Project plan sent to ' + toEmail)
+      emailEl.value = ''
+    } catch { alert('Network error — check n8n is running.') }
+    setPlannerSending(false)
+  }
 
   const generate = () => {
     if (!brief) return
@@ -2911,7 +2934,19 @@ Rules: Use bullet points only. No markdown tables. Be specific, not generic. Ass
       </div>
       <div style={s.card}>
         {aiLoading['planner'] && <div style={{ color: textDim, fontSize: '12px', textAlign: 'center', padding: '20px' }}>✦ Generating your project plan...</div>}
-        {aiText['planner'] && <div style={s.aiResponse} dangerouslySetInnerHTML={{ __html: formatAI(aiText['planner']) }}/>}
+        {aiText['planner'] && (
+          <>
+            <div style={s.aiResponse} dangerouslySetInnerHTML={{ __html: formatAI(aiText['planner']) }}/>
+            <div style={{ marginTop: '12px', padding: '12px 14px', background: 'rgba(201,153,58,0.04)', border: '1px solid rgba(201,153,58,0.15)', borderRadius: '3px' }}>
+              <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600, letterSpacing: '0.16em', color: goldDim, marginBottom: '8px' }}>✉ SHARE PROJECT PLAN</div>
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                <input id="planner-send-email" style={{ ...s.input, fontSize: '11px', padding: '7px 10px', flex: 1 }} placeholder="recipient@company.com" type="email"/>
+                <button style={{ ...s.btnGold, fontSize: '9px', padding: '7px 14px', whiteSpace: 'nowrap' as const }} onClick={sendPlannerReport} disabled={plannerSending}>{plannerSending ? 'Sending...' : '✉ Send →'}</button>
+              </div>
+              <button onClick={() => navigator.clipboard.writeText(aiText['planner'])} style={{ ...s.btnGhost, fontSize: '9px', padding: '5px 12px' }}>⎘ Copy Plan</button>
+            </div>
+          </>
+        )}
         {!aiLoading['planner'] && !aiText['planner'] && (
           <div>
             <div style={s.sectionTitle}>How It Works</div>
