@@ -2765,35 +2765,56 @@ function AIPlannerForm({ ai, aiLoading, aiText, projects, tasks, risks, teamMemb
     const pmName = user?.user_metadata?.full_name || 'Project Manager'
     const raw = aiText['planner'] || ''
 
-    // Convert raw plan text to rich HTML
+    // Convert raw plan text to rich HTML — uses tables for email-safe alignment
     const toHtml = (text: string) => {
       const lines = text.split('\n')
       let html = ''
+      let inTaskSection = false
+      let taskRows = ''
+
+      const flushTasks = () => {
+        if (!taskRows) return
+        html += '<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-family:Arial,sans-serif;font-size:12px;margin-bottom:8px;">'
+        html += '<tr style="background:#f8f9fa;"><th align="left" style="padding:6px 8px;color:#C9993A;font-size:10px;letter-spacing:1px;border-bottom:2px solid #E8B84B;">TASK</th><th align="left" style="padding:6px 8px;color:#C9993A;font-size:10px;letter-spacing:1px;border-bottom:2px solid #E8B84B;width:70px;">PRIORITY</th><th align="left" style="padding:6px 8px;color:#C9993A;font-size:10px;letter-spacing:1px;border-bottom:2px solid #E8B84B;width:90px;">OWNER</th><th align="left" style="padding:6px 8px;color:#C9993A;font-size:10px;letter-spacing:1px;border-bottom:2px solid #E8B84B;width:100px;">DUE DATE</th></tr>'
+        html += taskRows
+        html += '</table>'
+        taskRows = ''
+        inTaskSection = false
+      }
+
       for (const line of lines) {
         const trimmed = line.trim()
-        if (!trimmed) { html += '<br/>'; continue }
+        if (!trimmed) continue
+
         if (/^##\s/.test(trimmed)) {
-          html += '<h2 style="font-family:Arial,sans-serif;font-size:14px;font-weight:700;color:#C9993A;letter-spacing:2px;text-transform:uppercase;margin:20px 0 8px;padding-bottom:6px;border-bottom:2px solid #E8B84B;">' + trimmed.replace(/^##\s*/, '') + '</h2>'
+          flushTasks()
+          const heading = trimmed.replace(/^##\s*/, '').replace(/:/g, '')
+          inTaskSection = /^TASKS/i.test(heading)
+          html += '<h2 style="font-family:Arial,sans-serif;font-size:11px;font-weight:700;color:#C9993A;letter-spacing:2px;text-transform:uppercase;margin:24px 0 8px;padding-bottom:5px;border-bottom:2px solid #E8B84B;">' + heading + '</h2>'
         } else if (/^#\s/.test(trimmed)) {
+          flushTasks()
           html += '<h1 style="font-family:Arial,sans-serif;font-size:18px;font-weight:700;color:#050D1A;margin:0 0 16px;">' + trimmed.replace(/^#\s*/, '') + '</h1>'
         } else if (/^[-\u25b8]\s/.test(trimmed)) {
-          const content = trimmed.replace(/^[-\u25b8]\s*/, '').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-          const parts = content.split('|').map((p: string) => p.trim())
-          if (parts.length >= 3) {
-            html += '<div style="display:flex;gap:8px;padding:6px 0;border-bottom:1px solid #f0f0f0;font-family:Arial,sans-serif;font-size:12px;color:#333;">'
-            html += '<span style="flex:2;font-weight:500;">' + parts[0] + '</span>'
-            const priorityColor = parts[1] === 'high' ? '#e53e3e' : parts[1] === 'medium' ? '#d69e2e' : '#38a169'
-            html += '<span style="min-width:60px;color:' + priorityColor + ';font-weight:600;text-transform:uppercase;font-size:10px;padding-top:2px;">' + (parts[1] || '') + '</span>'
-            html += '<span style="min-width:80px;color:#666;">' + (parts[2] || '') + '</span>'
-            if (parts[3]) html += '<span style="min-width:90px;color:#888;font-size:11px;">' + parts[3] + '</span>'
-            html += '</div>'
+          const lineContent = trimmed.replace(/^[-\u25b8]\s*/, '').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+          const parts = lineContent.split('|').map((p: string) => p.trim())
+          if (inTaskSection && parts.length >= 3) {
+            const priorityColor = parts[1]?.toLowerCase() === 'high' ? '#e53e3e' : parts[1]?.toLowerCase() === 'medium' ? '#d69e2e' : '#38a169'
+            taskRows += '<tr style="border-bottom:1px solid #f0f0f0;">'
+            taskRows += '<td style="padding:7px 8px;color:#333;font-size:12px;vertical-align:top;">' + parts[0] + '</td>'
+            taskRows += '<td style="padding:7px 8px;color:' + priorityColor + ';font-weight:700;font-size:10px;text-transform:uppercase;vertical-align:top;">' + (parts[1] || '') + '</td>'
+            taskRows += '<td style="padding:7px 8px;color:#555;font-size:12px;vertical-align:top;">' + (parts[2] || '') + '</td>'
+            taskRows += '<td style="padding:7px 8px;color:#888;font-size:11px;vertical-align:top;">' + (parts[3] || '') + '</td>'
+            taskRows += '</tr>'
           } else {
-            html += '<div style="display:flex;gap:8px;padding:4px 0;font-family:Arial,sans-serif;font-size:13px;color:#333;"><span style="color:#C9993A;flex-shrink:0;">&#9656;</span><span>' + content + '</span></div>'
+            flushTasks()
+            html += '<table width="100%" cellpadding="0" cellspacing="0" style="margin:3px 0;"><tr><td width="16" valign="top" style="color:#C9993A;font-size:12px;padding-top:1px;">&#9656;</td><td style="font-family:Arial,sans-serif;font-size:12px;color:#333;line-height:1.6;padding-bottom:4px;">' + lineContent + '</td></tr></table>'
           }
         } else if (trimmed) {
+          flushTasks()
           html += '<p style="font-family:Arial,sans-serif;font-size:13px;color:#444;margin:6px 0;line-height:1.7;">' + trimmed.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') + '</p>'
         }
       }
+      flushTasks()
       return html
     }
 
