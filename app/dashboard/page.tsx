@@ -92,6 +92,7 @@ export default function Dashboard() {
   const [subscription, setSubscription] = useState<any>(null)
   const [aiText, setAiText] = useState<Record<string, string>>({})
   const [aiLoading, setAiLoading] = useState<Record<string, boolean>>({})
+  const [workloadSending, setWorkloadSending] = useState(false)
   const [timerSeconds, setTimerSeconds] = useState(0)
   const [timerRunning, setTimerRunning] = useState(false)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -282,6 +283,28 @@ Proceed and set this task to active anyway?`)
   }
 
   const signOut = async () => { await supabase.auth.signOut(); window.location.href = '/login' }
+
+  const sendWorkloadReport = async () => {
+    const emailEl = document.getElementById('workload-send-email') as HTMLInputElement
+    const toEmail = emailEl?.value
+    if (!toEmail) { alert('Please enter a recipient email'); return }
+    setWorkloadSending(true)
+    const pmName = user?.user_metadata?.full_name || 'Project Manager'
+    const cleaned = (aiText['workload'] || '')
+      .split('**').join('')
+      .split('\n').join('<br/>')
+    const fullHtml = '<div style="background:#f8f9fa;border-left:4px solid #C9993A;padding:12px 16px;margin-bottom:20px;"><div style="font-size:10px;color:#C9993A;font-weight:700;letter-spacing:2px;margin-bottom:2px;">WORKLOAD ANALYSIS</div><div style="font-size:16px;color:#050D1A;font-weight:600;">Team Capacity Report</div><div style="font-size:12px;color:#666;margin-top:4px;">' + new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) + '</div></div><div style="font-size:13px;line-height:1.8;color:#333;">' + cleaned + '</div><p style="margin:20px 0 0;font-size:12px;color:#999;border-top:1px solid #eee;padding-top:14px;">' + pmName + ' · ' + (user?.email || '') + '<br/>pm.one-empire.com</p>'
+    try {
+      const res = await fetch('https://n8n.one-empire.com/webhook/empire-pm-invoice', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ client: 'Team', project: 'Workload Report', clientEmail: toEmail, senderName: pmName, senderEmail: user?.email, invoiceDate: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }), dueDate: '', lineItems: '', total: '', coverEmail: fullHtml })
+      })
+      if (!res.ok) { alert('Failed to send: ' + res.status); setWorkloadSending(false); return }
+      alert('Workload report sent to ' + toEmail)
+      emailEl.value = ''
+    } catch { alert('Network error — check n8n is running.') }
+    setWorkloadSending(false)
+  }
 
   const toggleTimer = () => {
     if (timerRunning) {
@@ -1428,20 +1451,7 @@ Proceed and set this task to active anyway?`)
                         <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600, letterSpacing: '0.16em', color: goldDim, marginBottom: '8px' }}>✉ SEND WORKLOAD REPORT</div>
                         <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
                           <input id="workload-send-email" style={{ ...s.input, fontSize: '11px', padding: '7px 10px', flex: 1 }} placeholder="recipient@company.com" type="email"/>
-                          <button style={{ ...s.btnGold, fontSize: '9px', padding: '7px 14px', whiteSpace: 'nowrap' as const }} onClick={async () => {
-                            const emailEl = document.getElementById('workload-send-email') as HTMLInputElement
-                            const toEmail = emailEl?.value
-                            if (!toEmail) { alert('Please enter a recipient email'); return }
-                            const pmName = user?.user_metadata?.full_name || 'Project Manager'
-                            const bodyHtml = aiText['workload'].replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/^[-•] (.+)$/gm, '<li style="margin:4px 0;color:#333;font-size:13px;">$1</li>').replace(/\n/g, '<br/>')
-                            const fullHtml = `<div style="background:#f8f9fa;border-left:4px solid #C9993A;padding:12px 16px;margin-bottom:20px;"><div style="font-size:10px;color:#C9993A;font-weight:700;letter-spacing:2px;margin-bottom:2px;">WORKLOAD ANALYSIS</div><div style="font-size:16px;color:#050D1A;font-weight:600;">Team Capacity Report</div><div style="font-size:12px;color:#666;margin-top:4px;">${new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</div></div><div style="font-size:13px;line-height:1.8;color:#333;">${bodyHtml}</div><p style="margin:20px 0 0;font-size:12px;color:#999;border-top:1px solid #eee;padding-top:14px;">${pmName} · ${user?.email}<br/>pm.one-empire.com</p>`
-                            try {
-                              const res = await fetch('https://n8n.one-empire.com/webhook/empire-pm-invoice', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ client: 'Team', project: 'Workload Report', clientEmail: toEmail, senderName: pmName, senderEmail: user?.email, invoiceDate: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }), dueDate: '', lineItems: '', total: '', coverEmail: fullHtml }) })
-                              if (!res.ok) { alert(`✗ Failed: ${res.status}`); return }
-                              alert(`✓ Workload report sent to ${toEmail}`)
-                              emailEl.value = ''
-                            } catch { alert('Network error — check n8n is running.') }
-                          }}>✉ Send →</button>
+                          <button style={{ ...s.btnGold, fontSize: '9px', padding: '7px 14px', whiteSpace: 'nowrap' as const }} onClick={sendWorkloadReport} disabled={workloadSending}>{workloadSending ? 'Sending...' : '✉ Send →'}</button>
                         </div>
                         <button onClick={() => navigator.clipboard.writeText(aiText['workload'])} style={{ ...s.btnGhost, fontSize: '9px', padding: '5px 12px' }}>⎘ Copy Output</button>
                       </div>
