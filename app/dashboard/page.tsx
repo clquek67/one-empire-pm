@@ -118,6 +118,10 @@ export default function Dashboard() {
   const [editFields, setEditFields] = useState<Record<string, any>>({})
 
   useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('DEBUG_ACCESS_TOKEN:', session?.access_token)
+      console.log('DEBUG_USER_ID:', session?.user?.id)
+    })
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) { setUser(user as User); loadData(user.id) }
     })
