@@ -35,7 +35,7 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' data: https://lh3.googleusercontent.com https://hcti.io",
-      "connect-src 'self' https://*.supabase.co https://api.anthropic.com https://api.resend.com https://api.stripe.com https://n8n.one-empire.com",
+      "connect-src 'self' https://*.supabase.co https://supabase.refueledlife.com https://api.anthropic.com https://api.resend.com https://api.stripe.com https://n8n.one-empire.com",
       "frame-src https://js.stripe.com https://hooks.stripe.com",
       "object-src 'none'",
       "base-uri 'self'",
