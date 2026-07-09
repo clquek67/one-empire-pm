@@ -34,6 +34,7 @@ export async function middleware(request: NextRequest) {
   // Public page routes — no auth required
   if (
     pathname === '/login' ||
+    pathname === '/reset-password' ||
     pathname === '/pricing' ||
     pathname === '/roadmap' ||
     pathname === '/producthunt' ||
