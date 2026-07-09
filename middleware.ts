@@ -38,6 +38,8 @@ export async function middleware(request: NextRequest) {
     pathname === '/pricing' ||
     pathname === '/roadmap' ||
     pathname === '/producthunt' ||
+    pathname === '/terms' ||
+    pathname === '/privacy' ||
     pathname.startsWith('/invite')
   ) {
     return supabaseResponse
