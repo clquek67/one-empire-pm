@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, Fragment } from 'react'
 import { createClient } from '@/lib/supabase-client'
 import DOMPurify from 'isomorphic-dompurify'
 import { PLANS } from '@/lib/plans'
@@ -2298,7 +2298,7 @@ function RiskHeatMap({ risks, projects, riskProjectId }: { risks: any[], project
             <div/>
             {IMPACT_LEVELS.map(imp => <div key={imp} style={{ textAlign: 'center' as const, fontFamily: 'Rajdhani, sans-serif', fontSize: '8px', color: textDim, padding: '0 2px 4px' }}>{PROB_LABELS[imp]}</div>)}
             {[...PROB_LEVELS].reverse().map((prob) => (
-              <React.Fragment key={prob}>
+              <Fragment key={prob}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingRight: '6px', fontFamily: 'Rajdhani, sans-serif', fontSize: '8px', color: textDim, minHeight: '52px' }}>{PROB_LABELS[prob]}</div>
                 {IMPACT_LEVELS.map((impact) => {
                   const cellRisks = getRisksAt(prob, impact)
@@ -2308,7 +2308,7 @@ function RiskHeatMap({ risks, projects, riskProjectId }: { risks: any[], project
                     </div>
                   )
                 })}
-              </React.Fragment>
+              </Fragment>
             ))}
           </div>
           <div style={{ textAlign: 'center' as const, fontFamily: 'Rajdhani, sans-serif', fontSize: '8px', color: textDim, letterSpacing: '0.15em', marginTop: '6px', paddingLeft: '48px' }}>IMPACT</div>
