@@ -1,10 +1,12 @@
 'use client'
-import { navy, border, textDim, textMid } from './types'
+
+const navy = '#050D1A'
+const border = 'rgba(201,153,58,0.2)'
+const textDim = '#A8C0DC'
+const textMid = '#C8DCF4'
+const goldDim = '#C9993A'
 
 export function MilestoneTrendChart({ milestones, project }: { milestones: any[], project: any }) {
-  const goldDim = '#C9993A'
-  const textBright = '#F0F6FF'
-
   const relevant = milestones.filter((m: any) => m.due_date)
   if (relevant.length === 0) return null
 
@@ -49,7 +51,6 @@ export function MilestoneTrendChart({ milestones, project }: { milestones: any[]
         Bars show each milestone relative to project timeline — drift right of project end date indicates schedule slip
       </div>
 
-      {/* Date axis */}
       <div style={{ display: 'flex', justifyContent: 'space-between', paddingLeft: '140px', marginBottom: '6px' }}>
         {[0, 25, 50, 75, 100].map(pct => {
           const d = new Date(projectStart + (pct / 100) * span)
@@ -57,7 +58,6 @@ export function MilestoneTrendChart({ milestones, project }: { milestones: any[]
         })}
       </div>
 
-      {/* Milestone rows */}
       <div style={{ position: 'relative' }}>
         <div style={{ position: 'absolute', left: `calc(140px + ${todayPct}% * (100% - 140px) / 100)`, top: 0, bottom: 0, width: '1px', background: 'rgba(232,184,75,0.5)', zIndex: 2, pointerEvents: 'none' as const }}/>
         {project?.end_date && (
@@ -103,7 +103,6 @@ export function MilestoneTrendChart({ milestones, project }: { milestones: any[]
         })}
       </div>
 
-      {/* Legend */}
       <div style={{ display: 'flex', gap: '14px', marginTop: '10px', paddingTop: '10px', borderTop: `1px solid rgba(201,153,58,0.1)`, flexWrap: 'wrap' as const, alignItems: 'center' }}>
         {[
           { color: '#4DFFB4', label: 'Completed' },
