@@ -3887,7 +3887,7 @@ function MilestoneTrendChart({ milestones, project }: { milestones: any[], proje
           </div>
         </div>
       </div>
-    <MilestoneTrendChart milestones={milestones.filter((m: Milestone) => m.project_id === (projects.find((p: Project) => p.id === selectedProjectId) || projects[0])?.id)} project={project} />
+    <MilestoneTrendChart milestones={milestones.filter((m: Milestone) => m.project_id === project?.id)} project={project} />
     </div>
   )
 }
