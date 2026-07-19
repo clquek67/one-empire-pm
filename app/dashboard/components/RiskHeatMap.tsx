@@ -1,6 +1,11 @@
 'use client'
 import { Fragment } from 'react'
-import { gold, goldDim, navy, border, textDim } from './types'
+
+const gold = '#E8B84B'
+const goldDim = '#C9993A'
+const navy = '#050D1A'
+const border = 'rgba(201,153,58,0.2)'
+const textDim = '#A8C0DC'
 
 const PROB_LEVELS = ['very_low', 'low', 'medium', 'high', 'very_high']
 const IMPACT_LEVELS = ['very_low', 'low', 'medium', 'high', 'very_high']
