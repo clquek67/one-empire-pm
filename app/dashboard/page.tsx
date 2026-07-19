@@ -3887,13 +3887,12 @@ function MilestoneTrendChart({ milestones, project }: { milestones: any[], proje
           </div>
         </div>
       </div>
+    <MilestoneTrendChart milestones={projMilestones} project={project} />
     </div>
-      <MilestoneTrendChart milestones={projMilestones} project={project} />
   )
 }
 
-function MilestoneForm({ user, projectId, supabase, onCreated }: any) {
-  const [title, setTitle] = useState('')
+function MilestoneForm({ user, projectId, supabase, onCreated }: any) {  const [title, setTitle] = useState('')
   const [dueDate, setDueDate] = useState('')
   const [status, setStatus] = useState('pending')
 
