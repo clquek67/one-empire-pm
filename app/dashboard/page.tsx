@@ -2389,7 +2389,15 @@ function ResourceAllocationChart({ teamMembers, tasks, projects }: { teamMembers
         ].map(l => (
           <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
             <div style={{ width: '10px', height: '10px', borderRadius: '2px', background: l.color, flexShrink: 0 }}/>
-            <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: textDim
+            <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: textDim }}>{l.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function ProjectForm({ user, onCreated, supabase, isMobile, canAddProject, limits, plan }: any) {
   const [name, setName] = useState(''); const [client, setClient] = useState(''); const [budget, setBudget] = useState(''); const [startDate, setStartDate] = useState(''); const [endDate, setEndDate] = useState('')
   const [error, setError] = useState('')
   const submit = async () => {
