@@ -8,7 +8,7 @@ import ProjectBrief from './project-brief'
 type User = { id: string; email: string; user_metadata: { full_name?: string; avatar_url?: string } }
 type Project = { id: string; name: string; client_name: string; status: string; health: number; budget?: number; start_date?: string; end_date?: string }
 type Task = { id: string; name: string; status: string; priority: string; owner: string; project_id: string; due_date?: string; depends_on?: string | null; created_at?: string }
-type Risk = { id: string; title: string; description: string; level: string; status: string; project_id: string; due_date?: string }
+type Risk = { id: string; title: string; description: string; level: string; status: string; project_id: string; due_date?: string; probability?: string; impact?: string; category?: string }
 type TeamMember = { id: string; name: string; email: string; role: string; capacity: number; project_id: string; weekly_hours?: number; invited_email?: string; invite_status?: string; linked_user_id?: string }
 type TimeLog = { id: string; description: string; hours: number; rate: number; billed: boolean; project_id: string; created_at: string; log_date?: string }
 type Milestone = { id: string; title: string; due_date?: string; status: string; project_id: string; user_id: string; created_at: string }
@@ -1277,9 +1277,28 @@ Proceed and set this task to active anyway?`)
                       return `PROJECT: ${p.name} | Client: ${p.client_name || 'Internal'} | Health: ${p.health}% | Timeline: ${p.start_date || 'TBD'} to ${p.end_date || 'TBD'}\nTasks: ${projTasks.map((t: Task) => t.name + ' [' + t.status + ', due: ' + (t.due_date || 'none') + ', owner: ' + (t.owner || 'unassigned') + ']').join('; ') || 'None'}\nOverdue: ${overdueTasks.map((t: Task) => t.name).join(', ') || 'None'}\nOpen Risks: ${projRisks.map((r: Risk) => r.title + ' [' + r.level + ']').join(', ') || 'None'}\nTeam: ${projTeam.map((m: TeamMember) => m.name + ' (' + m.role + ', ' + m.capacity + '% capacity)').join(', ') || 'No team'}`
                     }).join('\n\n')
                     ai('risks',
-                      'You are an expert risk manager with 20 years PM experience. Analyse this specific project data. Be highly specific — reference actual task names, owners, and dates. Never give generic advice. Use bullet points only. Structure: 1. CRITICAL RISKS, 2. HIDDEN RISKS NOT YET LOGGED, 3. CAPACITY & DEADLINE CONFLICTS, 4. RECOMMENDED ACTIONS (with owner and deadline).',
+                      'You are an expert risk manager with 20 years PM experience. Analyse this specific project data. Be highly specific — reference actual task names, owners, and dates. Never give generic advice. Use bullet points only. Structure: 1. CRITICAL RISKS, 2. HIDDEN RISKS NOT YET LOGGED, 3. CAPACITY & DEADLINE CONFLICTS, 4. RECOMMENDED ACTIONS (with owner and deadline).\n\nAfter your analysis, append this on its own line with no markdown fences:\nRISK_JSON:[{"title":"risk title","probability":"low|medium|high|very_high","impact":"low|medium|high|very_high","category":"schedule|budget|scope|resource|client","level":"low|medium|high|critical"}]',
                       'Risk analysis for: ' + (riskProjectId === 'all' ? 'Full Portfolio' : (selectedProjects[0]?.name || 'Project')) + '\n\n' + projectContext
-                    )
+                    ).then(async (result: string) => {
+                      const jsonMatch = result.match(/RISK_JSON:(\[[\s\S]*?\])/)
+                      if (jsonMatch && user) {
+                        try {
+                          const parsed: any[] = JSON.parse(jsonMatch[1])
+                          const projectId = riskProjectId === 'all' ? (selectedProjects[0]?.id || null) : riskProjectId
+                          if (projectId) {
+                            for (const r of parsed) {
+                              const existing = risks.find((ex: Risk) => ex.title?.toLowerCase() === r.title?.toLowerCase() && ex.project_id === projectId)
+                              if (existing) {
+                                await supabase.from('risks').update({ probability: r.probability, impact: r.impact, category: r.category }).eq('id', existing.id)
+                              } else {
+                                await supabase.from('risks').insert({ user_id: user.id, project_id: projectId, title: r.title, description: '', level: r.level || 'medium', status: 'open', probability: r.probability, impact: r.impact, category: r.category })
+                              }
+                            }
+                            loadData(user.id)
+                          }
+                        } catch {}
+                      }
+                    })
                   }}>✦ AI Risk Scan</button>
                 </div>
               </div>
@@ -1332,6 +1351,7 @@ Proceed and set this task to active anyway?`)
                   </div>
                 </div>
                 <div>
+                  <RiskHeatMap risks={risks} projects={projects} riskProjectId={riskProjectId} />
                   <div style={s.card}>
                     <div style={s.sectionTitle}>✦ AI Risk Analysis</div>
                     {aiLoading['risks'] && <div style={{ color: textDim, fontSize: '12px' }}>Scanning {riskProjectId === 'all' ? 'all projects' : (projects.find((p: Project) => p.id === riskProjectId)?.name || 'project')} for risks...</div>}
@@ -2250,6 +2270,59 @@ Proceed and set this task to active anyway?`)
 }
 
 // ─── SUB-COMPONENTS ───
+
+const PROB_LEVELS = ['very_low', 'low', 'medium', 'high', 'very_high']
+const IMPACT_LEVELS = ['very_low', 'low', 'medium', 'high', 'very_high']
+const PROB_LABELS: Record<string, string> = { very_low: 'Very Low', low: 'Low', medium: 'Medium', high: 'High', very_high: 'Very High' }
+const CATEGORY_COLORS: Record<string, string> = { schedule: '#4DD8F0', budget: '#E8B84B', scope: '#FF9090', resource: '#4DFFB4', client: '#C084FC' }
+
+function RiskHeatMap({ risks, projects, riskProjectId }: { risks: any[], projects: any[], riskProjectId: string }) {
+  const gold = '#E8B84B'; const goldDim = '#C9993A'; const navy = '#050D1A'
+  const border = 'rgba(201,153,58,0.2)'; const textDim = '#A8C0DC'
+  const filtered = risks.filter((r: any) => r.status !== 'closed' && r.probability && r.impact && (riskProjectId === 'all' || r.project_id === riskProjectId))
+  const cellColor = (probIdx: number, impIdx: number) => { const score = (probIdx + 1) * (impIdx + 1); if (score >= 16) return 'rgba(226,75,74,0.35)'; if (score >= 9) return 'rgba(245,166,35,0.25)'; if (score >= 4) return 'rgba(232,184,75,0.15)'; return 'rgba(34,201,144,0.08)' }
+  const getRisksAt = (prob: string, impact: string) => filtered.filter((r: any) => r.probability === prob && r.impact === impact)
+  if (filtered.length === 0) return null
+  return (
+    <div style={{ background: 'rgba(16,36,72,0.7)', border: `1px solid ${border}`, borderRadius: '4px', padding: '16px 18px', marginBottom: '12px' }}>
+      <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', fontWeight: 600, letterSpacing: '0.22em', color: goldDim, marginBottom: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span>RISK HEAT MAP</span>
+        <span style={{ fontWeight: 400, color: textDim }}>{filtered.length} open risk{filtered.length !== 1 ? 's' : ''} plotted</span>
+      </div>
+      <div style={{ display: 'flex', gap: '6px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '14px', flexShrink: 0 }}>
+          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '8px', color: textDim, letterSpacing: '0.15em', transform: 'rotate(-90deg)', whiteSpace: 'nowrap' as const }}>PROBABILITY</div>
+        </div>
+        <div style={{ flex: 1 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '48px repeat(5, 1fr)', gap: '3px' }}>
+            <div/>
+            {IMPACT_LEVELS.map(imp => <div key={imp} style={{ textAlign: 'center' as const, fontFamily: 'Rajdhani, sans-serif', fontSize: '8px', color: textDim, padding: '0 2px 4px' }}>{PROB_LABELS[imp]}</div>)}
+            {[...PROB_LEVELS].reverse().map((prob) => (
+              <React.Fragment key={prob}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingRight: '6px', fontFamily: 'Rajdhani, sans-serif', fontSize: '8px', color: textDim, minHeight: '52px' }}>{PROB_LABELS[prob]}</div>
+                {IMPACT_LEVELS.map((impact) => {
+                  const cellRisks = getRisksAt(prob, impact)
+                  return (
+                    <div key={`${prob}-${impact}`} style={{ background: cellColor(PROB_LEVELS.indexOf(prob), IMPACT_LEVELS.indexOf(impact)), border: `1px solid rgba(201,153,58,0.12)`, borderRadius: '3px', minHeight: '52px', padding: '4px', display: 'flex', flexWrap: 'wrap' as const, gap: '3px', alignContent: 'flex-start' }}>
+                      {cellRisks.map((r: any) => { const dotColor = CATEGORY_COLORS[r.category] || gold; const proj = projects.find((p: any) => p.id === r.project_id); return <div key={r.id} title={`${r.title}\n${proj?.name || ''}\nCategory: ${r.category || 'scope'}`} style={{ width: '14px', height: '14px', borderRadius: '50%', background: dotColor, border: `1.5px solid ${navy}`, cursor: 'default', flexShrink: 0, boxShadow: `0 0 4px ${dotColor}55` }}/> })}
+                    </div>
+                  )
+                })}
+              </React.Fragment>
+            ))}
+          </div>
+          <div style={{ textAlign: 'center' as const, fontFamily: 'Rajdhani, sans-serif', fontSize: '8px', color: textDim, letterSpacing: '0.15em', marginTop: '6px', paddingLeft: '48px' }}>IMPACT</div>
+        </div>
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: '10px', marginTop: '12px', paddingTop: '10px', borderTop: `1px solid rgba(201,153,58,0.1)` }}>
+        {Object.entries(CATEGORY_COLORS).map(([cat, color]) => <div key={cat} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><div style={{ width: '8px', height: '8px', borderRadius: '50%', background: color }}/><span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: textDim, textTransform: 'capitalize' as const }}>{cat}</span></div>)}
+        <div style={{ display: 'flex', gap: '8px', marginLeft: 'auto', alignItems: 'center' }}>
+          {[{ color: 'rgba(34,201,144,0.35)', label: 'Low' }, { color: 'rgba(232,184,75,0.35)', label: 'Med' }, { color: 'rgba(245,166,35,0.45)', label: 'High' }, { color: 'rgba(226,75,74,0.55)', label: 'Critical' }].map(l => <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><div style={{ width: '10px', height: '10px', borderRadius: '2px', background: l.color }}/><span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '9px', color: textDim }}>{l.label}</span></div>)}
+        </div>
+      </div>
+    </div>
+  )
+}
 
 function ProjectForm({ user, onCreated, supabase, isMobile, canAddProject, limits, plan }: any) {
   const [name, setName] = useState(''); const [client, setClient] = useState(''); const [budget, setBudget] = useState(''); const [startDate, setStartDate] = useState(''); const [endDate, setEndDate] = useState('')
