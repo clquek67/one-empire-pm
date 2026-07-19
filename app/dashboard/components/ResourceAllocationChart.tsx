@@ -1,5 +1,9 @@
 'use client'
-import { gold, goldDim, border, textDim, textMid, textBright } from './types'
+
+const goldDim = '#C9993A'
+const border = 'rgba(201,153,58,0.2)'
+const textDim = '#A8C0DC'
+const textBright = '#F0F6FF'
 
 export function ResourceAllocationChart({ teamMembers, tasks, projects }: { teamMembers: any[], tasks: any[], projects: any[] }) {
   if (teamMembers.length === 0) return null
