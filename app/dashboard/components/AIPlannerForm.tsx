@@ -3,6 +3,16 @@ import { useState, useEffect, useRef, Fragment } from 'react'
 import { createClient } from '@/lib/supabase-client'
 import DOMPurify from 'isomorphic-dompurify'
 
+type User = { id: string; email: string; user_metadata: { full_name?: string; avatar_url?: string } }
+type Project = { id: string; name: string; client_name: string; status: string; health: number; budget?: number; start_date?: string; end_date?: string }
+type Task = { id: string; name: string; status: string; priority: string; owner: string; project_id: string; due_date?: string; depends_on?: string | null; created_at?: string }
+type Risk = { id: string; title: string; description: string; level: string; status: string; project_id: string; due_date?: string; probability?: string; impact?: string; category?: string }
+type TeamMember = { id: string; name: string; email: string; role: string; capacity: number; project_id: string; weekly_hours?: number; invited_email?: string; invite_status?: string; linked_user_id?: string }
+type TimeLog = { id: string; description: string; hours: number; rate: number; billed: boolean; project_id: string; created_at: string; log_date?: string }
+type Milestone = { id: string; title: string; due_date?: string; status: string; project_id: string; user_id: string; created_at: string }
+type Proposal = { id: string; title: string; client_name: string; project_type: string; budget?: number; timeline?: string; status: string; scope_summary?: string; deliverables?: string; ai_body?: string; created_at: string; user_id: string }
+type RecurringInvoice = { id: string; user_id: string; project_id: string; client_email: string; description: string; amount: number; frequency: 'monthly' | 'weekly' | 'quarterly'; next_run_date: string; active: boolean; created_at: string }
+
 const gold = '#E8B84B'
 const goldDim = '#C9993A'
 const navy = '#050D1A'
@@ -343,4 +353,3 @@ Rules: Use bullet points only. No markdown tables. Be specific, not generic. Ass
     </div>
   )
 }
-
