@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, Fragment } from 'react'
 import { createClient } from '@/lib/supabase-client'
 import DOMPurify from 'isomorphic-dompurify'
+import { PLANS } from '@/lib/plans'
 
 type User = { id: string; email: string; user_metadata: { full_name?: string; avatar_url?: string } }
 type Project = { id: string; name: string; client_name: string; status: string; health: number; budget?: number; start_date?: string; end_date?: string }
@@ -271,4 +272,3 @@ export function SettingsForm({ user, supabase }: any) {
 }
 
 // ─── TIMELINE VIEW ───────────────────────────────────────────────────────────
-
