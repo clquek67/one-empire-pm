@@ -375,9 +375,15 @@ Start with "Hi ${recipientName || 'there'}," — no subject line.`
       'deadline-reminder': `Action Required — ${project?.name || 'Project'}`,
       'meeting-followup': `Meeting Follow-up — ${project?.name || 'Your Project'}`,
     }
-    const bodyHtml = draft.split('\n\n').filter(Boolean).map((para: string) =>
-      `<p style="margin:0 0 14px;font-size:14px;line-height:1.8;color:#333;font-family:Arial,sans-serif;">${para.replace(/\n/g, '<br/>')}</p>`
-    ).join('')
+    const bodyHtml = draft.split('\n\n').filter(Boolean).map((para: string) => {
+      const lines = para.split('\n')
+      const isBulletBlock = lines.every((l: string) => l.trim().startsWith('\u2022') || l.trim().startsWith('-') || l.trim() === '')
+      if (isBulletBlock) {
+        const items = lines.filter((l: string) => l.trim()).map((l: string) => l.replace(/^[\u2022\-]\s*/, '').trim())
+        return `<ul style="margin:0 0 14px;padding-left:20px;">${items.map((item: string) => `<li style="font-size:14px;line-height:1.6;color:#333;font-family:Arial,sans-serif;margin-bottom:4px;">${item}</li>`).join('')}</ul>`
+      }
+      return `<p style="margin:0 0 14px;font-size:14px;line-height:1.8;color:#333;font-family:Arial,sans-serif;">${para.replace(/\n/g, '<br/>')}</p>`
+    }).join('')
     const fullHtml = `
 <div style="background:#f8f9fa;border-left:4px solid #C9993A;padding:12px 16px;margin-bottom:20px;border-radius:0 4px 4px 0;">
   <div style="font-size:10px;color:#C9993A;font-weight:700;letter-spacing:2px;margin-bottom:2px;">EMPIRE PM</div>
