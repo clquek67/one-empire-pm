@@ -3624,8 +3624,7 @@ function TimelineView({ projects, tasks, milestones, user, supabase, onSaved, ed
           </div>
         </div>
       </div>
-      <MilestoneTrendChart milestones={milestones.filter((m: Milestone) => m.project_id === project?.id)} project={project} />
-    </div>
+      </div>
   )
 }
 
@@ -4412,6 +4411,8 @@ Paragraph 3: Confidence statement and forward outlook.`
         </div>
 
         {/* ── Section 1: Project Snapshot ── */}
+        <MilestoneTrendChart milestones={milestones.filter((m: Milestone) => m.project_id === project?.id)} project={project} />
+        
         <div style={{ background: navyCard, border: `1px solid ${border}`, borderRadius: '6px', padding: '24px 28px', marginBottom: '14px' }}>
           {sectionHeader('1', 'PROJECT SNAPSHOT', 'snapshot')}
           {fp.map((p: Project) => {
