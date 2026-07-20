@@ -3485,6 +3485,8 @@ function TimelineView({ projects, tasks, milestones, user, supabase, onSaved, ed
         </div>
       )}
 
+      <MilestoneTrendChart milestones={milestones.filter((m: Milestone) => m.project_id === project?.id)} project={project} />
+
       {/* Date axis header */}
       <div style={{ background: navyCard, border: `1px solid ${border}`, borderRadius: '4px 4px 0 0', padding: '8px 16px 8px 220px', display: 'flex', justifyContent: 'space-between' }}>
         {[0, 25, 50, 75, 100].map(pct => {
@@ -4411,8 +4413,6 @@ Paragraph 3: Confidence statement and forward outlook.`
         </div>
 
         {/* ── Section 1: Project Snapshot ── */}
-        <MilestoneTrendChart milestones={milestones.filter((m: Milestone) => m.project_id === project?.id)} project={project} />
-        
         <div style={{ background: navyCard, border: `1px solid ${border}`, borderRadius: '6px', padding: '24px 28px', marginBottom: '14px' }}>
           {sectionHeader('1', 'PROJECT SNAPSHOT', 'snapshot')}
           {fp.map((p: Project) => {
