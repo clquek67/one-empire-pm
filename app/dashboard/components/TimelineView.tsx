@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useRef, Fragment } from 'react'
 import { MilestoneTrendChart } from './MilestoneTrendChart'
+import { MilestoneForm } from './MilestoneForm'
 import { createClient } from '@/lib/supabase-client'
 import DOMPurify from 'isomorphic-dompurify'
 
@@ -326,4 +327,3 @@ export function TimelineView({ projects, tasks, milestones, user, supabase, onSa
       </div>
   )
 }
-
