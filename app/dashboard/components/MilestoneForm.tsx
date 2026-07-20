@@ -49,7 +49,8 @@ function formatAI(text: string) {
     .replace(/^- (.+)$/gm, `<div style="display:flex;gap:8px;margin:3px 0"><span style="color:${goldDim};flex-shrink:0">–</span><span>$1</span></div>`)
     .replace(/^(\d+\.) (.+)$/gm, `<div style="display:flex;gap:8px;margin:4px 0"><span style="color:${gold};flex-shrink:0;min-width:16px">$1</span><span>$2</span></div>`)
     .replace(/`([^`]+)`/g, `<code style="background:rgba(201,153,58,0.1);border:1px solid ${border};padding:1px 5px;border-radius:2px;font-size:11px;color:${gold}">$1</code>`)
-    .replace(/\n/g, '<br/>')
+    .replace(/\n/g, '')
+    .replace(/<\/div><br>/g, '</div>')
   return DOMPurify.sanitize(html, { ADD_ATTR: ['style'] })
 }
 
