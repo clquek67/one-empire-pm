@@ -7,6 +7,7 @@ import ProjectBrief from './project-brief'
 import { RiskHeatMap } from './components/RiskHeatMap'
 import { ResourceAllocationChart } from './components/ResourceAllocationChart'
 import { MilestoneTrendChart } from './components/MilestoneTrendChart'
+import { PortfolioDashboard } from './components/PortfolioDashboard'
 
 type User = { id: string; email: string; user_metadata: { full_name?: string; avatar_url?: string } }
 type Project = { id: string; name: string; client_name: string; status: string; health: number; budget?: number; start_date?: string; end_date?: string }
@@ -429,6 +430,7 @@ Proceed and set this task to active anyway?`)
     { id: 'billing', icon: '◷', label: 'Time & Billing', section: null },
     { id: 'brief', icon: '◫', label: 'Project Brief', section: null, ai: true, locked: !hasAIFeature('planner') },
     { id: 'retainers', icon: '◷', label: 'Retainers', section: null, locked: !hasAIFeature('retainers') },
+    { id: 'portfolio', icon: '⊟', label: 'Portfolio', section: null, locked: plan !== 'agency' },
     { id: 'communication', icon: '✉', label: 'Comms Agent', section: null, ai: true, locked: !hasAIFeature('communication') },
     { id: 'settings', icon: '⚙', label: 'Settings', section: 'Account' },
   ]
@@ -2124,6 +2126,17 @@ Proceed and set this task to active anyway?`)
                 </div>
               </div>
             </div>
+          )}
+
+          {tab === 'portfolio' && (
+            <PortfolioDashboard
+              projects={projects}
+              tasks={tasks}
+              risks={risks}
+              timeLogs={timeLogs}
+              milestones={milestones}
+              plan={plan}
+            />
           )}
 
           {tab === 'communication' && (
