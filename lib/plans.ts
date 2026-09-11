@@ -107,9 +107,9 @@ export function getPlanFromPriceId(priceId: string): { plan: PlanType, period: P
   return null
 }
 
-// Demo account — bypasses subscription check, gets full Agency access
-export const DEMO_EMAIL = 'pmdemo26@gmail.com'
-
+// Demo account — email set via DEMO_EMAIL Vercel env var, gets full Agency access
 export function isDemoUser(email: string | null | undefined): boolean {
-  return !!email && email === DEMO_EMAIL
+  const demoEmail = process.env.DEMO_EMAIL
+  if (!demoEmail || !email) return false
+  return email === demoEmail
 }
