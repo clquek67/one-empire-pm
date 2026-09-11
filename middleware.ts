@@ -46,13 +46,10 @@ export async function middleware(request: NextRequest) {
   }
 
   // API routes — only whitelisted paths bypass auth; all others pass through to route-level auth
-  // Route-level auth is the primary enforcement; this is defence-in-depth
   if (pathname.startsWith('/api')) {
     const isPublicApi = PUBLIC_API_ROUTES.some(route => pathname.startsWith(route))
     if (isPublicApi) return supabaseResponse
 
-    // For all other API routes: if no session at all, reject at middleware
-    // (Each route also independently verifies auth — this is an extra layer)
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -92,6 +89,12 @@ export async function middleware(request: NextRequest) {
 
   // Owners → check subscription for dashboard access
   if (pathname.startsWith('/dashboard')) {
+    // Demo account — bypass subscription check, full Agency access granted via DB row
+    const demoEmail = process.env.DEMO_EMAIL
+    if (demoEmail && user.email === demoEmail) {
+      return supabaseResponse
+    }
+
     const { data: subscription } = await supabase
       .from('subscriptions')
       .select('status')
