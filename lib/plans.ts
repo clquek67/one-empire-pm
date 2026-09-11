@@ -106,3 +106,10 @@ export function getPlanFromPriceId(priceId: string): { plan: PlanType, period: P
   }
   return null
 }
+
+// Demo account — bypasses subscription check, gets full Agency access
+export const DEMO_EMAIL = 'pmdemo26@gmail.com'
+
+export function isDemoUser(email: string | null | undefined): boolean {
+  return !!email && email === DEMO_EMAIL
+}
